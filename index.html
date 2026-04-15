@@ -409,15 +409,18 @@ async function pickClass(c, btn) {
 
   try {
     const d = await api({ action:'getStudents', grade:S.grade, cls:c });
-    if (!d.success || !d.names.length) {
-      resetNames('해당 학년/반 학생이 없습니다.'); return;
+    if (!d.success) {
+      resetNames(`⚠️ 오류: ${d.error}`); return;
+    }
+    if (!d.names || !d.names.length) {
+      resetNames(`해당 학년/반 학생이 없습니다. (${S.grade}학년 ${c}반)`); return;
     }
     document.getElementById('name-btns').innerHTML = d.names.map(n => {
       const display = n.split(' ')[0]; // 한글 이름만 버튼에 표시
       return `<button class="nb" onclick="pickName('${esc(n)}',this)">${display}</button>`;
     }).join('');
   } catch(e) {
-    resetNames('⚠️ 불러오기 실패. 다시 시도하세요.');
+    resetNames('⚠️ 불러오기 실패. 네트워크 상태를 확인하세요.');
   }
 }
 
