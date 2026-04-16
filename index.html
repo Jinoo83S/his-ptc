@@ -199,11 +199,14 @@ function toast(msg, type='') {
 // ── students.json 로드 ───────────────────────────
 async function loadStudents() {
   try {
-    const r = await fetch('students.json');
-    if (!r.ok) throw new Error();
+    const base = location.href.replace(/\/[^/]*$/, '');
+    const url  = base + '/students.json';
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
     S.students = await r.json();
   } catch(e) {
-    toast('학생 데이터를 불러올 수 없습니다.', 'err');
+    console.error('students.json 로드 실패:', e);
+    toast('학생 데이터 로드 실패: ' + e.message, 'err');
   }
 }
 loadStudents();
