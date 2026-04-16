@@ -7,78 +7,161 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <style>
 :root{
-  --nv:#0F1F5C; --nv2:#1B2F7A; --gd2:#E8B020; --gd3:#FBD155;
-  --bg:#EEF1F9; --sb:#5B6888; --bd:#D8DDED; --gn:#15803D; --rd:#DC2626; --yl:#B45309;
-  --rlg:22px; --sh:0 2px 16px rgba(15,31,92,.08); --shh:0 8px 36px rgba(15,31,92,.16);
+  --nv:#0F1F5C;--nv2:#1B2F7A;
+  --gd2:#E8B020;--gd3:#FBD155;
+  --bg:#EEF1F9;--tx:#111827;--sb:#5B6888;--bd:#D8DDED;
+  --gn:#15803D;--gnb:#DCFCE7;--rd:#DC2626;--yl:#B45309;
+  --rlg:22px;--sh:0 2px 16px rgba(15,31,92,.08);--shh:0 8px 36px rgba(15,31,92,.16);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:16px;-webkit-tap-highlight-color:transparent}
-body{font-family:'Noto Sans KR',sans-serif;background:linear-gradient(150deg,var(--nv) 0%,var(--nv2) 45%,#1A3A8F 100%);color:#111827;min-height:100dvh}
+body{font-family:'Noto Sans KR',sans-serif;background:linear-gradient(150deg,var(--nv) 0%,var(--nv2) 45%,#1A3A8F 100%);color:var(--tx);min-height:100dvh}
 button{cursor:pointer;font-family:inherit;border:none}
-.hidden{display:none!important}
-#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:#111827;color:#fff;padding:10px 20px;border-radius:30px;font-size:14px;font-weight:500;white-space:nowrap;max-width:90vw;z-index:10000;transition:transform .3s cubic-bezier(.34,1.56,.64,1);box-shadow:0 4px 20px rgba(0,0,0,.22)}
+
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--tx);color:#fff;padding:10px 20px;border-radius:30px;font-size:14px;font-weight:500;white-space:nowrap;max-width:90vw;z-index:10000;transition:transform .3s cubic-bezier(.34,1.56,.64,1);box-shadow:0 4px 20px rgba(0,0,0,.22)}
 #toast.on{transform:translateX(-50%) translateY(0)}
 #toast.ok{background:var(--gn)}
 #toast.err{background:var(--rd)}
 #toast.warn{background:var(--yl)}
-.page{min-height:100dvh;padding:34px 14px 54px}.wrap{max-width:760px;margin:0 auto}
-.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
-.brand{color:#fff}.brand h1{font-family:'DM Serif Display',serif;font-size:22px;line-height:1.2}.brand p{margin-top:4px;font-size:12px;color:rgba(255,255,255,.72)}
-.top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.btn{padding:10px 14px;border-radius:12px;font-size:13px;font-weight:800;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.12);color:#fff;backdrop-filter:blur(8px);transition:all .15s}.btn:hover{background:rgba(255,255,255,.2)}.btn.primary{background:linear-gradient(135deg,var(--gd2),var(--gd3));color:var(--nv);border:none}
-.card{background:#fff;border-radius:var(--rlg);box-shadow:var(--shh)}
-.hero{padding:20px 22px;margin-bottom:16px}.badge{display:inline-flex;align-items:center;gap:8px;background:var(--bg);border-radius:30px;padding:6px 12px;color:var(--nv2);font-size:11px;font-weight:800}
-.title{margin-top:10px;font-size:24px;font-weight:900;color:var(--nv);line-height:1.2}.sub{margin-top:8px;font-size:14px;color:var(--sb);font-weight:700}.meta{margin-top:12px;font-size:13px;color:var(--sb);display:flex;gap:14px;flex-wrap:wrap}
-.section{padding:22px}.section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.section-title h2{font-size:18px;color:var(--nv)}.count{font-size:12px;font-weight:800;color:var(--nv2);background:var(--bg);padding:5px 10px;border-radius:999px}
-.list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.slot{border:1px solid var(--bd);border-radius:16px;padding:16px 12px;background:#fff;box-shadow:var(--sh);text-align:center;transition:transform .14s,border-color .14s,box-shadow .14s,opacity .14s;min-height:56px}
-.slot.enabled:hover{transform:translateY(-1px);border-color:var(--nv2);box-shadow:0 8px 24px rgba(15,31,92,.12)}
-.slot.selected{background:#EFF6FF;border-color:var(--nv2)}.slot.loading{opacity:.65;pointer-events:none}
-.slot-time{font-size:16px;font-weight:800;color:var(--nv);line-height:1.3}
-.slot-booked-by{font-size:11px;color:var(--rd);margin-top:4px;font-weight:600}
-.slot-disabled{opacity:.42;background:#F3F4F6;border-color:#E5E7EB;pointer-events:none}
-.empty{padding:22px;border-radius:18px;background:#FAFBFF;border:1px dashed var(--bd);text-align:center;color:var(--sb)}
-@media(max-width:680px){.list{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:420px){.list{grid-template-columns:1fr}}@media(min-width:700px){.page{padding:40px 20px 60px}.hero{padding:22px 26px}.section{padding:24px 26px}}
+
+.page{min-height:100dvh;padding:24px 14px 54px}
+.wrap{max-width:760px;margin:0 auto}
+
+/* 상단 바 */
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.brand h1{font-family:'DM Serif Display',serif;font-size:20px;color:#fff;line-height:1.2}
+.brand p{margin-top:3px;font-size:12px;color:rgba(255,255,255,.65)}
+.top-btns{display:flex;gap:8px}
+.btn{padding:9px 14px;border-radius:11px;font-size:13px;font-weight:700;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.12);color:#fff;backdrop-filter:blur(8px);transition:all .14s}
+.btn:hover{background:rgba(255,255,255,.22)}
+.btn.gold{background:linear-gradient(135deg,var(--gd2),var(--gd3));color:var(--nv);border:none}
+
+/* 교사 정보 카드 */
+.info-card{background:rgba(255,255,255,.14);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.22);border-radius:var(--rlg);padding:18px 20px;margin-bottom:16px}
+.tc-teacher{font-size:22px;font-weight:900;color:#fff}
+.tc-subject{font-size:13px;color:rgba(255,255,255,.7);margin-top:4px}
+.tc-meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
+.tc-meta span{font-size:12px;color:rgba(255,255,255,.6)}
+
+/* 슬롯 그리드 */
+.slot-section{background:#fff;border-radius:var(--rlg);padding:20px;box-shadow:var(--shh)}
+.slot-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.slot-hd h2{font-size:16px;font-weight:800;color:var(--nv)}
+.slot-count{font-size:12px;font-weight:800;color:var(--nv2);background:var(--bg);padding:4px 10px;border-radius:999px}
+
+.slot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+
+/* 슬롯 버튼 */
+.slot{border-radius:14px;padding:16px 10px;text-align:center;transition:all .14s;border:2px solid var(--bd);background:#F8F9FF;cursor:pointer}
+.slot:hover:not(.slot-taken):not(.slot-loading){border-color:var(--nv2);background:#EEF2FF;transform:translateY(-1px);box-shadow:0 4px 16px rgba(15,31,92,.12)}
+.slot-time{font-size:15px;font-weight:800;color:var(--nv)}
+
+/* 예약 완료 슬롯 */
+.slot-taken{background:#FFF5F5;border-color:#FECACA;cursor:not-allowed}
+.slot-taken .slot-time{color:var(--sb)}
+.slot-taken-label{font-size:10px;font-weight:800;color:var(--rd);margin-top:4px}
+
+/* 내가 예약한 슬롯 */
+.slot-mine{background:#F0FDF4;border-color:var(--gn);cursor:default}
+.slot-mine .slot-time{color:var(--gn)}
+.slot-mine-label{font-size:10px;font-weight:800;color:var(--gn);margin-top:4px}
+
+/* 로딩 중 슬롯 */
+.slot-loading{opacity:.6;pointer-events:none}
+
+/* 로딩 스피너 */
+.spin-wrap{display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.8);font-size:13px;padding:20px 0}
+.spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+.slot-spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--bd);border-top-color:var(--nv2);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.empty{padding:28px 20px;text-align:center;color:var(--sb);font-size:14px}
+
+/* 확인 모달 */
+#cf-overlay{position:fixed;inset:0;z-index:600;background:rgba(8,18,60,.6);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px}
+#cf-overlay.on{display:flex}
+.cf-box{background:#fff;border-radius:20px;padding:26px 22px;width:100%;max-width:360px;box-shadow:var(--shh);animation:popIn .26s cubic-bezier(.16,1,.3,1)}
+@keyframes popIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
+.cf-box h3{font-size:18px;font-weight:800;margin-bottom:8px;color:var(--nv)}
+.cf-box p{font-size:13px;color:var(--sb);line-height:1.5}
+.cf-info{background:var(--bg);border-radius:12px;padding:13px;margin:14px 0}
+.cf-row{display:flex;justify-content:space-between;font-size:14px;padding:4px 0}
+.cf-row strong{font-weight:800;color:var(--nv)}
+.cf-btns{display:flex;gap:8px}
+.cf-no{flex:1;padding:12px;background:var(--bg);border-radius:11px;font-size:14px;font-weight:700;color:var(--sb)}
+.cf-yes{flex:2;padding:12px;background:linear-gradient(135deg,var(--nv),var(--nv2));border-radius:11px;font-size:14px;font-weight:800;color:#fff}
+.cf-yes:disabled{opacity:.5;cursor:not-allowed}
+
+@media(max-width:480px){.slot-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:700px){.page{padding:32px 20px 60px}.slot-grid{grid-template-columns:repeat(4,1fr)}}
 </style>
 </head>
 <body>
 <div id="toast"></div>
+
 <div class="page">
   <div class="wrap">
+
     <div class="topbar">
       <div class="brand">
-        <h1>Handong International School</h1>
-        <p>PTC 예약 2026 · 시간 선택</p>
+        <h1>시간 선택</h1>
+        <p>Handong International School · PTC 2026</p>
       </div>
-      <div class="top-actions">
-        <button class="btn" type="button" onclick="goBack()">← 과목 목록으로</button>
-        <button class="btn primary" type="button" onclick="logout()">로그아웃</button>
-      </div>
-    </div>
-
-    <div class="card hero">
-      <div class="badge">🕘 예약 시간 선택</div>
-      <div class="title" id="teacher-name">불러오는 중…</div>
-      <div class="sub" id="subject-name"></div>
-      <div class="meta">
-        <span id="student-name"></span>
-        <span id="student-class"></span>
+      <div class="top-btns">
+        <button class="btn" onclick="location.href='subjects.html'">← 뒤로</button>
+        <button class="btn" onclick="logout()">로그아웃</button>
       </div>
     </div>
 
-    <div class="card section">
-      <div class="section-title">
-        <h2>시간 목록</h2>
-        <span class="count" id="slot-count">0개</span>
+    <!-- 교사 정보 -->
+    <div class="info-card">
+      <div class="tc-teacher" id="tc-teacher">—</div>
+      <div class="tc-subject" id="tc-subject">—</div>
+      <div class="tc-meta">
+        <span id="tc-student">—</span>
+        <span id="tc-class">—</span>
       </div>
-      <div id="slot-list" class="list"></div>
+    </div>
+
+    <!-- 슬롯 목록 -->
+    <div class="slot-section">
+      <div class="slot-hd">
+        <h2>예약 가능 시간</h2>
+        <span class="slot-count" id="slot-count">0개</span>
+      </div>
+      <div id="slot-grid" class="slot-grid">
+        <div class="empty" style="grid-column:1/-1">
+          <div class="spin-wrap" style="justify-content:center;color:var(--sb)">
+            <div class="spinner" style="border-top-color:var(--nv2);border-color:var(--bd)"></div>
+            시간 목록을 불러오는 중...
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 예약 확인 모달 -->
+<div id="cf-overlay">
+  <div class="cf-box">
+    <h3>✅ 예약 확인</h3>
+    <p>아래 내용으로 예약하시겠습니까?</p>
+    <div class="cf-info">
+      <div class="cf-row"><span>선생님</span><strong id="cf-tc">—</strong></div>
+      <div class="cf-row"><span>과목</span><strong id="cf-sub">—</strong></div>
+      <div class="cf-row"><span>시간</span><strong id="cf-time">—</strong></div>
+    </div>
+    <div class="cf-btns">
+      <button class="cf-no" onclick="closeCf()">취소</button>
+      <button class="cf-yes" id="cf-confirm" onclick="doReserve()">예약하기</button>
     </div>
   </div>
 </div>
 
-<!-- Firebase CDN -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
 // ── Firebase 초기화 ──────────────────────────────
 const firebaseConfig = {
@@ -93,159 +176,212 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-const student = readJson('his_student');
-const selectedSubject = readJson('his_selected_subject');
-let slotKeys = [];   // Firebase key 목록
-let slotData = {};   // { firebaseKey: rowData }
-let bookingInProgress = false;
+// ── 상태 ─────────────────────────────────────────
+let student = null;
+let selectedSubject = null;
+let slotData = {};         // { firebaseKey: slotObject }
+let selectedSlotKey = '';  // 예약할 슬롯 키
+let myBookedSlotKey = '';  // 이미 예약한 슬롯 키 (있으면)
+let unsubscribe = null;    // 실시간 리스너 해제 함수
+let reserving = false;
 
+// ── 초기화 ───────────────────────────────────────
+function init() {
+  try {
+    student = JSON.parse(sessionStorage.getItem('his_student'));
+    selectedSubject = JSON.parse(sessionStorage.getItem('his_selected_subject'));
+  } catch(e) {}
+
+  if (!student || !selectedSubject) {
+    location.href = 'subjects.html'; return;
+  }
+
+  // 헤더 표시
+  document.getElementById('tc-teacher').textContent = selectedSubject.교사 + ' 선생님';
+  document.getElementById('tc-subject').textContent = selectedSubject.과목;
+  document.getElementById('tc-student').textContent = `학생: ${student.이름}`;
+  document.getElementById('tc-class').textContent   = `${student.학년}학년 ${student.반}반`;
+
+  // 이미 이 선생님 예약했는지 확인 후 슬롯 로드
+  checkExistingReservation();
+}
+
+async function checkExistingReservation() {
+  try {
+    const rvKey = `${student.학년}_${student.반}_${student.이름}_${selectedSubject.교사}`;
+    const snap = await db.ref(`reservations/${rvKey}`).once('value');
+    if (snap.exists()) {
+      myBookedSlotKey = snap.val().시간ID || '';
+    }
+  } catch(e) { console.error(e); }
+  subscribeSlots();
+}
+
+// ── 실시간 슬롯 구독 ─────────────────────────────
+// Firebase onValue로 실시간 반영 (다른 학생이 예약하면 즉시 마감 표시)
+function subscribeSlots() {
+  const ref = db.ref('timeslots').orderByChild('교사').equalTo(selectedSubject.교사);
+
+  unsubscribe = ref.on('value', snap => {
+    slotData = {};
+    snap.forEach(child => {
+      slotData[child.key] = child.val();
+    });
+    renderSlots();
+  }, err => {
+    console.error(err);
+    toast('시간 데이터 로드 실패', 'err');
+  });
+}
+
+// ── 슬롯 렌더링 ──────────────────────────────────
+function renderSlots() {
+  const grid = document.getElementById('slot-grid');
+  const keys = Object.keys(slotData);
+
+  document.getElementById('slot-count').textContent = `${keys.length}개`;
+
+  if (!keys.length) {
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1">등록된 시간 슬롯이 없습니다.</div>';
+    return;
+  }
+
+  // 시간순 정렬
+  const sorted = keys.sort((a, b) => {
+    const ta = slotData[a]['시간목록'] || '';
+    const tb = slotData[b]['시간목록'] || '';
+    return ta.localeCompare(tb);
+  });
+
+  grid.innerHTML = sorted.map(key => {
+    const s = slotData[key];
+    const timeText = s['시간목록'] || '-';
+    const isAvail   = s['예약가능'] === true;
+    const bookedBy  = String(s['예약완료'] || '').trim();
+    const isMine    = key === myBookedSlotKey || bookedBy === student.이름;
+    const isTaken   = bookedBy !== '' && !isMine;
+
+    if (isMine) {
+      return `<div class="slot slot-mine">
+        <div class="slot-time">${timeText}</div>
+        <div class="slot-mine-label">✓ 내 예약</div>
+      </div>`;
+    }
+    if (!isAvail || isTaken) {
+      return `<div class="slot slot-taken">
+        <div class="slot-time">${timeText}</div>
+        <div class="slot-taken-label">🔒 마감</div>
+      </div>`;
+    }
+    return `<div class="slot" onclick="pickSlot('${key}','${esc(timeText)}')">
+      <div class="slot-time">${timeText}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── 슬롯 선택 → 확인 모달 ────────────────────────
+function pickSlot(key, timeText) {
+  if (reserving) return;
+  selectedSlotKey = key;
+  document.getElementById('cf-tc').textContent   = selectedSubject.교사 + ' 선생님';
+  document.getElementById('cf-sub').textContent  = selectedSubject.과목;
+  document.getElementById('cf-time').textContent = timeText;
+  document.getElementById('cf-overlay').classList.add('on');
+}
+function closeCf() {
+  document.getElementById('cf-overlay').classList.remove('on');
+  selectedSlotKey = '';
+}
+
+// ── 예약 처리 (Firebase Transaction) ────────────
+async function doReserve() {
+  if (!selectedSlotKey || reserving) return;
+
+  const btn = document.getElementById('cf-confirm');
+  btn.disabled = true;
+  btn.textContent = '처리 중...';
+  reserving = true;
+
+  try {
+    const slotRef = db.ref(`timeslots/${selectedSlotKey}/예약완료`);
+
+    // Transaction: 예약완료가 "" 인 경우에만 학생이름 기록
+    const result = await slotRef.transaction(current => {
+      if (current === null || current === '') {
+        return student.이름; // 빈값 → 내 이름으로 업데이트 (선착순)
+      }
+      return; // 이미 예약됨 → abort (undefined 반환)
+    });
+
+    if (!result.committed) {
+      // 선착순 실패
+      toast('방금 다른 분이 예약했습니다. 다른 시간을 선택해주세요.', 'warn');
+      closeCf();
+      return;
+    }
+
+    // 슬롯의 시간ID 가져오기
+    const slotSnap = await db.ref(`timeslots/${selectedSlotKey}`).once('value');
+    const slotVal = slotSnap.val();
+    const timeText = slotVal['시간목록'] || '';
+    const timeId   = slotVal['시간ID'] || selectedSlotKey;
+
+    // reservations에 예약 기록 저장
+    const rvKey = `${student.학년}_${student.반}_${student.이름}_${selectedSubject.교사}`;
+    await db.ref(`reservations/${rvKey}`).set({
+      학생:   student.이름,
+      학년:   String(student.학년),
+      반:     student.반,
+      교사:   selectedSubject.교사,
+      과목:   selectedSubject.과목,
+      시간:   timeText,
+      시간ID: timeId,
+      예약시간: new Date().toISOString()
+    });
+
+    // 내 예약 슬롯 키 업데이트
+    myBookedSlotKey = selectedSlotKey;
+
+    toast(`${selectedSubject.교사} 선생님 ${timeText} 예약 완료! 🎉`, 'ok');
+    closeCf();
+
+    // sessionStorage에 내 예약 정보 임시 저장 (subjects 페이지 반영용)
+    try {
+      const existing = JSON.parse(sessionStorage.getItem('his_my_reservations') || '{}');
+      existing[selectedSubject.교사] = { 시간: timeText };
+      sessionStorage.setItem('his_my_reservations', JSON.stringify(existing));
+    } catch(e) {}
+
+  } catch(e) {
+    console.error(e);
+    toast('예약 중 오류가 발생했습니다.', 'err');
+  } finally {
+    reserving = false;
+    btn.disabled = false;
+    btn.textContent = '예약하기';
+  }
+}
+
+// ── 유틸 ─────────────────────────────────────────
 function toast(msg, type='') {
   const el = document.getElementById('toast');
   el.textContent = msg; el.className = type;
   el.classList.add('on');
   setTimeout(() => el.classList.remove('on'), 3500);
 }
-
-function readJson(key) {
-  try { const raw = sessionStorage.getItem(key); return raw ? JSON.parse(raw) : null; }
-  catch(e) { return null; }
-}
-function normalizeText(v){ return String(v ?? '').trim(); }
-function escapeHtml(v){ return String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-function logout(){ sessionStorage.clear(); location.href='index.html'; }
-function goBack(){ location.href='subjects.html'; }
-
-function fillHeader() {
-  if (!student || !selectedSubject) {
-    toast('로그인 정보 또는 과목 정보가 없어 이전 화면으로 이동합니다.', 'err');
-    setTimeout(() => location.href = 'subjects.html', 700);
-    return false;
-  }
-  document.getElementById('teacher-name').textContent = selectedSubject.교사 || '-';
-  document.getElementById('subject-name').textContent = selectedSubject.과목 || '';
-  document.getElementById('student-name').textContent = `학생: ${student.이름 || '-'}`;
-  document.getElementById('student-class').textContent = `${student.학년 || '-'}학년 ${student.반 || '-'}반`;
-  return true;
+function esc(s){ return String(s).replace(/'/g,"\\'"); }
+function logout(){
+  if (unsubscribe) db.ref('timeslots').off('value', unsubscribe);
+  sessionStorage.clear();
+  location.href = 'index.html';
 }
 
-function canReserve(row) {
-  return row['예약가능'] === true && normalizeText(row['예약완료']) === '';
-}
+// 페이지 떠날 때 리스너 해제
+window.addEventListener('beforeunload', () => {
+  if (unsubscribe) db.ref('timeslots').off('value', unsubscribe);
+});
 
-function renderSlots(snap) {
-  slotKeys = [];
-  slotData = {};
-
-  if (!snap.exists()) {
-    document.getElementById('slot-count').textContent = '0개';
-    document.getElementById('slot-list').innerHTML = `<div class="empty">해당 교사의 시간 정보를 찾을 수 없습니다.</div>`;
-    return;
-  }
-
-  snap.forEach(child => {
-    slotKeys.push(child.key);
-    slotData[child.key] = child.val();
-  });
-
-  document.getElementById('slot-count').textContent = `${slotKeys.length}개`;
-
-  document.getElementById('slot-list').innerHTML = slotKeys.map((key, index) => {
-    const row = slotData[key];
-    const enabled = canReserve(row);
-    const cls = enabled ? 'slot enabled' : 'slot slot-disabled';
-    const bookedLabel = !enabled && row['예약완료'] ? `<div class="slot-booked-by">예약됨</div>` : '';
-    return `<button type="button" class="${cls}" ${enabled ? '' : 'disabled'} data-key="${escapeHtml(key)}" data-index="${index}" onclick="selectSlot('${escapeHtml(key)}')">
-      <div class="slot-time">${escapeHtml(row['시간목록'] || '-')}</div>
-      ${bookedLabel}
-    </button>`;
-  }).join('');
-}
-
-async function loadTimeslots() {
-  const teacher = normalizeText(selectedSubject.교사);
-  document.getElementById('slot-list').innerHTML = `<div class="empty">불러오는 중…</div>`;
-  try {
-    // timeslots에서 교사명으로 필터링
-    const snap = await db.ref('timeslots').orderByChild('교사').equalTo(teacher).get();
-    renderSlots(snap);
-  } catch(e) {
-    console.error(e);
-    toast('시간 데이터를 불러오지 못했습니다.', 'err');
-    document.getElementById('slot-list').innerHTML = `<div class="empty">Firebase에서 시간 정보를 불러오지 못했습니다.</div>`;
-  }
-}
-
-async function selectSlot(key) {
-  const row = slotData[key];
-  if (!row || bookingInProgress) return;
-  if (!canReserve(row)) {
-    toast('이미 예약되었거나 예약 불가능한 시간입니다.', 'err');
-    return;
-  }
-
-  const ok = confirm(`${selectedSubject.교사} 선생님 ${row['시간목록']} 시간으로 예약하시겠습니까?`);
-  if (!ok) return;
-
-  bookingInProgress = true;
-
-  // 버튼 로딩 표시
-  const btn = document.querySelector(`[data-key="${key}"]`);
-  if (btn) { btn.classList.add('loading', 'selected'); btn.disabled = true; }
-
-  try {
-    const slotRef = db.ref(`timeslots/${key}`);
-    const studentName = student.이름 || '';
-    const reservationKey = `${student.학년}_${student.반}_${studentName}_${selectedSubject.교사}`;
-
-    // 트랜잭션으로 동시 예약 방지
-    const result = await slotRef.transaction(current => {
-      if (!current) return; // 데이터 없으면 abort
-      if (current['예약완료'] !== '') return; // 이미 예약됨 → abort
-      if (current['예약가능'] !== true) return; // 예약불가 → abort
-      return {
-        ...current,
-        예약가능: false,
-        예약완료: studentName
-      };
-    });
-
-    if (!result.committed) {
-      toast('이미 다른 사람이 예약했습니다. 다시 시도해주세요.', 'err');
-      await loadTimeslots();
-      return;
-    }
-
-    // reservations에 예약 기록 저장
-    await db.ref(`reservations/${reservationKey}`).set({
-      학생: studentName,
-      학년: student.학년 || '',
-      반: student.반 || '',
-      교사: selectedSubject.교사 || '',
-      과목: selectedSubject.과목 || '',
-      시간: row['시간목록'] || '',
-      예약시간: new Date().toISOString()
-    });
-
-    sessionStorage.setItem('his_selected_timeslot', JSON.stringify({
-      시간ID: row['시간ID'],
-      교사: selectedSubject.교사,
-      시간목록: row['시간목록'],
-      예약자: studentName
-    }));
-
-    toast('예약이 완료되었습니다! 🎉', 'ok');
-    await loadTimeslots();
-
-  } catch(e) {
-    console.error(e);
-    toast('예약 처리 중 오류가 발생했습니다.', 'err');
-    await loadTimeslots();
-  } finally {
-    bookingInProgress = false;
-  }
-}
-
-(function init(){ if (fillHeader()) loadTimeslots(); })();
+init();
 </script>
 </body>
 </html>
