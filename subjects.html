@@ -10,7 +10,7 @@
   --nv:#0F1F5C; --nv2:#1B2F7A; --nv3:#2C4099;
   --gd:#C9940A; --gd2:#E8B020; --gd3:#FBD155;
   --bg:#EEF1F9; --wh:#FFF; --tx:#111827; --sb:#5B6888; --bd:#D8DDED;
-  --gn:#15803D; --gnb:#DCFCE7; --rd:#DC2626; --rdb:#FEF2F2;
+  --gn:#15803D; --gnb:#DCFCE7; --rd:#DC2626;
   --r:14px; --rlg:22px;
   --sh:0 2px 16px rgba(15,31,92,.08);
   --shh:0 8px 36px rgba(15,31,92,.16);
@@ -19,7 +19,6 @@
 html{font-size:16px;-webkit-tap-highlight-color:transparent}
 body{font-family:'Noto Sans KR',sans-serif;background:linear-gradient(150deg,var(--nv) 0%,var(--nv2) 45%,#1A3A8F 100%);color:var(--tx);min-height:100dvh}
 button{cursor:pointer;font-family:inherit;border:none}
-.hidden{display:none!important}
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--tx);color:#fff;padding:10px 20px;border-radius:30px;font-size:14px;font-weight:500;white-space:nowrap;max-width:90vw;z-index:10000;transition:transform .3s cubic-bezier(.34,1.56,.64,1);box-shadow:0 4px 20px rgba(0,0,0,.22)}
 #toast.on{transform:translateX(-50%) translateY(0)}
 #toast.ok{background:var(--gn)}
@@ -41,37 +40,37 @@ button{cursor:pointer;font-family:inherit;border:none}
 .btn.primary{background:linear-gradient(135deg,var(--gd2),var(--gd3));color:var(--nv);border:none}
 
 .card{background:#fff;border-radius:var(--rlg);box-shadow:var(--shh)}
-.hero{padding:24px 20px;margin-bottom:16px}
-.hero-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
-.badge{display:inline-flex;align-items:center;gap:8px;background:var(--bg);border-radius:30px;padding:7px 14px;color:var(--nv2);font-size:12px;font-weight:800}
-.student-name{font-size:28px;font-weight:900;color:var(--nv);line-height:1.2}
-.student-meta{margin-top:8px;color:var(--sb);font-size:14px;font-weight:600}
-.summary{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
-.summary-chip{background:#F8FAFF;border:1px solid var(--bd);border-radius:14px;padding:10px 12px;min-width:120px}
-.summary-chip .k{display:block;font-size:11px;color:var(--sb);margin-bottom:4px}
-.summary-chip .v{display:block;font-size:15px;font-weight:800;color:var(--nv)}
+.hero{padding:18px 20px;margin-bottom:16px}
+.hero-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.badge{display:inline-flex;align-items:center;gap:8px;background:var(--bg);border-radius:30px;padding:6px 12px;color:var(--nv2);font-size:11px;font-weight:800}
+.student-name{font-size:24px;font-weight:900;color:var(--nv);line-height:1.2;margin-top:8px}
+.student-meta{margin-top:6px;color:var(--sb);font-size:13px;font-weight:600}
+.metrics{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.metric-chip{background:#F8FAFF;border:1px solid var(--bd);border-radius:12px;padding:8px 10px;min-width:92px;text-align:center}
+.metric-chip .k{display:block;font-size:10px;color:var(--sb);margin-bottom:3px}
+.metric-chip .v{display:block;font-size:14px;font-weight:800;color:var(--nv)}
 
 .section{padding:20px}
 .section + .section{border-top:1px dashed var(--bd)}
-.section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.section-title{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .section-title h2{font-size:18px;color:var(--nv)}
 .section-title .count{font-size:12px;font-weight:800;color:var(--nv2);background:var(--bg);padding:5px 10px;border-radius:999px}
-.notice{padding:14px 16px;border-radius:14px;background:#FAFBFF;border:1px solid var(--bd);color:var(--sb);font-size:13px;line-height:1.65}
-.list{display:grid;grid-template-columns:1fr;gap:12px}
-.item{border:1px solid var(--bd);border-radius:18px;padding:16px;background:#fff;box-shadow:var(--sh)}
-.item-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
-.item-title{font-size:17px;font-weight:800;color:var(--nv);line-height:1.4}
-.pill{display:inline-flex;align-items:center;justify-content:center;padding:5px 10px;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap}
-.pill.type{background:var(--bg);color:var(--nv2)}
-.pill.scope.personal{background:var(--gnb);color:var(--gn)}
-.pill.scope.common{background:#FFF7E6;color:#9A6700}
-.meta-row{display:flex;flex-wrap:wrap;gap:8px}
-.meta-chip{font-size:13px;font-weight:700;color:var(--sb);background:#F8FAFF;border-radius:10px;padding:7px 10px}
+.list{display:grid;grid-template-columns:1fr;gap:10px}
+.item{border:1px solid var(--bd);border-radius:16px;padding:14px 16px;background:#fff;box-shadow:var(--sh)}
+.item-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.item-title{font-size:16px;font-weight:800;color:var(--nv);line-height:1.45;flex:1;min-width:0}
+.teacher-name{font-size:14px;font-weight:700;color:var(--sb);white-space:nowrap;flex-shrink:0}
 .empty{padding:22px;border-radius:18px;background:#FAFBFF;border:1px dashed var(--bd);text-align:center;color:var(--sb)}
 
+@media(max-width:560px){
+  .hero-head{flex-direction:column}
+  .metrics{width:100%;justify-content:flex-start}
+  .item-top{align-items:flex-start;flex-direction:column}
+  .teacher-name{white-space:normal}
+}
 @media(min-width:700px){
   .page{padding:40px 20px 60px}
-  .hero{padding:28px 26px}
+  .hero{padding:20px 24px}
   .section{padding:24px 26px}
 }
 </style>
@@ -98,15 +97,15 @@ button{cursor:pointer;font-family:inherit;border:none}
           <div class="student-name" id="student-name">불러오는 중…</div>
           <div class="student-meta" id="student-meta"></div>
         </div>
-      </div>
-      <div class="summary">
-        <div class="summary-chip">
-          <span class="k">예약 가능 횟수</span>
-          <span class="v" id="student-reserve-count">-</span>
-        </div>
-        <div class="summary-chip">
-          <span class="k">불러온 과목 수</span>
-          <span class="v" id="subject-count">-</span>
+        <div class="metrics">
+          <div class="metric-chip">
+            <span class="k">예약 가능 횟수</span>
+            <span class="v" id="student-reserve-count">-</span>
+          </div>
+          <div class="metric-chip">
+            <span class="k">불러온 과목 수</span>
+            <span class="v" id="subject-count">-</span>
+          </div>
         </div>
       </div>
     </div>
@@ -116,10 +115,6 @@ button{cursor:pointer;font-family:inherit;border:none}
         <div class="section-title">
           <h2>과목 목록</h2>
           <span class="count" id="subject-count-chip">0개</span>
-        </div>
-        <div class="notice">
-          아래 목록에는 <strong>학생 이름이 로그인된 이름과 정확히 일치하는 과목</strong>과
-          <strong>이름이 비어 있으면서 로그인된 학년·반과 일치하는 공통 과목</strong>이 함께 표시됩니다.
         </div>
       </div>
       <div class="section">
@@ -167,7 +162,7 @@ function escapeHtml(value) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+    .replace(/\"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
 
@@ -197,15 +192,11 @@ function pickSubjects(rows) {
       normalizeText(row['반']) === cls;
 
     return sameName || blankNameSameClass;
-  }).map((row, index) => {
-    const rowName = normalizeText(row['이름']);
-    return {
-      ...row,
-      _scope: rowName === name ? 'personal' : 'common',
-      _scopeLabel: rowName === name ? '개인 과목' : '학년/반 공통',
-      _index: index
-    };
-  });
+  }).map((row, index) => ({
+    ...row,
+    _scope: normalizeText(row['이름']) === name ? 'personal' : 'common',
+    _index: index
+  }));
 
   filtered.sort((a, b) => {
     const scopeOrder = (a._scope === 'personal' ? 0 : 1) - (b._scope === 'personal' ? 0 : 1);
@@ -235,13 +226,7 @@ function renderSubjects(items) {
     <div class="item">
       <div class="item-top">
         <div class="item-title">${escapeHtml(item['과목'])}</div>
-        <span class="pill scope ${item._scope}">${item._scopeLabel}</span>
-      </div>
-      <div class="meta-row">
-        <span class="pill type">${escapeHtml(item['분류'] || '미분류')}</span>
-        <span class="meta-chip">교사: ${escapeHtml(item['교사'] || '-')}</span>
-        <span class="meta-chip">학년/반: ${escapeHtml(item['학년'])}학년 ${escapeHtml(item['반'])}반</span>
-        ${normalizeText(item['이름']) ? `<span class="meta-chip">이름 기준: ${escapeHtml(item['이름'])}</span>` : `<span class="meta-chip">이름 기준: 공통</span>`}
+        <div class="teacher-name">${escapeHtml(item['교사'] || '-')}</div>
       </div>
     </div>
   `).join('');
