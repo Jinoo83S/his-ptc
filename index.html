@@ -199,7 +199,7 @@ function toast(msg, type='') {
 // ── students.json 로드 ───────────────────────────
 async function loadStudents() {
   try {
-    const r = await fetch('data/students.json');
+    const r = await fetch('students.json');
     if (!r.ok) throw new Error();
     S.students = await r.json();
   } catch(e) {
@@ -225,7 +225,7 @@ function pickGrade(g, btn) {
 
   document.querySelectorAll('#s1 .sb').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
-  stepDone(1, g + '학년');
+  stepDone(1, g);
 
   // 반 버튼 생성 (7~9: A,B / 10~12: A,B,C)
   const classes = (g >= 7 && g <= 9) ? ['A','B'] : ['A','B','C'];
@@ -246,7 +246,7 @@ function pickClass(c, btn) {
 
   document.querySelectorAll('#cls-btns .sb').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
-  stepDone(2, c + '반');
+  stepDone(2, c);
 
   unlock(3); stepActive(3);
   lock(4); stepReset(4);
