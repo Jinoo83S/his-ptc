@@ -31,11 +31,7 @@ button{cursor:pointer;font-family:inherit;border:none}
 .brand h1{font-family:'DM Serif Display',serif;font-size:22px;line-height:1.2}
 .brand p{margin-top:4px;font-size:12px;color:rgba(255,255,255,.72)}
 .top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.btn{
-  padding:10px 14px;border-radius:12px;font-size:13px;font-weight:800;
-  border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.12);color:#fff;
-  backdrop-filter:blur(8px);transition:all .15s;
-}
+.btn{padding:10px 14px;border-radius:12px;font-size:13px;font-weight:800;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.12);color:#fff;backdrop-filter:blur(8px);transition:all .15s}
 .btn:hover{background:rgba(255,255,255,.2)}
 .btn.primary{background:linear-gradient(135deg,var(--gd2),var(--gd3));color:var(--nv);border:none}
 
@@ -51,32 +47,20 @@ button{cursor:pointer;font-family:inherit;border:none}
 .metric-chip .v{display:block;font-size:14px;font-weight:800;color:var(--nv)}
 
 .section{padding:20px}
-.section + .section{border-top:1px dashed var(--bd)}
+.section+.section{border-top:1px dashed var(--bd)}
 .section-title{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .section-title h2{font-size:18px;color:var(--nv)}
 .section-title .count{font-size:12px;font-weight:800;color:var(--nv2);background:var(--bg);padding:5px 10px;border-radius:999px}
 .list{display:grid;grid-template-columns:1fr;gap:10px}
-.item{
-  width:100%;border:1px solid var(--bd);border-radius:16px;padding:14px 16px;background:#fff;
-  box-shadow:var(--sh);text-align:left;transition:transform .14s,border-color .14s,box-shadow .14s;
-}
+.item{width:100%;border:1px solid var(--bd);border-radius:16px;padding:14px 16px;background:#fff;box-shadow:var(--sh);text-align:left;transition:transform .14s,border-color .14s,box-shadow .14s}
 .item:hover{transform:translateY(-1px);border-color:var(--nv2);box-shadow:0 8px 24px rgba(15,31,92,.12)}
 .item-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .item-title{font-size:16px;font-weight:800;color:var(--nv);line-height:1.45;flex:1;min-width:0}
 .teacher-name{font-size:14px;font-weight:700;color:var(--sb);white-space:nowrap;flex-shrink:0}
 .empty{padding:22px;border-radius:18px;background:#FAFBFF;border:1px dashed var(--bd);text-align:center;color:var(--sb)}
 
-@media(max-width:560px){
-  .hero-head{flex-direction:column}
-  .metrics{width:100%;justify-content:flex-start}
-  .item-top{align-items:flex-start;flex-direction:column}
-  .teacher-name{white-space:normal}
-}
-@media(min-width:700px){
-  .page{padding:40px 20px 60px}
-  .hero{padding:20px 24px}
-  .section{padding:24px 26px}
-}
+@media(max-width:560px){.hero-head{flex-direction:column}.metrics{width:100%;justify-content:flex-start}.item-top{align-items:flex-start;flex-direction:column}.teacher-name{white-space:normal}}
+@media(min-width:700px){.page{padding:40px 20px 60px}.hero{padding:20px 24px}.section{padding:24px 26px}}
 </style>
 </head>
 <body>
@@ -122,19 +106,36 @@ button{cursor:pointer;font-family:inherit;border:none}
         </div>
       </div>
       <div class="section">
-        <div id="subject-list" class="list"></div>
+        <div id="subject-list" class="list">
+          <div class="empty">과목을 불러오는 중…</div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Firebase CDN -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
+// ── Firebase 초기화 ──────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyCz-baFM_1-ecp2HUKxrF2aPXhtDv1xxrc",
+  authDomain: "his-ptc-2026.firebaseapp.com",
+  databaseURL: "https://his-ptc-2026-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "his-ptc-2026",
+  storageBucket: "his-ptc-2026.firebasestorage.app",
+  messagingSenderId: "712671108934",
+  appId: "1:712671108934:web:0782167bb63c3d836b4f47"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
 const student = readStudent();
 
 function toast(msg, type='') {
   const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = type;
+  el.textContent = msg; el.className = type;
   el.classList.add('on');
   setTimeout(() => el.classList.remove('on'), 3500);
 }
@@ -143,9 +144,7 @@ function readStudent() {
   try {
     const raw = sessionStorage.getItem('his_student');
     return raw ? JSON.parse(raw) : null;
-  } catch (e) {
-    return null;
-  }
+  } catch(e) { return null; }
 }
 
 function logout() {
@@ -154,21 +153,12 @@ function logout() {
   location.href = 'index.html';
 }
 
-function goBack() {
-  location.href = 'index.html';
-}
+function goBack() { location.href = 'index.html'; }
 
-function normalizeText(v) {
-  return String(v ?? '').trim();
-}
+function normalizeText(v) { return String(v ?? '').trim(); }
 
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/\"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+function escapeHtml(v) {
+  return String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function fillStudentInfo() {
@@ -177,7 +167,6 @@ function fillStudentInfo() {
     setTimeout(() => location.href = 'index.html', 700);
     return false;
   }
-
   document.getElementById('student-name').textContent = student.이름 || '-';
   document.getElementById('student-meta').textContent = `${student.학년}학년 ${student.반}반`;
   document.getElementById('student-reserve-count').textContent = student.예약횟수 ?? '-';
@@ -186,16 +175,16 @@ function fillStudentInfo() {
 
 function pickSubjects(rows) {
   const grade = normalizeText(student.학년);
-  const cls = normalizeText(student.반);
-  const name = normalizeText(student.이름);
+  const cls   = normalizeText(student.반);
+  const name  = normalizeText(student.이름);
 
+  // 개인 과목(이름 일치) + 공통 과목(이름 빈칸, 같은 학년/반)
   const filtered = rows.filter(row => {
     const rowName = normalizeText(row['이름']);
     const sameName = rowName === name;
     const blankNameSameClass = rowName === '' &&
       normalizeText(row['학년']) === grade &&
       normalizeText(row['반']) === cls;
-
     return sameName || blankNameSameClass;
   }).map((row, index) => ({
     ...row,
@@ -214,10 +203,7 @@ function pickSubjects(rows) {
 
 function selectSubject(index) {
   const row = window.__subjectItems?.[index];
-  if (!row) {
-    toast('선택한 과목 정보를 찾을 수 없습니다.', 'err');
-    return;
-  }
+  if (!row) { toast('선택한 과목 정보를 찾을 수 없습니다.', 'err'); return; }
 
   sessionStorage.setItem('his_selected_subject', JSON.stringify({
     과목: row['과목'] || '',
@@ -225,9 +211,8 @@ function selectSubject(index) {
     분류: row['분류'] || '',
     이름: row['이름'] || '',
     학년: row['학년'] || '',
-    반: row['반'] || ''
+    반:   row['반']   || ''
   }));
-
   location.href = 'timeslots.html';
 }
 
@@ -238,12 +223,7 @@ function renderSubjects(items) {
   window.__subjectItems = items;
 
   if (!items.length) {
-    list.innerHTML = `
-      <div class="empty">
-        로그인된 학생 기준으로 표시할 과목이 없습니다.<br>
-        subjects.json 데이터 또는 이름/학년/반 값을 확인해주세요.
-      </div>
-    `;
+    list.innerHTML = `<div class="empty">로그인된 학생 기준으로 표시할 과목이 없습니다.<br>subjects 데이터 또는 이름/학년/반 값을 확인해주세요.</div>`;
     return;
   }
 
@@ -261,17 +241,21 @@ async function init() {
   if (!fillStudentInfo()) return;
 
   try {
-    const response = await fetch('subjects.json');
-    if (!response.ok) throw new Error('subjects.json fetch failed');
-    const rows = await response.json();
+    // Firebase에서 subjects 읽기
+    const snap = await db.ref('subjects').get();
+    if (!snap.exists()) {
+      toast('과목 데이터가 없습니다.', 'err');
+      renderSubjects([]);
+      return;
+    }
+    // Object → Array 변환
+    const rows = Object.values(snap.val());
     const items = pickSubjects(rows);
     renderSubjects(items);
-  } catch (e) {
+  } catch(e) {
     console.error(e);
     toast('과목 데이터를 불러오지 못했습니다.', 'err');
-    document.getElementById('subject-list').innerHTML = `
-      <div class="empty">subjects.json을 불러오지 못했습니다.</div>
-    `;
+    document.getElementById('subject-list').innerHTML = `<div class="empty">Firebase에서 과목 정보를 불러오지 못했습니다.</div>`;
   }
 }
 
