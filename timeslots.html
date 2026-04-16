@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HIS PTC 예약 2026 · 시간 선택</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root{
+  --nv:#0F1F5C; --nv2:#1B2F7A; --nv3:#2C4099;
+  --gd:#C9940A; --gd2:#E8B020; --gd3:#FBD155;
+  --bg:#EEF1F9; --wh:#FFF; --tx:#111827; --sb:#5B6888; --bd:#D8DDED;
+  --gn:#15803D; --rd:#DC2626;
+  --r:14px; --rlg:22px;
+  --sh:0 2px 16px rgba(15,31,92,.08);
+  --shh:0 8px 36px rgba(15,31,92,.16);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;-webkit-tap-highlight-color:transparent}
+body{font-family:'Noto Sans KR',sans-serif;background:linear-gradient(150deg,var(--nv) 0%,var(--nv2) 45%,#1A3A8F 100%);color:var(--tx);min-height:100dvh}
+button{cursor:pointer;font-family:inherit;border:none}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--tx);color:#fff;padding:10px 20px;border-radius:30px;font-size:14px;font-weight:500;white-space:nowrap;max-width:90vw;z-index:10000;transition:transform .3s cubic-bezier(.34,1.56,.64,1);box-shadow:0 4px 20px rgba(0,0,0,.22)}
+#toast.on{transform:translateX(-50%) translateY(0)}
+#toast.ok{background:var(--gn)}
+#toast.err{background:var(--rd)}
+
+.page{min-height:100dvh;padding:34px 14px 54px}
+.wrap{max-width:760px;margin:0 auto}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+.brand{color:#fff}
+.brand h1{font-family:'DM Serif Display',serif;font-size:22px;line-height:1.2}
+.brand p{margin-top:4px;font-size:12px;color:rgba(255,255,255,.72)}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.btn{
+  padding:10px 14px;border-radius:12px;font-size:13px;font-weight:800;
+  border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.12);color:#fff;
+  backdrop-filter:blur(8px);transition:all .15s;
+}
+.btn:hover{background:rgba(255,255,255,.2)}
+.btn.primary{background:linear-gradient(135deg,var(--gd2),var(--gd3));color:var(--nv);border:none}
+
+.card{background:#fff;border-radius:var(--rlg);box-shadow:var(--shh)}
+.hero{padding:20px 22px;margin-bottom:16px}
+.badge{display:inline-flex;align-items:center;gap:8px;background:var(--bg);border-radius:30px;padding:6px 12px;color:var(--nv2);font-size:11px;font-weight:800}
+.title{margin-top:10px;font-size:24px;font-weight:900;color:var(--nv);line-height:1.2}
+.sub{margin-top:8px;font-size:14px;color:var(--sb);font-weight:700}
+
+.section{padding:22px}
+.section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.section-title h2{font-size:18px;color:var(--nv)}
+.count{font-size:12px;font-weight:800;color:var(--nv2);background:var(--bg);padding:5px 10px;border-radius:999px}
+.list{display:grid;grid-template-columns:repeat(3, minmax(0,1fr));gap:12px}
+.slot{
+  border:1px solid var(--bd);border-radius:16px;padding:16px 12px;background:#fff;
+  box-shadow:var(--sh);text-align:center;transition:transform .14s,border-color .14s,box-shadow .14s;
+}
+.slot.enabled:hover{transform:translateY(-1px);border-color:var(--nv2);box-shadow:0 8px 24px rgba(15,31,92,.12)}
+.slot-time{font-size:16px;font-weight:800;color:var(--nv);line-height:1.3}
+.slot-disabled{opacity:.42;background:#F3F4F6;border-color:#E5E7EB;pointer-events:none}
+.empty{padding:22px;border-radius:18px;background:#FAFBFF;border:1px dashed var(--bd);text-align:center;color:var(--sb)}
+
+@media(max-width:680px){
+  .list{grid-template-columns:repeat(2, minmax(0,1fr))}
+}
+@media(max-width:420px){
+  .list{grid-template-columns:1fr}
+}
+@media(min-width:700px){
+  .page{padding:40px 20px 60px}
+  .hero{padding:22px 26px}
+  .section{padding:24px 26px}
+}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div class="page">
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <h1>Handong International School</h1>
+        <p>PTC 예약 2026 · 시간 선택</p>
+      </div>
+      <div class="top-actions">
+        <button class="btn" type="button" onclick="goBack()">← 과목 목록으로</button>
+        <button class="btn primary" type="button" onclick="logout()">로그아웃</button>
+      </div>
+    </div>
+
+    <div class="card hero">
+      <div class="badge">🕘 예약 시간 선택</div>
+      <div class="title" id="teacher-name">불러오는 중…</div>
+      <div class="sub" id="subject-name"></div>
+    </div>
+
+    <div class="card section">
+      <div class="section-title">
+        <h2>시간 목록</h2>
+        <span class="count" id="slot-count">0개</span>
+      </div>
+      <div id="slot-list" class="list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const student = readJson('his_student');
+const selectedSubject = readJson('his_selected_subject');
+
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = type;
+  el.classList.add('on');
+  setTimeout(() => el.classList.remove('on'), 3500);
+}
+
+function readJson(key) {
+  try {
+    const raw = sessionStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function normalizeText(v) {
+  return String(v ?? '').trim();
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function logout() {
+  sessionStorage.removeItem('his_student');
+  sessionStorage.removeItem('his_selected_subject');
+  location.href = 'index.html';
+}
+
+function goBack() {
+  location.href = 'subjects.html';
+}
+
+function fillHeader() {
+  if (!student || !selectedSubject) {
+    toast('로그인 정보 또는 과목 정보가 없어 이전 화면으로 이동합니다.', 'err');
+    setTimeout(() => location.href = 'subjects.html', 700);
+    return false;
+  }
+
+  document.getElementById('teacher-name').textContent = selectedSubject.교사 || '-';
+  document.getElementById('subject-name').textContent = selectedSubject.과목 || '';
+  return true;
+}
+
+function isAvailable(value) {
+  return normalizeText(value).toUpperCase() === 'TRUE';
+}
+
+function renderSlots(rows) {
+  const teacher = normalizeText(selectedSubject.교사);
+  const matched = rows.filter(row => normalizeText(row['교사']) === teacher);
+  document.getElementById('slot-count').textContent = `${matched.length}개`;
+
+  const list = document.getElementById('slot-list');
+  if (!matched.length) {
+    list.innerHTML = `<div class="empty">해당 교사의 시간 정보를 찾을 수 없습니다.</div>`;
+    return;
+  }
+
+  list.innerHTML = matched.map((row, index) => {
+    const enabled = isAvailable(row['예약가능']);
+    const cls = enabled ? 'slot enabled' : 'slot slot-disabled';
+    return `
+      <button type="button" class="${cls}" ${enabled ? '' : 'disabled aria-disabled="true"'} onclick="selectSlot(${index})">
+        <div class="slot-time">${escapeHtml(row['시간목록'] || '-')}</div>
+      </button>
+    `;
+  }).join('');
+
+  window.__matchedSlots = matched;
+}
+
+function selectSlot(index) {
+  const row = window.__matchedSlots?.[index];
+  if (!row) {
+    toast('시간 정보를 찾을 수 없습니다.', 'err');
+    return;
+  }
+  toast(`${row['시간목록']} 선택`, 'ok');
+  sessionStorage.setItem('his_selected_timeslot', JSON.stringify(row));
+}
+
+async function init() {
+  if (!fillHeader()) return;
+
+  try {
+    const response = await fetch('timeslots.json');
+    if (!response.ok) throw new Error('timeslots.json fetch failed');
+    const rows = await response.json();
+    renderSlots(rows);
+  } catch (e) {
+    console.error(e);
+    toast('시간 데이터를 불러오지 못했습니다.', 'err');
+    document.getElementById('slot-list').innerHTML = `<div class="empty">timeslots.json을 불러오지 못했습니다.</div>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>

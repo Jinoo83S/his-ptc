@@ -56,7 +56,11 @@ button{cursor:pointer;font-family:inherit;border:none}
 .section-title h2{font-size:18px;color:var(--nv)}
 .section-title .count{font-size:12px;font-weight:800;color:var(--nv2);background:var(--bg);padding:5px 10px;border-radius:999px}
 .list{display:grid;grid-template-columns:1fr;gap:10px}
-.item{border:1px solid var(--bd);border-radius:16px;padding:14px 16px;background:#fff;box-shadow:var(--sh)}
+.item{
+  width:100%;border:1px solid var(--bd);border-radius:16px;padding:14px 16px;background:#fff;
+  box-shadow:var(--sh);text-align:left;transition:transform .14s,border-color .14s,box-shadow .14s;
+}
+.item:hover{transform:translateY(-1px);border-color:var(--nv2);box-shadow:0 8px 24px rgba(15,31,92,.12)}
 .item-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .item-title{font-size:16px;font-weight:800;color:var(--nv);line-height:1.45;flex:1;min-width:0}
 .teacher-name{font-size:14px;font-weight:700;color:var(--sb);white-space:nowrap;flex-shrink:0}
@@ -146,6 +150,7 @@ function readStudent() {
 
 function logout() {
   sessionStorage.removeItem('his_student');
+  sessionStorage.removeItem('his_selected_subject');
   location.href = 'index.html';
 }
 
@@ -207,10 +212,30 @@ function pickSubjects(rows) {
   return filtered;
 }
 
+function selectSubject(index) {
+  const row = window.__subjectItems?.[index];
+  if (!row) {
+    toast('선택한 과목 정보를 찾을 수 없습니다.', 'err');
+    return;
+  }
+
+  sessionStorage.setItem('his_selected_subject', JSON.stringify({
+    과목: row['과목'] || '',
+    교사: row['교사'] || '',
+    분류: row['분류'] || '',
+    이름: row['이름'] || '',
+    학년: row['학년'] || '',
+    반: row['반'] || ''
+  }));
+
+  location.href = 'timeslots.html';
+}
+
 function renderSubjects(items) {
   const list = document.getElementById('subject-list');
   document.getElementById('subject-count').textContent = items.length;
   document.getElementById('subject-count-chip').textContent = `${items.length}개`;
+  window.__subjectItems = items;
 
   if (!items.length) {
     list.innerHTML = `
@@ -222,13 +247,13 @@ function renderSubjects(items) {
     return;
   }
 
-  list.innerHTML = items.map(item => `
-    <div class="item">
+  list.innerHTML = items.map((item, index) => `
+    <button class="item" type="button" onclick="selectSubject(${index})">
       <div class="item-top">
         <div class="item-title">${escapeHtml(item['과목'])}</div>
         <div class="teacher-name">${escapeHtml(item['교사'] || '-')}</div>
       </div>
-    </div>
+    </button>
   `).join('');
 }
 
