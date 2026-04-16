@@ -172,7 +172,6 @@ hr.div{border:none;border-top:1px dashed var(--bd);margin:18px 0}
       <div class="step-hd">
         <div class="sn" id="n4">4</div>
         <span class="slabel">비밀번호 입력</span>
-        <span class="sval hidden" id="v4"></span>
       </div>
       <div class="pw-row">
         <input type="password" id="pw" class="pw-in" placeholder="비밀번호"
@@ -200,11 +199,14 @@ function toast(msg, type='') {
 // ── students.json 로드 ───────────────────────────
 async function loadStudents() {
   try {
-    const r = await fetch('students.json');
-    if (!r.ok) throw new Error();
+    const base = location.href.replace(/\/[^/]*$/, '');
+    const url  = base + '/students.json';
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
     S.students = await r.json();
   } catch(e) {
-    toast('학생 데이터를 불러올 수 없습니다.', 'err');
+    console.error('students.json 로드 실패:', e);
+    toast('학생 데이터 로드 실패: ' + e.message, 'err');
   }
 }
 loadStudents();
@@ -213,33 +215,11 @@ loadStudents();
 function stepDone(n, v)  { setSN(n,'done','✓'); setV(n, v); }
 function stepActive(n)   { setSN(n,'active', n); hideV(n); }
 function stepReset(n)    { setSN(n,'', n); hideV(n); }
-function setSN(n,cls,txt){
-  const el = document.getElementById('n'+n);
-  if (!el) return;
-  el.className = 'sn' + (cls ? ' ' + cls : '');
-  el.textContent = txt;
-}
-function setV(n, v) {
-  const el = document.getElementById('v'+n);
-  if (!el) return;
-  el.textContent = v;
-  el.classList.remove('hidden');
-}
-function hideV(n) {
-  const el = document.getElementById('v'+n);
-  if (!el) return;
-  el.classList.add('hidden');
-}
-function lock(n) {
-  const el = document.getElementById('s'+n);
-  if (!el) return;
-  el.classList.add('locked');
-}
-function unlock(n) {
-  const el = document.getElementById('s'+n);
-  if (!el) return;
-  el.classList.remove('locked');
-}
+function setSN(n,cls,txt){ const el=document.getElementById('n'+n); el.className='sn'+(cls?' '+cls:''); el.textContent=txt; }
+function setV(n, v)      { const el=document.getElementById('v'+n); el.textContent=v; el.classList.remove('hidden'); }
+function hideV(n)        { document.getElementById('v'+n).classList.add('hidden'); }
+function lock(n)         { document.getElementById('s'+n).classList.add('locked'); }
+function unlock(n)       { document.getElementById('s'+n).classList.remove('locked'); }
 function esc(s)          { return String(s).replace(/'/g,"\\'"); }
 
 // ── STEP 1: 학년 선택 ────────────────────────────
