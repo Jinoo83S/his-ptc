@@ -21,15 +21,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);
 button{cursor:pointer;font-family:inherit;border:none}
 .hidden{display:none!important}
 .locked{opacity:.4;pointer-events:none}
-.view{display:none;flex-direction:column;min-height:100dvh}
-.view.active{display:flex}
-
-/* ── 오버레이 ── */
-#ov{position:fixed;inset:0;z-index:9999;background:rgba(8,18,60,.52);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px}
-#ov.on{display:flex}
-.spin{width:42px;height:42px;border:4px solid rgba(255,255,255,.18);border-top-color:var(--gd3);border-radius:50%;animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-#ovtxt{color:#fff;font-size:13px;font-weight:500}
 
 /* ── 토스트 ── */
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--tx);color:#fff;padding:10px 20px;border-radius:30px;font-size:14px;font-weight:500;white-space:nowrap;max-width:90vw;z-index:10000;transition:transform .3s cubic-bezier(.34,1.56,.64,1);box-shadow:0 4px 20px rgba(0,0,0,.22)}
@@ -37,32 +28,42 @@ button{cursor:pointer;font-family:inherit;border:none}
 #toast.ok{background:var(--gn)}
 #toast.err{background:var(--rd)}
 
-/* ── 탑바 ── */
-.topbar{background:linear-gradient(120deg,var(--nv),var(--nv2) 55%,var(--nv3));padding:13px 16px;display:flex;align-items:center;gap:11px;position:sticky;top:0;z-index:100;box-shadow:0 2px 14px rgba(15,31,92,.22)}
-.topbar .back{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.12);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;transition:background .14s}
-.topbar .back:hover{background:rgba(255,255,255,.22)}
-.topbar .ttl{flex:1;color:#fff}
-.topbar .ttl h2{font-size:16px;font-weight:700}
-.topbar .ttl p{font-size:11px;opacity:.7;margin-top:2px}
-.topbar .pill{background:var(--gd2);color:var(--nv);padding:7px 13px;border-radius:20px;font-size:12px;font-weight:800;white-space:nowrap;transition:background .14s}
-.topbar .pill:hover{background:var(--gd3)}
+/* ── 로그인 배경 ── */
+#view-login{
+  background:linear-gradient(150deg,var(--nv) 0%,var(--nv2) 45%,#1A3A8F 100%);
+  display:flex;flex-direction:column;align-items:center;
+  min-height:100dvh;padding:0 0 52px;overflow-y:auto;position:relative;
+}
+#view-login::before{
+  content:'';position:absolute;top:-120px;right:-120px;
+  width:400px;height:400px;
+  background:radial-gradient(circle,rgba(251,209,85,.1),transparent 70%);
+  border-radius:50%;pointer-events:none;
+}
 
-/* ════════════════════════════════════
-   로그인
-════════════════════════════════════ */
-#view-login{background:linear-gradient(150deg,var(--nv) 0%,var(--nv2) 45%,#1A3A8F 100%);align-items:center;padding:0 0 52px;overflow-y:auto;position:relative}
-#view-login::before{content:'';position:absolute;top:-120px;right:-120px;width:400px;height:400px;background:radial-gradient(circle,rgba(251,209,85,.1),transparent 70%);border-radius:50%;pointer-events:none}
+/* ── admin 버튼 ── */
+.admin-btn{
+  position:absolute;top:16px;right:16px;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);
+  color:rgba(255,255,255,.75);border-radius:9px;
+  padding:6px 13px;font-size:12px;font-weight:700;
+  transition:background .14s,color .14s;
+  text-decoration:none;display:inline-flex;align-items:center;gap:5px;
+}
+.admin-btn:hover{background:rgba(255,255,255,.22);color:#fff}
 
+/* ── 헤더 ── */
 .lhd{width:100%;padding:52px 24px 30px;text-align:center;position:relative}
 .emblem{width:70px;height:70px;margin:0 auto 14px;background:linear-gradient(135deg,var(--gd2),var(--gd3));border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 6px 24px rgba(200,148,10,.36)}
 .lhd h1{font-family:'DM Serif Display',serif;font-size:19px;color:#fff;letter-spacing:.3px}
 .lhd .sub{font-size:12px;color:rgba(255,255,255,.55);margin-top:4px}
 .ptc-chip{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:30px;padding:6px 15px;margin-top:12px;color:rgba(255,255,255,.82);font-size:12px;font-weight:600}
 
-.lcard{background:#fff;margin:0 14px;border-radius:var(--rlg);padding:24px 20px;box-shadow:var(--shh);animation:fadeUp .45s cubic-bezier(.16,1,.3,1)}
+/* ── 카드 ── */
+.lcard{background:#fff;width:100%;margin:0 14px;border-radius:var(--rlg);padding:24px 20px;box-shadow:var(--shh);animation:fadeUp .45s cubic-bezier(.16,1,.3,1)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
 
-/* 단계 */
+/* ── 단계 헤더 ── */
 .step-hd{display:flex;align-items:center;gap:9px;margin-bottom:13px}
 .sn{width:25px;height:25px;border-radius:50%;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--bd);color:var(--sb)}
 .sn.active{background:var(--gd2);color:var(--nv)}
@@ -71,7 +72,7 @@ button{cursor:pointer;font-family:inherit;border:none}
 .sval{margin-left:auto;background:var(--bg);border-radius:7px;padding:3px 10px;font-size:13px;font-weight:700;color:var(--nv2)}
 hr.div{border:none;border-top:1px dashed var(--bd);margin:18px 0}
 
-/* 선택 버튼 */
+/* ── 선택 버튼 ── */
 .bgrid{display:flex;flex-wrap:wrap;gap:8px}
 .sb{padding:9px 15px;background:var(--bg);border:2px solid var(--bd);border-radius:10px;font-size:14px;font-weight:700;color:var(--sb);transition:all .13s}
 .sb:hover{border-color:var(--nv2);color:var(--nv)}
@@ -80,129 +81,35 @@ hr.div{border:none;border-top:1px dashed var(--bd);margin:18px 0}
 .nb:hover{border-color:var(--nv2);color:var(--nv)}
 .nb.on{background:var(--nv2);border-color:var(--nv2);color:#fff}
 
-/* 비번 */
+/* ── 비밀번호 ── */
 .pw-row{display:flex;gap:9px;align-items:stretch}
 .pw-in{flex:1;padding:13px 14px;border:2px solid var(--bd);border-radius:10px;font-family:inherit;font-size:15px;color:var(--tx);background:#FAFBFF;outline:none;transition:border-color .2s,box-shadow .2s}
 .pw-in:focus{border-color:var(--nv2);box-shadow:0 0 0 4px rgba(27,47,122,.08)}
 .btn-login{padding:13px 18px;background:linear-gradient(135deg,var(--nv),var(--nv2));color:#fff;border-radius:10px;font-size:14px;font-weight:800;box-shadow:0 4px 14px rgba(15,31,92,.28);transition:transform .13s,box-shadow .13s;white-space:nowrap}
 .btn-login:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(15,31,92,.32)}
-
-/* ════════════════════════════════════
-   교사 목록
-════════════════════════════════════ */
-#view-teachers{background:var(--bg)}
-
-.stu-bar{background:#fff;border-bottom:1px solid var(--bd);padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
-.stu-bar .sname{font-size:15px;font-weight:800}
-.stu-bar .sinfo{font-size:12px;color:var(--sb);margin-top:2px}
-.qbadge{background:var(--bg);border:2px solid var(--bd);border-radius:20px;padding:5px 13px;font-size:13px;font-weight:700;color:var(--nv)}
-.qbadge.warn{border-color:var(--gd2);background:#FFFBEB;color:#92400E}
-.qbadge.full{border-color:var(--rd);background:var(--rdb);color:var(--rd)}
-
-.sec-hd{padding:14px 16px 5px;font-size:11px;font-weight:800;color:var(--sb);letter-spacing:1.5px;text-transform:uppercase}
-.tc-list{padding:0 12px 8px;display:flex;flex-direction:column;gap:8px}
-
-.tc-card{background:#fff;border-radius:var(--r);padding:14px 15px;display:flex;align-items:center;gap:12px;box-shadow:var(--sh);border:2px solid transparent;cursor:pointer;transition:all .13s}
-.tc-card:hover{border-color:var(--nv2);transform:translateY(-1px);box-shadow:var(--shh)}
-.tc-card.booked{border-color:var(--gn);background:#F0FDF4;cursor:default}
-.tc-card.booked:hover{transform:none;box-shadow:var(--sh)}
-
-.tc-ico{width:44px;height:44px;border-radius:12px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-.tc-info{flex:1;min-width:0}
-.tc-name{font-size:15px;font-weight:700}
-.tc-subj{font-size:12px;color:var(--sb);margin-top:2px}
-.subj-tag{font-size:11px;font-weight:700;background:#EEF2FF;color:#4338CA;padding:3px 8px;border-radius:20px;flex-shrink:0;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bk-tag{font-size:11px;font-weight:700;background:var(--gnb);color:var(--gn);padding:3px 8px;border-radius:20px;flex-shrink:0}
-.tc-arr{font-size:20px;color:var(--sb);flex-shrink:0}
-.tc-chk{font-size:20px;color:var(--gn);flex-shrink:0}
-
-.empty-tc{text-align:center;padding:60px 20px;color:var(--sb)}
-.empty-tc .ei{font-size:46px;margin-bottom:11px}
-.empty-tc h3{font-size:16px;font-weight:700;color:var(--nv)}
-.empty-tc p{font-size:13px;margin-top:5px}
-
-/* ════════════════════════════════════
-   시간 모달
-════════════════════════════════════ */
-#modal-bg{position:fixed;inset:0;z-index:500;background:rgba(8,18,60,.55);backdrop-filter:blur(4px);display:none;align-items:flex-end;justify-content:center}
-#modal-bg.on{display:flex}
-.tmodal{background:#fff;border-radius:22px 22px 0 0;width:100%;max-width:540px;max-height:82dvh;display:flex;flex-direction:column;animation:slideUp .3s cubic-bezier(.16,1,.3,1)}
-@keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
-.mhd{padding:17px 17px 13px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:flex-start}
-.m-name{font-size:18px;font-weight:800;color:var(--nv)}
-.m-sub{font-size:13px;color:var(--sb);margin-top:3px}
-.m-cls{width:30px;height:30px;border-radius:50%;background:var(--bg);color:var(--sb);font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.mbody{overflow-y:auto;padding:15px 14px 28px}
-.tgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
-
-/* 시간 슬롯 카드 */
-.tslot{background:#F6F8FF;border:2px solid var(--bd);border-radius:12px;padding:14px 10px;text-align:center;cursor:pointer;transition:all .13s}
-.tslot:hover:not(.bk){border-color:var(--nv2);background:#EEF2FF;transform:translateY(-1px)}
-.tslot .ts-range{font-size:16px;font-weight:800;color:var(--nv);letter-spacing:-.3px}
-.tslot .ts-dash{font-size:11px;color:var(--sb);margin:3px 0}
-.tslot.bk{background:#FFF5F5;border-color:#FECACA;cursor:not-allowed}
-.tslot.bk .ts-range{color:var(--sb)}
-.bk-label{font-size:11px;font-weight:800;color:var(--rd);margin-top:4px;display:flex;align-items:center;justify-content:center;gap:3px}
-
-/* 예약 확인 모달 */
-#cf-bg{position:fixed;inset:0;z-index:600;background:rgba(8,18,60,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px}
-#cf-bg.on{display:flex}
-.cfbox{background:#fff;border-radius:20px;padding:24px 20px;width:100%;max-width:350px;box-shadow:var(--shh);animation:popIn .26s cubic-bezier(.16,1,.3,1)}
-@keyframes popIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
-.cfbox h3{font-size:18px;font-weight:800;margin-bottom:7px}
-.cfbox p{font-size:13px;color:var(--sb);line-height:1.5}
-.cf-info{background:var(--bg);border-radius:11px;padding:13px;margin:13px 0}
-.cf-row{display:flex;justify-content:space-between;font-size:14px;padding:4px 0}
-.cf-row strong{font-weight:800;color:var(--nv)}
-.cf-btns{display:flex;gap:8px}
-.cf-no{flex:1;padding:11px;background:var(--bg);border-radius:11px;font-size:14px;font-weight:700;color:var(--sb)}
-.cf-yes{flex:2;padding:11px;background:linear-gradient(135deg,var(--nv),var(--nv2));border-radius:11px;font-size:14px;font-weight:800;color:#fff}
-
-/* ════════════════════════════════════
-   내 예약
-════════════════════════════════════ */
-#view-reservations{background:var(--bg)}
-.res-list{padding:12px 12px 40px;display:flex;flex-direction:column;gap:10px}
-.rc{background:#fff;border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;animation:fadeUp .28s ease}
-.rc-hd{background:linear-gradient(120deg,var(--nv),var(--nv2));padding:12px 15px;display:flex;align-items:center;gap:9px}
-.rc-hd .ri{font-size:19px}
-.rc-hd .rn{flex:1;color:#fff;font-size:15px;font-weight:700}
-.rc-hd .rts{color:rgba(255,255,255,.6);font-size:11px}
-.rc-bd{padding:13px 15px}
-.r-subj{font-size:12px;color:var(--sb);margin-bottom:6px}
-.r-time{font-size:22px;font-weight:900;color:var(--nv);letter-spacing:-1px}
-.r-date{font-size:12px;color:var(--sb);margin-top:3px}
-.btn-cancel{width:100%;margin-top:11px;padding:10px;background:var(--rdb);color:var(--rd);border:1.5px solid #FECACA;border-radius:9px;font-size:13px;font-weight:700;transition:background .13s}
-.btn-cancel:hover{background:#FEE2E2}
-.empty-r{text-align:center;padding:70px 20px}
-.empty-r .ei{font-size:50px;margin-bottom:13px}
-.empty-r h3{font-size:17px;font-weight:700;color:var(--nv)}
-.empty-r p{font-size:13px;color:var(--sb);margin-top:5px}
+.btn-login:disabled{opacity:.5;transform:none;cursor:not-allowed}
 
 /* ── 반응형 ── */
 @media(min-width:480px){
-  .tgrid{grid-template-columns:repeat(3,1fr)}
-  #modal-bg{align-items:center;padding:20px}
-  .tmodal{border-radius:22px;max-height:78dvh}
   .lcard{margin:0 22px;padding:30px 26px}
 }
 @media(min-width:700px){
   #view-login{justify-content:center}
   .lhd{padding:60px 24px 34px}
   .lcard{max-width:480px;margin:0 auto 48px}
-  .tgrid{grid-template-columns:repeat(4,1fr)}
 }
 </style>
 </head>
 <body>
 
-<div id="ov"><div class="spin"></div><p id="ovtxt">처리 중...</p></div>
 <div id="toast"></div>
 
-<!-- ══════════════════════════════
-     VIEW 1 — 로그인
-══════════════════════════════ -->
-<div id="view-login" class="view active">
+<div id="view-login">
+
+  <!-- admin 버튼 -->
+  <a href="admin.html" class="admin-btn">⚙️ Admin</a>
+
+  <!-- 헤더 -->
   <div class="lhd">
     <div class="emblem">🎓</div>
     <h1>Handong International School</h1>
@@ -210,6 +117,7 @@ hr.div{border:none;border-top:1px dashed var(--bd);margin:18px 0}
     <div class="ptc-chip">📅 PTC 예약 2026 · 5월 15일</div>
   </div>
 
+  <!-- 로그인 카드 -->
   <div class="lcard">
 
     <!-- STEP 1 학년 -->
@@ -220,12 +128,12 @@ hr.div{border:none;border-top:1px dashed var(--bd);margin:18px 0}
         <span class="sval hidden" id="v1"></span>
       </div>
       <div class="bgrid">
-        <button class="sb" onclick="pickGrade(7,this)">7학년</button>
-        <button class="sb" onclick="pickGrade(8,this)">8학년</button>
-        <button class="sb" onclick="pickGrade(9,this)">9학년</button>
-        <button class="sb" onclick="pickGrade(10,this)">10학년</button>
-        <button class="sb" onclick="pickGrade(11,this)">11학년</button>
-        <button class="sb" onclick="pickGrade(12,this)">12학년</button>
+        <button class="sb" onclick="pickGrade(7,this)">7</button>
+        <button class="sb" onclick="pickGrade(8,this)">8</button>
+        <button class="sb" onclick="pickGrade(9,this)">9</button>
+        <button class="sb" onclick="pickGrade(10,this)">10</button>
+        <button class="sb" onclick="pickGrade(11,this)">11</button>
+        <button class="sb" onclick="pickGrade(12,this)">12</button>
       </div>
     </div>
 
@@ -238,7 +146,9 @@ hr.div{border:none;border-top:1px dashed var(--bd);margin:18px 0}
         <span class="slabel">반 선택</span>
         <span class="sval hidden" id="v2"></span>
       </div>
-      <div class="bgrid" id="cls-btns"></div>
+      <div class="bgrid" id="cls-btns">
+        <p style="font-size:13px;color:var(--sb)">학년을 먼저 선택하세요</p>
+      </div>
     </div>
 
     <hr class="div">
@@ -266,7 +176,7 @@ hr.div{border:none;border-top:1px dashed var(--bd);margin:18px 0}
       <div class="pw-row">
         <input type="password" id="pw" class="pw-in" placeholder="비밀번호"
                onkeydown="if(event.key==='Enter')doLogin()">
-        <button class="btn-login" onclick="doLogin()">로그인</button>
+        <button class="btn-login" id="btn-login" onclick="doLogin()">로그인</button>
       </div>
       <p style="font-size:11px;color:var(--sb);margin-top:8px">※ 비밀번호는 학교에서 안내한 번호입니다</p>
     </div>
@@ -274,422 +184,133 @@ hr.div{border:none;border-top:1px dashed var(--bd);margin:18px 0}
   </div>
 </div>
 
-<!-- ══════════════════════════════
-     VIEW 2 — 교사 목록
-══════════════════════════════ -->
-<div id="view-teachers" class="view">
-  <div class="topbar">
-    <button class="back" onclick="gotoLogin()">←</button>
-    <div class="ttl"><h2>상담 선생님 선택</h2><p>예약할 선생님을 선택하세요</p></div>
-    <button class="pill" onclick="openMyRes()">📋 내 예약</button>
-  </div>
-  <div class="stu-bar">
-    <div>
-      <div class="sname" id="bar-name">—</div>
-      <div class="sinfo" id="bar-info">—</div>
-    </div>
-    <div class="qbadge" id="qbadge">예약 0 / 0</div>
-  </div>
-  <div id="tc-container"></div>
-</div>
-
-<!-- 시간 선택 모달 -->
-<div id="modal-bg" onclick="closeMod(event)">
-  <div class="tmodal" onclick="event.stopPropagation()">
-    <div class="mhd">
-      <div>
-        <div class="m-name" id="m-name">—</div>
-        <div class="m-sub"  id="m-sub">예약 시간을 선택하세요</div>
-      </div>
-      <button class="m-cls" onclick="closeMod()">✕</button>
-    </div>
-    <div class="mbody"><div class="tgrid" id="tgrid"></div></div>
-  </div>
-</div>
-
-<!-- 예약 확인 모달 -->
-<div id="cf-bg">
-  <div class="cfbox">
-    <h3>✅ 예약 확인</h3>
-    <p>아래 내용으로 예약하시겠습니까?</p>
-    <div class="cf-info">
-      <div class="cf-row"><span>선생님</span><strong id="cf-tc">—</strong></div>
-      <div class="cf-row"><span>과목</span><strong id="cf-sub">—</strong></div>
-      <div class="cf-row"><span>시작</span><strong id="cf-start">—</strong></div>
-      <div class="cf-row"><span>종료</span><strong id="cf-end">—</strong></div>
-    </div>
-    <div class="cf-btns">
-      <button class="cf-no" onclick="closeCf()">취소</button>
-      <button class="cf-yes" onclick="doReserve()">예약하기</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════
-     VIEW 3 — 내 예약
-══════════════════════════════ -->
-<div id="view-reservations" class="view">
-  <div class="topbar">
-    <button class="back" onclick="showView('teachers')">←</button>
-    <div class="ttl"><h2>내 예약 현황</h2><p id="res-name">—</p></div>
-  </div>
-  <div class="res-list" id="res-list"></div>
-</div>
-
 <script>
-// ── 설정 ─────────────────────────────────────────
-const API = 'https://script.google.com/macros/s/AKfycbxmXYgxwhL7bxjhpfsKRMIy0_MrjHeiq6KsWWfnvLhGOFQ77kNw0k3W18lCwGl27wR5yA/exec';
-
 // ── 상태 ─────────────────────────────────────────
-const S = {
-  grade:null, cls:null, name:null,
-  student:null,               // { name, grade, cls, maxRes }
-  teachers:[],                // [{ name, subject }]
-  bookedSet:new Set(),        // 예약 완료된 교사이름 Set
-  myRes:[],                   // 내 예약 목록
-  selTc:null,                 // 선택된 교사 { name, subject }
-  selSlot:null,               // 선택된 슬롯 { rowIndex, display, start, end }
-};
+const S = { grade:null, cls:null, name:null, students:[] };
 
-// ── API 호출 ─────────────────────────────────────
-async function api(p) {
-  const r = await fetch(API + '?' + new URLSearchParams(p), { redirect:'follow' });
-  if (!r.ok) throw new Error('HTTP ' + r.status);
-  return r.json();
-}
-
-// ── 로딩 / 토스트 ────────────────────────────────
-function ld(t='처리 중...') { document.getElementById('ovtxt').textContent=t; document.getElementById('ov').classList.add('on'); }
-function ul() { document.getElementById('ov').classList.remove('on'); }
+// ── 토스트 ───────────────────────────────────────
 function toast(msg, type='') {
   const el = document.getElementById('toast');
   el.textContent = msg; el.className = type;
-  el.classList.add('on'); setTimeout(()=>el.classList.remove('on'), 3500);
+  el.classList.add('on');
+  setTimeout(() => el.classList.remove('on'), 3500);
 }
 
-// ── 뷰 전환 ──────────────────────────────────────
-function showView(n) {
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.getElementById('view-'+n).classList.add('active');
-  window.scrollTo(0,0);
-}
-function gotoLogin() { document.getElementById('pw').value=''; showView('login'); }
-
-// ────────────────────────────────────────────────
-// 로그인 단계
-// ────────────────────────────────────────────────
-function pickGrade(g, btn) {
-  S.grade=g; S.cls=null; S.name=null;
-  document.querySelectorAll('#s1 .sb').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  stepDone(1, g+'학년');
-
-  // 반 버튼 생성 (7~9: A,B  /  10~12: A,B,C)
-  const cls = (g>=7&&g<=9) ? ['A','B'] : ['A','B','C'];
-  document.getElementById('cls-btns').innerHTML = cls.map(c=>
-    `<button class="sb" onclick="pickClass('${c}',this)">${c}반</button>`
-  ).join('');
-
-  unlock(2); stepActive(2);
-  lock(3); stepReset(3); resetNames('반을 먼저 선택하세요');
-  lock(4); stepReset(4);
-  document.getElementById('pw').value='';
-}
-
-async function pickClass(c, btn) {
-  S.cls=c; S.name=null;
-  document.querySelectorAll('#cls-btns .sb').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  stepDone(2, c+'반');
-
-  unlock(3); stepActive(3);
-  resetNames('⏳ 학생 목록 불러오는 중...');
-  lock(4); stepReset(4);
-  document.getElementById('pw').value='';
-
+// ── students.json 로드 ───────────────────────────
+async function loadStudents() {
   try {
-    const d = await api({ action:'getStudents', grade:S.grade, cls:c });
-    if (!d.success || !d.names.length) {
-      resetNames('해당 학년/반 학생이 없습니다.'); return;
-    }
-    document.getElementById('name-btns').innerHTML = d.names.map(n =>
-      `<button class="nb" onclick="pickName('${esc(n)}',this)">${n}</button>`
-    ).join('');
+    const r = await fetch('data/students.json');
+    if (!r.ok) throw new Error();
+    S.students = await r.json();
   } catch(e) {
-    resetNames('⚠️ 불러오기 실패. 다시 시도하세요.');
+    toast('학생 데이터를 불러올 수 없습니다.', 'err');
   }
 }
+loadStudents();
 
-function pickName(n, btn) {
-  S.name = n;
-  document.querySelectorAll('#name-btns .nb').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  stepDone(3, n);
-  unlock(4); stepActive(4);
-  setTimeout(()=>document.getElementById('pw').focus(), 80);
-}
-
-async function doLogin() {
-  if (!S.grade||!S.cls||!S.name) { toast('학년, 반, 이름을 모두 선택해주세요.','err'); return; }
-  const pw = document.getElementById('pw').value;
-  if (!pw) { toast('비밀번호를 입력해주세요.','err'); return; }
-
-  ld('로그인 중...');
-  try {
-    const d = await api({ action:'login', grade:S.grade, cls:S.cls, name:S.name, password:pw });
-    if (!d.success) { toast(d.error,'err'); return; }
-    S.student = d.student;
-    await loadTeachers();
-    updateBar();
-    showView('teachers');
-  } catch(e) { toast('서버에 연결할 수 없습니다.','err'); }
-  finally { ul(); }
-}
-
-// 단계 헬퍼
-function stepDone(n,v)   { setSN(n,'done','✓'); setV(n,v); }
-function stepActive(n)   { setSN(n,'active',n); hideV(n); }
-function stepReset(n)    { setSN(n,'',n); hideV(n); }
+// ── 단계 헬퍼 ───────────────────────────────────
+function stepDone(n, v)  { setSN(n,'done','✓'); setV(n, v); }
+function stepActive(n)   { setSN(n,'active', n); hideV(n); }
+function stepReset(n)    { setSN(n,'', n); hideV(n); }
 function setSN(n,cls,txt){ const el=document.getElementById('n'+n); el.className='sn'+(cls?' '+cls:''); el.textContent=txt; }
-function setV(n,v)       { const el=document.getElementById('v'+n); el.textContent=v; el.classList.remove('hidden'); }
+function setV(n, v)      { const el=document.getElementById('v'+n); el.textContent=v; el.classList.remove('hidden'); }
 function hideV(n)        { document.getElementById('v'+n).classList.add('hidden'); }
 function lock(n)         { document.getElementById('s'+n).classList.add('locked'); }
 function unlock(n)       { document.getElementById('s'+n).classList.remove('locked'); }
-function resetNames(msg) { document.getElementById('name-btns').innerHTML=`<p style="font-size:13px;color:var(--sb)">${msg}</p>`; }
-function esc(s)          { return s.replace(/'/g,"\\'"); }
+function esc(s)          { return String(s).replace(/'/g,"\\'"); }
 
-// ────────────────────────────────────────────────
-// 교사 목록
-// ────────────────────────────────────────────────
-async function loadTeachers() {
-  const { name, grade, cls } = S.student;
-  const [td, rd] = await Promise.all([
-    api({ action:'getTeachers', name, grade, cls }),
-    api({ action:'getReservations', studentName:name }),
-  ]);
-  if (!td.success) throw new Error(td.error);
-  S.teachers  = td.teachers || [];
-  S.myRes     = rd.success ? rd.reservations : [];
-  S.bookedSet = new Set(S.myRes.map(r=>r.teacher));
-  renderTeachers();
+// ── STEP 1: 학년 선택 ────────────────────────────
+function pickGrade(g, btn) {
+  S.grade = g; S.cls = null; S.name = null;
+
+  document.querySelectorAll('#s1 .sb').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  stepDone(1, g + '학년');
+
+  // 반 버튼 생성 (7~9: A,B / 10~12: A,B,C)
+  const classes = (g >= 7 && g <= 9) ? ['A','B'] : ['A','B','C'];
+  document.getElementById('cls-btns').innerHTML = classes.map(c =>
+    `<button class="sb" onclick="pickClass('${c}',this)">${c}</button>`
+  ).join('');
+
+  unlock(2); stepActive(2);
+  lock(3); stepReset(3);
+  document.getElementById('name-btns').innerHTML = '<p style="font-size:13px;color:var(--sb)">반을 먼저 선택하세요</p>';
+  lock(4); stepReset(4);
+  document.getElementById('pw').value = '';
 }
 
-function renderTeachers() {
-  const el = document.getElementById('tc-container');
-  const { teachers, bookedSet } = S;
+// ── STEP 2: 반 선택 ──────────────────────────────
+function pickClass(c, btn) {
+  S.cls = c; S.name = null;
 
-  if (!teachers.length) {
-    el.innerHTML = `<div class="empty-tc"><div class="ei">🔍</div><h3>배정된 선생님이 없습니다</h3><p>관리자에게 문의해주세요.</p></div>`;
-    updateQ(); return;
-  }
+  document.querySelectorAll('#cls-btns .sb').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  stepDone(2, c + '반');
 
-  const avail  = teachers.filter(t => !bookedSet.has(t.name));
-  const booked = teachers.filter(t =>  bookedSet.has(t.name));
-  let html = '';
+  unlock(3); stepActive(3);
+  lock(4); stepReset(4);
+  document.getElementById('pw').value = '';
 
-  if (avail.length) {
-    html += `<div class="sec-hd">👨‍🏫 예약 가능한 선생님</div><div class="tc-list">`;
-    avail.forEach(t => {
-      html += `
-        <div class="tc-card" onclick="openSlots('${esc(t.name)}','${esc(t.subject)}')">
-          <div class="tc-ico">👨‍🏫</div>
-          <div class="tc-info">
-            <div class="tc-name">${t.name} 선생님</div>
-            ${t.subject ? `<div class="tc-subj">${t.subject}</div>` : ''}
-          </div>
-          ${t.subject ? `<span class="subj-tag">${t.subject}</span>` : ''}
-          <span class="tc-arr">›</span>
-        </div>`;
-    });
-    html += `</div>`;
-  }
+  // students.json에서 해당 학년/반 이름 필터
+  const names = S.students
+    .filter(s => String(s['학년']) === String(S.grade) && s['반'] === c)
+    .map(s => s['이름']);
 
-  if (booked.length) {
-    html += `<div class="sec-hd">✅ 예약 완료</div><div class="tc-list">`;
-    booked.forEach(t => {
-      const res = S.myRes.find(r=>r.teacher===t.name);
-      html += `
-        <div class="tc-card booked">
-          <div class="tc-ico">✅</div>
-          <div class="tc-info">
-            <div class="tc-name">${t.name} 선생님</div>
-            <div class="tc-subj">${res ? res.time : (t.subject||'')}</div>
-          </div>
-          <span class="bk-tag">예약완료</span>
-          <span class="tc-chk">✓</span>
-        </div>`;
-    });
-    html += `</div>`;
-  }
-
-  el.innerHTML = html;
-  updateQ();
-}
-
-function updateBar() {
-  const s = S.student;
-  document.getElementById('bar-name').textContent = s.name;
-  document.getElementById('bar-info').textContent = `${s.grade}학년 ${s.cls}반`;
-  document.getElementById('res-name').textContent = s.name;
-}
-function updateQ() {
-  const el=document.getElementById('qbadge');
-  const curr=S.bookedSet.size, max=S.student?S.student.maxRes:0;
-  el.textContent=`예약 ${curr} / ${max}`;
-  el.className='qbadge'+(curr>=max?' full':curr>=max-1?' warn':'');
-}
-
-// ────────────────────────────────────────────────
-// 시간 슬롯 모달
-// ────────────────────────────────────────────────
-async function openSlots(tcName, tcSubject) {
-  if (S.bookedSet.size >= S.student.maxRes) {
-    toast(`최대 예약 횟수(${S.student.maxRes}회)에 도달했습니다.`,'err'); return;
-  }
-  S.selTc = { name:tcName, subject:tcSubject };
-  document.getElementById('m-name').textContent = tcName + ' 선생님';
-  document.getElementById('m-sub').textContent  = tcSubject || '예약 시간을 선택하세요';
-  document.getElementById('tgrid').innerHTML =
-    '<div style="grid-column:1/-1;text-align:center;padding:28px;color:var(--sb)">⏳ 불러오는 중...</div>';
-  document.getElementById('modal-bg').classList.add('on');
-
-  try {
-    const d = await api({ action:'getTimeSlots', teacher:tcName });
-    if (!d.success) { toast(d.error,'err'); closeMod(); return; }
-    renderSlots(d.slots);
-  } catch(e) { toast('시간 목록을 불러올 수 없습니다.','err'); closeMod(); }
-}
-
-function renderSlots(slots) {
-  const g = document.getElementById('tgrid');
-  if (!slots.length) {
-    g.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:36px;color:var(--sb)">등록된 시간이 없습니다.</div>';
+  if (!names.length) {
+    document.getElementById('name-btns').innerHTML =
+      '<p style="font-size:13px;color:var(--sb)">해당 학년/반 학생이 없습니다.</p>';
     return;
   }
-  g.innerHTML = slots.map(s => {
-    if (s.available) {
-      return `
-        <div class="tslot" onclick="pickSlot(${s.rowIndex},'${esc(s.display)}','${esc(s.start)}','${esc(s.end)}')">
-          <div class="ts-range">${s.start}</div>
-          <div class="ts-dash">↓</div>
-          <div class="ts-range">${s.end}</div>
-        </div>`;
-    } else {
-      return `
-        <div class="tslot bk">
-          <div class="ts-range">${s.start}</div>
-          <div class="ts-dash">↓</div>
-          <div class="ts-range">${s.end}</div>
-          <div class="bk-label">🔒 예약완료</div>
-        </div>`;
-    }
-  }).join('');
+
+  document.getElementById('name-btns').innerHTML = names.map(n =>
+    `<button class="nb" onclick="pickName('${esc(n)}',this)">${n}</button>`
+  ).join('');
 }
 
-function closeMod(e) {
-  if (e && e.target !== document.getElementById('modal-bg')) return;
-  document.getElementById('modal-bg').classList.remove('on');
-  S.selSlot = null;
+// ── STEP 3: 이름 선택 ────────────────────────────
+function pickName(n, btn) {
+  S.name = n;
+  document.querySelectorAll('#name-btns .nb').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  stepDone(3, n);
+  unlock(4); stepActive(4);
+  setTimeout(() => document.getElementById('pw').focus(), 80);
 }
 
-function pickSlot(row, display, start, end) {
-  S.selSlot = { rowIndex:row, display, start, end };
-  document.getElementById('cf-tc').textContent    = S.selTc.name + ' 선생님';
-  document.getElementById('cf-sub').textContent   = S.selTc.subject || '—';
-  document.getElementById('cf-start').textContent = start;
-  document.getElementById('cf-end').textContent   = end;
-  document.getElementById('cf-bg').classList.add('on');
-}
-function closeCf() { document.getElementById('cf-bg').classList.remove('on'); }
+// ── STEP 4: 로그인 ───────────────────────────────
+function doLogin() {
+  if (!S.grade || !S.cls || !S.name) {
+    toast('학년, 반, 이름을 모두 선택해주세요.', 'err'); return;
+  }
+  const pw = document.getElementById('pw').value.trim();
+  if (!pw) { toast('비밀번호를 입력해주세요.', 'err'); return; }
 
-async function doReserve() {
-  closeCf(); closeMod();
-  const { student:st, selTc:tc, selSlot:sl } = S;
-  if (!tc || !sl) return;
+  const student = S.students.find(s =>
+    String(s['학년']) === String(S.grade) &&
+    s['반'] === S.cls &&
+    s['이름'] === S.name
+  );
 
-  ld('예약 처리 중...');
-  try {
-    const d = await api({
-      action:'reserve',
-      studentName: st.name,
-      teacherName: tc.name,
-      slotRow:     sl.rowIndex,
-      slotDisplay: sl.display,
-    });
-    if (!d.success) { toast(d.error,'err'); return; }
-    toast(`${tc.name} 선생님 예약 완료! 🎉`, 'ok');
-
-    // 로컬 상태 갱신
-    S.bookedSet.add(tc.name);
-    S.myRes.push({ teacher:tc.name, subject:tc.subject, time:sl.display, timestamp:'' });
-    renderTeachers();
-  } catch(e) { toast('예약 중 오류가 발생했습니다.','err'); }
-  finally { ul(); S.selSlot=null; S.selTc=null; }
-}
-
-// ────────────────────────────────────────────────
-// 내 예약
-// ────────────────────────────────────────────────
-async function openMyRes() {
-  ld('예약 목록 조회 중...');
-  try {
-    const d = await api({ action:'getReservations', studentName:S.student.name });
-    if (!d.success) { toast(d.error,'err'); return; }
-    S.myRes = d.reservations;
-    S.bookedSet = new Set(S.myRes.map(r=>r.teacher));
-    renderTeachers();
-    renderRes();
-    showView('reservations');
-  } catch(e) { toast('예약 목록을 불러올 수 없습니다.','err'); }
-  finally { ul(); }
-}
-
-function renderRes() {
-  const el = document.getElementById('res-list');
-  if (!S.myRes.length) {
-    el.innerHTML = `<div class="empty-r"><div class="ei">📭</div><h3>예약 내역이 없습니다</h3><p>선생님을 선택해 예약을 진행해주세요</p></div>`;
+  if (!student) { toast('학생 정보를 찾을 수 없습니다.', 'err'); return; }
+  if (String(student['비밀번호']) !== pw) {
+    toast('비밀번호가 올바르지 않습니다.', 'err');
+    document.getElementById('pw').value = '';
+    document.getElementById('pw').focus();
     return;
   }
-  // 시간 기준 정렬
-  const sorted = [...S.myRes].sort((a,b)=>a.time>b.time?1:-1);
-  el.innerHTML = sorted.map(r=>`
-    <div class="rc">
-      <div class="rc-hd">
-        <span class="ri">📋</span>
-        <span class="rn">${r.teacher} 선생님</span>
-        <span class="rts">${r.timestamp||''}</span>
-      </div>
-      <div class="rc-bd">
-        ${r.subject ? `<div class="r-subj">${r.subject}</div>` : ''}
-        <div class="r-time">${r.time}</div>
-        <div class="r-date">📅 2026-05-15 (PTC Day)</div>
-        <button class="btn-cancel"
-          onclick="doCancel('${esc(r.teacher)}','${esc(r.time)}')">
-          예약 취소
-        </button>
-      </div>
-    </div>`).join('');
-}
 
-async function doCancel(teacher, time) {
-  if (!confirm(`"${teacher} 선생님 / ${time}"\n예약을 취소하시겠습니까?`)) return;
-  ld('취소 처리 중...');
-  try {
-    const d = await api({
-      action:'cancel',
-      studentName: S.student.name,
-      teacherName: teacher,
-      timeDisplay: time,
-    });
-    if (!d.success) { toast(d.error,'err'); return; }
-    toast('예약이 취소되었습니다.','ok');
-    S.myRes     = S.myRes.filter(r=>!(r.teacher===teacher&&r.time===time));
-    S.bookedSet.delete(teacher);
-    renderRes();
-    renderTeachers();
-    updateQ();
-  } catch(e) { toast('취소 중 오류가 발생했습니다.','err'); }
-  finally { ul(); }
+  // 로그인 성공 → 다음 단계로 (추후 연결)
+  sessionStorage.setItem('his_student', JSON.stringify({
+    학년: student['학년'],
+    반:   student['반'],
+    이름: student['이름'],
+    예약횟수: student['예약횟수'],
+  }));
+  toast(`${S.name} 로그인 성공! 🎉`, 'ok');
+
+  // TODO: 다음 페이지(교사 선택)로 이동
+  // window.location.href = 'teachers.html';  또는 showView('teachers')
 }
 </script>
 </body>
