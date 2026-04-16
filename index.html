@@ -220,12 +220,12 @@ hr.div{border:none;border-top:1px dashed var(--bd);margin:18px 0}
         <span class="sval hidden" id="v1"></span>
       </div>
       <div class="bgrid">
-        <button class="sb" onclick="pickGrade(7,this)">7</button>
-        <button class="sb" onclick="pickGrade(8,this)">8</button>
-        <button class="sb" onclick="pickGrade(9,this)">9</button>
-        <button class="sb" onclick="pickGrade(10,this)">10</button>
-        <button class="sb" onclick="pickGrade(11,this)">11</button>
-        <button class="sb" onclick="pickGrade(12,this)">12</button>
+        <button class="sb" onclick="pickGrade(7,this)">7학년</button>
+        <button class="sb" onclick="pickGrade(8,this)">8학년</button>
+        <button class="sb" onclick="pickGrade(9,this)">9학년</button>
+        <button class="sb" onclick="pickGrade(10,this)">10학년</button>
+        <button class="sb" onclick="pickGrade(11,this)">11학년</button>
+        <button class="sb" onclick="pickGrade(12,this)">12학년</button>
       </div>
     </div>
 
@@ -338,7 +338,7 @@ hr.div{border:none;border-top:1px dashed var(--bd);margin:18px 0}
 
 <script>
 // ── 설정 ─────────────────────────────────────────
-const API = 'https://script.google.com/macros/s/AKfycbxImsAeyr8fEvMU9PKlPSb9ckgK-arIrK9g_fdOzWQx7eh6aTO6rcIBrTzKLFbbH9eX6Q/exec';
+const API = 'https://script.google.com/macros/s/AKfycbxmXYgxwhL7bxjhpfsKRMIy0_MrjHeiq6KsWWfnvLhGOFQ77kNw0k3W18lCwGl27wR5yA/exec';
 
 // ── 상태 ─────────────────────────────────────────
 const S = {
@@ -382,12 +382,12 @@ function pickGrade(g, btn) {
   S.grade=g; S.cls=null; S.name=null;
   document.querySelectorAll('#s1 .sb').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
-  stepDone(1, g);
+  stepDone(1, g+'학년');
 
   // 반 버튼 생성 (7~9: A,B  /  10~12: A,B,C)
   const cls = (g>=7&&g<=9) ? ['A','B'] : ['A','B','C'];
   document.getElementById('cls-btns').innerHTML = cls.map(c=>
-    `<button class="sb" onclick="pickClass('${c}',this)">${c}</button>`
+    `<button class="sb" onclick="pickClass('${c}',this)">${c}반</button>`
   ).join('');
 
   unlock(2); stepActive(2);
@@ -400,7 +400,7 @@ async function pickClass(c, btn) {
   S.cls=c; S.name=null;
   document.querySelectorAll('#cls-btns .sb').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
-  stepDone(2, c);
+  stepDone(2, c+'반');
 
   unlock(3); stepActive(3);
   resetNames('⏳ 학생 목록 불러오는 중...');
@@ -409,17 +409,14 @@ async function pickClass(c, btn) {
 
   try {
     const d = await api({ action:'getStudents', grade:S.grade, cls:c });
-    if (!d.success) {
-      resetNames(`⚠️ 오류: ${d.error}`); return;
-    }
-    if (!d.names || !d.names.length) {
-      resetNames(`해당 학년/반 학생이 없습니다. (${S.grade}학년 ${c}반)`); return;
+    if (!d.success || !d.names.length) {
+      resetNames('해당 학년/반 학생이 없습니다.'); return;
     }
     document.getElementById('name-btns').innerHTML = d.names.map(n =>
       `<button class="nb" onclick="pickName('${esc(n)}',this)">${n}</button>`
     ).join('');
   } catch(e) {
-    resetNames('⚠️ 불러오기 실패. 네트워크 상태를 확인하세요.');
+    resetNames('⚠️ 불러오기 실패. 다시 시도하세요.');
   }
 }
 
@@ -590,10 +587,8 @@ function renderSlots(slots) {
 }
 
 function closeMod(e) {
-  const bg = document.getElementById('modal-bg');
-  if (!bg) return;
-  if (e && e.target !== bg) return;
-  bg.classList.remove('on');
+  if (e && e.target !== document.getElementById('modal-bg')) return;
+  document.getElementById('modal-bg').classList.remove('on');
   S.selSlot = null;
 }
 
