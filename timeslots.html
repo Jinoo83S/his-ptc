@@ -10,7 +10,7 @@
   --nv:#0F1F5C; --nv2:#1B2F7A; --nv3:#2C4099;
   --gd:#C9940A; --gd2:#E8B020; --gd3:#FBD155;
   --bg:#EEF1F9; --wh:#FFF; --tx:#111827; --sb:#5B6888; --bd:#D8DDED;
-  --gn:#15803D; --rd:#DC2626;
+  --gn:#15803D; --rd:#DC2626; --yl:#B45309;
   --r:14px; --rlg:22px;
   --sh:0 2px 16px rgba(15,31,92,.08);
   --shh:0 8px 36px rgba(15,31,92,.16);
@@ -19,10 +19,12 @@
 html{font-size:16px;-webkit-tap-highlight-color:transparent}
 body{font-family:'Noto Sans KR',sans-serif;background:linear-gradient(150deg,var(--nv) 0%,var(--nv2) 45%,#1A3A8F 100%);color:var(--tx);min-height:100dvh}
 button{cursor:pointer;font-family:inherit;border:none}
+.hidden{display:none!important}
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--tx);color:#fff;padding:10px 20px;border-radius:30px;font-size:14px;font-weight:500;white-space:nowrap;max-width:90vw;z-index:10000;transition:transform .3s cubic-bezier(.34,1.56,.64,1);box-shadow:0 4px 20px rgba(0,0,0,.22)}
 #toast.on{transform:translateX(-50%) translateY(0)}
 #toast.ok{background:var(--gn)}
 #toast.err{background:var(--rd)}
+#toast.warn{background:var(--yl)}
 
 .page{min-height:100dvh;padding:34px 14px 54px}
 .wrap{max-width:760px;margin:0 auto}
@@ -31,11 +33,7 @@ button{cursor:pointer;font-family:inherit;border:none}
 .brand h1{font-family:'DM Serif Display',serif;font-size:22px;line-height:1.2}
 .brand p{margin-top:4px;font-size:12px;color:rgba(255,255,255,.72)}
 .top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.btn{
-  padding:10px 14px;border-radius:12px;font-size:13px;font-weight:800;
-  border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.12);color:#fff;
-  backdrop-filter:blur(8px);transition:all .15s;
-}
+.btn{padding:10px 14px;border-radius:12px;font-size:13px;font-weight:800;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.12);color:#fff;backdrop-filter:blur(8px);transition:all .15s}
 .btn:hover{background:rgba(255,255,255,.2)}
 .btn.primary{background:linear-gradient(135deg,var(--gd2),var(--gd3));color:var(--nv);border:none}
 
@@ -44,32 +42,25 @@ button{cursor:pointer;font-family:inherit;border:none}
 .badge{display:inline-flex;align-items:center;gap:8px;background:var(--bg);border-radius:30px;padding:6px 12px;color:var(--nv2);font-size:11px;font-weight:800}
 .title{margin-top:10px;font-size:24px;font-weight:900;color:var(--nv);line-height:1.2}
 .sub{margin-top:8px;font-size:14px;color:var(--sb);font-weight:700}
+.meta{margin-top:12px;font-size:13px;color:var(--sb);display:flex;gap:14px;flex-wrap:wrap}
 
+.notice{margin-bottom:16px;padding:14px 16px;background:#FFF7ED;border:1px solid #FED7AA;color:#9A3412;border-radius:16px;font-size:13px;line-height:1.6}
 .section{padding:22px}
 .section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
 .section-title h2{font-size:18px;color:var(--nv)}
 .count{font-size:12px;font-weight:800;color:var(--nv2);background:var(--bg);padding:5px 10px;border-radius:999px}
 .list{display:grid;grid-template-columns:repeat(3, minmax(0,1fr));gap:12px}
-.slot{
-  border:1px solid var(--bd);border-radius:16px;padding:16px 12px;background:#fff;
-  box-shadow:var(--sh);text-align:center;transition:transform .14s,border-color .14s,box-shadow .14s;
-}
+.slot{border:1px solid var(--bd);border-radius:16px;padding:16px 12px;background:#fff;box-shadow:var(--sh);text-align:center;transition:transform .14s,border-color .14s,box-shadow .14s,opacity .14s;min-height:56px}
 .slot.enabled:hover{transform:translateY(-1px);border-color:var(--nv2);box-shadow:0 8px 24px rgba(15,31,92,.12)}
+.slot.selected{background:#EFF6FF;border-color:var(--nv2)}
+.slot.loading{opacity:.65;pointer-events:none}
 .slot-time{font-size:16px;font-weight:800;color:var(--nv);line-height:1.3}
 .slot-disabled{opacity:.42;background:#F3F4F6;border-color:#E5E7EB;pointer-events:none}
 .empty{padding:22px;border-radius:18px;background:#FAFBFF;border:1px dashed var(--bd);text-align:center;color:var(--sb)}
 
-@media(max-width:680px){
-  .list{grid-template-columns:repeat(2, minmax(0,1fr))}
-}
-@media(max-width:420px){
-  .list{grid-template-columns:1fr}
-}
-@media(min-width:700px){
-  .page{padding:40px 20px 60px}
-  .hero{padding:22px 26px}
-  .section{padding:24px 26px}
-}
+@media(max-width:680px){.list{grid-template-columns:repeat(2, minmax(0,1fr))}}
+@media(max-width:420px){.list{grid-template-columns:1fr}}
+@media(min-width:700px){.page{padding:40px 20px 60px}.hero{padding:22px 26px}.section{padding:24px 26px}}
 </style>
 </head>
 <body>
@@ -87,10 +78,18 @@ button{cursor:pointer;font-family:inherit;border:none}
       </div>
     </div>
 
+    <div id="config-notice" class="notice hidden">
+      Apps Script 웹앱 URL이 설정되지 않았습니다. timeslots.html 상단의 <b>APPS_SCRIPT_WEBAPP_URL</b> 값을 배포된 <b>/exec</b> 주소로 바꿔주세요.
+    </div>
+
     <div class="card hero">
       <div class="badge">🕘 예약 시간 선택</div>
       <div class="title" id="teacher-name">불러오는 중…</div>
       <div class="sub" id="subject-name"></div>
+      <div class="meta">
+        <span id="student-name"></span>
+        <span id="student-class"></span>
+      </div>
     </div>
 
     <div class="card section">
@@ -104,8 +103,11 @@ button{cursor:pointer;font-family:inherit;border:none}
 </div>
 
 <script>
+const APPS_SCRIPT_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycby7dD8KmDfpK0VLdkjusjnMZYrujzBjReXwlbzAHV3QfjPzbwDs0-2XKdEKIobQXegkYQ/exec';
 const student = readJson('his_student');
 const selectedSubject = readJson('his_selected_subject');
+let slotRows = [];
+let bookingInProgress = false;
 
 function toast(msg, type='') {
   const el = document.getElementById('toast');
@@ -140,11 +142,24 @@ function escapeHtml(value) {
 function logout() {
   sessionStorage.removeItem('his_student');
   sessionStorage.removeItem('his_selected_subject');
+  sessionStorage.removeItem('his_selected_timeslot');
   location.href = 'index.html';
 }
 
 function goBack() {
   location.href = 'subjects.html';
+}
+
+function isConfigured() {
+  return APPS_SCRIPT_WEBAPP_URL && !APPS_SCRIPT_WEBAPP_URL.includes('PASTE_YOUR_WEB_APP_URL_HERE');
+}
+
+function buildApiUrl(params = {}) {
+  const url = new URL(APPS_SCRIPT_WEBAPP_URL);
+  Object.entries(params).forEach(([key, value]) => {
+    url.searchParams.set(key, value);
+  });
+  return url.toString();
 }
 
 function fillHeader() {
@@ -156,60 +171,139 @@ function fillHeader() {
 
   document.getElementById('teacher-name').textContent = selectedSubject.교사 || '-';
   document.getElementById('subject-name').textContent = selectedSubject.과목 || '';
+  document.getElementById('student-name').textContent = `학생: ${student.이름 || '-'}`;
+  document.getElementById('student-class').textContent = `${student.학년 || '-'}학년 ${student.반 || '-'}반`;
   return true;
 }
 
-function isAvailable(value) {
-  return normalizeText(value).toUpperCase() === 'TRUE';
+function canReserve(row) {
+  const available = normalizeText(row['예약가능']).toUpperCase() === 'TRUE';
+  const reservedBy = normalizeText(row['예약완료']);
+  return available && reservedBy === '';
 }
 
 function renderSlots(rows) {
-  const teacher = normalizeText(selectedSubject.교사);
-  const matched = rows.filter(row => normalizeText(row['교사']) === teacher);
-  document.getElementById('slot-count').textContent = `${matched.length}개`;
+  slotRows = rows.slice();
+  document.getElementById('slot-count').textContent = `${rows.length}개`;
 
   const list = document.getElementById('slot-list');
-  if (!matched.length) {
+  if (!rows.length) {
     list.innerHTML = `<div class="empty">해당 교사의 시간 정보를 찾을 수 없습니다.</div>`;
     return;
   }
 
-  list.innerHTML = matched.map((row, index) => {
-    const enabled = isAvailable(row['예약가능']);
+  list.innerHTML = rows.map((row, index) => {
+    const enabled = canReserve(row);
     const cls = enabled ? 'slot enabled' : 'slot slot-disabled';
     return `
-      <button type="button" class="${cls}" ${enabled ? '' : 'disabled aria-disabled="true"'} onclick="selectSlot(${index})">
+      <button
+        type="button"
+        class="${cls}"
+        ${enabled ? '' : 'disabled aria-disabled="true"'}
+        data-slot-index="${index}"
+        onclick="selectSlot(${index})">
         <div class="slot-time">${escapeHtml(row['시간목록'] || '-')}</div>
       </button>
     `;
   }).join('');
-
-  window.__matchedSlots = matched;
 }
 
-function selectSlot(index) {
-  const row = window.__matchedSlots?.[index];
-  if (!row) {
-    toast('시간 정보를 찾을 수 없습니다.', 'err');
+function setSlotLoading(index, isLoading) {
+  const button = document.querySelector(`[data-slot-index="${index}"]`);
+  if (!button) return;
+  button.classList.toggle('loading', isLoading);
+  if (isLoading) button.classList.add('selected');
+  if (isLoading) button.setAttribute('disabled', 'disabled');
+}
+
+async function loadTimeslots() {
+  if (!isConfigured()) {
+    document.getElementById('config-notice').classList.remove('hidden');
+    document.getElementById('slot-list').innerHTML = `<div class="empty">Apps Script 웹앱 URL을 먼저 설정해주세요.</div>`;
     return;
   }
-  toast(`${row['시간목록']} 선택`, 'ok');
-  sessionStorage.setItem('his_selected_timeslot', JSON.stringify(row));
+
+  try {
+    const teacher = normalizeText(selectedSubject.교사);
+    const response = await fetch(buildApiUrl({ action: 'getTimeslots', teacher }));
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    if (!data.success) throw new Error(data.message || 'timeslot load failed');
+    renderSlots(Array.isArray(data.items) ? data.items : []);
+  } catch (e) {
+    console.error(e);
+    toast('시간 데이터를 불러오지 못했습니다.', 'err');
+    document.getElementById('slot-list').innerHTML = `<div class="empty">구글 시트에서 시간 정보를 불러오지 못했습니다.</div>`;
+  }
+}
+
+async function selectSlot(index) {
+  const row = slotRows[index];
+  if (!row || bookingInProgress) return;
+  if (!canReserve(row)) {
+    toast('이미 예약되었거나 예약 불가능한 시간입니다.', 'err');
+    return;
+  }
+  if (!isConfigured()) {
+    toast('Apps Script 웹앱 URL을 먼저 설정해주세요.', 'warn');
+    return;
+  }
+
+  const ok = confirm(`${selectedSubject.교사} 선생님 ${row['시간목록']} 시간으로 예약하시겠습니까?`);
+  if (!ok) return;
+
+  bookingInProgress = true;
+  setSlotLoading(index, true);
+
+  const payload = {
+    action: 'reserveTimeslot',
+    studentName: student.이름 || '',
+    teacher: selectedSubject.교사 || '',
+    subject: selectedSubject.과목 || '',
+    timeId: row['시간ID'] || '',
+    timeText: row['시간목록'] || ''
+  };
+
+  try {
+    const response = await fetch(APPS_SCRIPT_WEBAPP_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow'
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+
+    if (data.success) {
+      sessionStorage.setItem('his_selected_timeslot', JSON.stringify({
+        시간ID: row['시간ID'] || '',
+        교사: selectedSubject.교사 || '',
+        시간목록: row['시간목록'] || '',
+        예약자: student.이름 || ''
+      }));
+      toast('예약이 완료되었습니다.', 'ok');
+      await loadTimeslots();
+      return;
+    }
+
+    toast(data.message || '예약에 실패했습니다.', 'err');
+    await loadTimeslots();
+  } catch (e) {
+    console.error(e);
+    toast('예약 요청 중 오류가 발생했습니다.', 'err');
+    await loadTimeslots();
+  } finally {
+    bookingInProgress = false;
+    setSlotLoading(index, false);
+  }
 }
 
 async function init() {
   if (!fillHeader()) return;
-
-  try {
-    const response = await fetch('timeslots.json');
-    if (!response.ok) throw new Error('timeslots.json fetch failed');
-    const rows = await response.json();
-    renderSlots(rows);
-  } catch (e) {
-    console.error(e);
-    toast('시간 데이터를 불러오지 못했습니다.', 'err');
-    document.getElementById('slot-list').innerHTML = `<div class="empty">timeslots.json을 불러오지 못했습니다.</div>`;
-  }
+  await loadTimeslots();
 }
 
 init();
