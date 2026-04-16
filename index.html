@@ -205,11 +205,11 @@ function toast(msg, type='') {
 function stepDone(n, v)  { setSN(n,'done','✓'); setV(n, v); }
 function stepActive(n)   { setSN(n,'active', n); hideV(n); }
 function stepReset(n)    { setSN(n,'', n); hideV(n); }
-function setSN(n,cls,txt){ const el=document.getElementById('n'+n); el.className='sn'+(cls?' '+cls:''); el.textContent=txt; }
-function setV(n, v)      { const el=document.getElementById('v'+n); el.textContent=v; el.classList.remove('hidden'); }
-function hideV(n)        { document.getElementById('v'+n).classList.add('hidden'); }
-function lock(n)         { document.getElementById('s'+n).classList.add('locked'); }
-function unlock(n)       { document.getElementById('s'+n).classList.remove('locked'); }
+function setSN(n,cls,txt){ const el=document.getElementById('n'+n); if(el){ el.className='sn'+(cls?' '+cls:''); el.textContent=txt; } }
+function setV(n, v)      { const el=document.getElementById('v'+n); if(el){ el.textContent=v; el.classList.remove('hidden'); } }
+function hideV(n)        { const el=document.getElementById('v'+n); if(el) el.classList.add('hidden'); }
+function lock(n)         { const el=document.getElementById('s'+n); if(el) el.classList.add('locked'); }
+function unlock(n)       { const el=document.getElementById('s'+n); if(el) el.classList.remove('locked'); }
 function esc(s)          { return String(s).replace(/'/g,"\\'"); }
 
 // ── STEP 1: 학년 선택 ────────────────────────────
@@ -218,18 +218,18 @@ function pickGrade(g, btn) {
 
   document.querySelectorAll('#s1 .sb-btn').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
-  stepDone(1, g + '학년');
+  stepDone(1, g);  // "학년" 제거
 
   const classes = (g >= 7 && g <= 9) ? ['A','B'] : ['A','B','C'];
   document.getElementById('cls-btns').innerHTML = classes.map(c =>
-    `<button class="sb-btn" onclick="pickClass('${c}',this)">${c}반</button>`
+    `<button class="sb-btn" onclick="pickClass('${c}',this)">${c}</button>`  // "반" 제거
   ).join('');
 
   unlock(2); stepActive(2);
   lock(3); stepReset(3);
   document.getElementById('name-btns').innerHTML =
     '<p style="font-size:13px;color:var(--sb)">반을 먼저 선택하세요</p>';
-  lock(4); stepReset(4);
+  lock(4);
   document.getElementById('pw').value = '';
 }
 
@@ -239,10 +239,10 @@ async function pickClass(c, btn) {
 
   document.querySelectorAll('#cls-btns .sb-btn').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
-  stepDone(2, c + '반');
+  stepDone(2, c);  // "반" 제거
 
   unlock(3); stepActive(3);
-  lock(4); stepReset(4);
+  lock(4);
   document.getElementById('pw').value = '';
 
   // 로딩 표시
