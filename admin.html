@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HIS PTC 관리자 · Admin</title>
+<title>HIS PTC 관리자</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -11,181 +11,212 @@
   --gd2:#E8B020;--gd3:#FBD155;
   --bg:#EEF1F9;--tx:#111827;--sb:#5B6888;--bd:#D8DDED;
   --gn:#15803D;--gnb:#DCFCE7;--rd:#DC2626;--rdb:#FEF2F2;
-  --rl:14px;--rlg:20px;
-  --sh:0 2px 16px rgba(15,31,92,.08);--shh:0 6px 28px rgba(15,31,92,.15);
+  --yl:#B45309;--ylb:#FFFBEB;
+  --r:12px;--rlg:18px;
+  --sh:0 2px 12px rgba(15,31,92,.07);--shh:0 6px 24px rgba(15,31,92,.14);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{font-size:16px;-webkit-tap-highlight-color:transparent}
+html{font-size:15px;-webkit-tap-highlight-color:transparent}
 body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);min-height:100dvh}
 button{cursor:pointer;font-family:inherit;border:none}
-input,select{font-family:inherit}
+input,select,textarea{font-family:inherit}
 
-/* ── 토스트 ── */
-#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--tx);color:#fff;padding:10px 20px;border-radius:30px;font-size:14px;font-weight:500;white-space:nowrap;max-width:90vw;z-index:10000;transition:transform .3s cubic-bezier(.34,1.56,.64,1);box-shadow:0 4px 20px rgba(0,0,0,.22)}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--tx);color:#fff;padding:10px 22px;border-radius:30px;font-size:14px;font-weight:600;white-space:nowrap;max-width:90vw;z-index:10000;transition:transform .3s cubic-bezier(.34,1.56,.64,1);box-shadow:0 4px 20px rgba(0,0,0,.22)}
 #toast.on{transform:translateX(-50%) translateY(0)}
 #toast.ok{background:var(--gn)}
 #toast.err{background:var(--rd)}
+#toast.warn{background:var(--yl)}
 
-/* ── 로그인 화면 ── */
-#login-screen{
-  background:linear-gradient(150deg,var(--nv) 0%,var(--nv2) 50%,#1A3A8F 100%);
-  min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px;
-}
-.login-box{background:#fff;border-radius:var(--rlg);padding:36px 32px;width:100%;max-width:380px;box-shadow:var(--shh);text-align:center;animation:fadeUp .4s cubic-bezier(.16,1,.3,1)}
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
-.login-icon{width:60px;height:60px;margin:0 auto 16px;background:linear-gradient(135deg,var(--gd2),var(--gd3));border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 16px rgba(200,148,10,.32)}
+/* ── 로그인 ── */
+#login-screen{background:linear-gradient(150deg,var(--nv),var(--nv2) 50%,#1A3A8F);min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:#fff;border-radius:var(--rlg);padding:36px 32px;width:100%;max-width:360px;box-shadow:var(--shh);text-align:center;animation:fadeUp .4s cubic-bezier(.16,1,.3,1)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.login-icon{width:58px;height:58px;margin:0 auto 14px;background:linear-gradient(135deg,var(--gd2),var(--gd3));border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 14px rgba(200,148,10,.3)}
 .login-box h1{font-family:'DM Serif Display',serif;font-size:20px;color:var(--nv);margin-bottom:4px}
-.login-box p{font-size:13px;color:var(--sb);margin-bottom:24px}
-.login-input{width:100%;padding:13px 14px;border:2px solid var(--bd);border-radius:10px;font-size:16px;color:var(--tx);background:#FAFBFF;outline:none;transition:border-color .2s,box-shadow .2s;text-align:center;letter-spacing:4px}
-.login-input:focus{border-color:var(--nv2);box-shadow:0 0 0 4px rgba(27,47,122,.08)}
-.login-btn{width:100%;margin-top:14px;padding:13px;background:linear-gradient(135deg,var(--nv),var(--nv2));color:#fff;border-radius:10px;font-size:15px;font-weight:800;box-shadow:0 4px 14px rgba(15,31,92,.28);transition:transform .13s}
+.login-box p{font-size:13px;color:var(--sb);margin-bottom:22px}
+.login-input{width:100%;padding:13px;border:2px solid var(--bd);border-radius:10px;font-size:16px;text-align:center;letter-spacing:4px;outline:none;transition:border-color .2s}
+.login-input:focus{border-color:var(--nv2)}
+.login-btn{width:100%;margin-top:12px;padding:13px;background:linear-gradient(135deg,var(--nv),var(--nv2));color:#fff;border-radius:10px;font-size:15px;font-weight:800;box-shadow:0 4px 12px rgba(15,31,92,.26);transition:transform .13s}
 .login-btn:hover{transform:translateY(-1px)}
-.back-link{display:block;margin-top:14px;font-size:13px;color:var(--sb);text-decoration:none;transition:color .14s}
+.back-link{display:block;margin-top:12px;font-size:13px;color:var(--sb);text-decoration:none}
 .back-link:hover{color:var(--nv2)}
 
-/* ── 관리자 메인 ── */
+/* ── 관리자 화면 ── */
 #admin-screen{display:none}
-
-/* 탑바 */
-.topbar{background:linear-gradient(120deg,var(--nv),var(--nv2) 55%,var(--nv3));padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 14px rgba(15,31,92,.2)}
-.topbar h1{font-family:'DM Serif Display',serif;font-size:18px;color:#fff}
-.topbar p{font-size:12px;color:rgba(255,255,255,.65);margin-top:2px}
-.top-right{display:flex;gap:8px;align-items:center}
-.tbtn{padding:8px 14px;border-radius:10px;font-size:13px;font-weight:700;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.12);color:#fff;transition:all .14s}
+.topbar{background:linear-gradient(120deg,var(--nv),var(--nv2) 55%,var(--nv3));padding:13px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(15,31,92,.2)}
+.topbar-left h1{font-family:'DM Serif Display',serif;font-size:17px;color:#fff}
+.topbar-left p{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px}
+.top-btns{display:flex;gap:8px}
+.tbtn{padding:7px 13px;border-radius:9px;font-size:13px;font-weight:700;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.12);color:#fff;transition:all .14s}
 .tbtn:hover{background:rgba(255,255,255,.22)}
-.tbtn.active{background:#fff;color:var(--nv)}
 
-/* 탭 */
-.tabs{background:#fff;border-bottom:1px solid var(--bd);padding:0 20px;display:flex;gap:0}
-.tab{padding:13px 18px;font-size:14px;font-weight:700;color:var(--sb);border-bottom:3px solid transparent;cursor:pointer;transition:all .14s;background:none}
+/* ── 탭 ── */
+.tabs{background:#fff;border-bottom:1px solid var(--bd);padding:0 20px;display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{padding:12px 16px;font-size:14px;font-weight:700;color:var(--sb);border-bottom:3px solid transparent;cursor:pointer;background:none;white-space:nowrap;transition:all .14s}
 .tab:hover{color:var(--nv2)}
 .tab.active{color:var(--nv);border-bottom-color:var(--nv2)}
 
-/* 컨텐츠 영역 */
-.content{padding:20px;max-width:1000px;margin:0 auto}
+/* ── 컨텐츠 ── */
+.content{padding:18px 16px;max-width:1100px;margin:0 auto}
 
-/* 필터 바 */
-.filter-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
-.filter-bar select,.filter-bar input{padding:8px 12px;border:1.5px solid var(--bd);border-radius:9px;font-size:14px;color:var(--tx);background:#fff;outline:none;transition:border-color .2s}
+/* ── 필터 ── */
+.filter-bar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.filter-bar select,.filter-bar input{padding:8px 11px;border:1.5px solid var(--bd);border-radius:9px;font-size:14px;color:var(--tx);background:#fff;outline:none;transition:border-color .2s}
 .filter-bar select:focus,.filter-bar input:focus{border-color:var(--nv2)}
-.filter-bar .search-input{flex:1;min-width:160px}
+.filter-bar .flex1{flex:1;min-width:150px}
 
-/* 카드 */
-.card{background:#fff;border-radius:var(--rlg);padding:18px 20px;box-shadow:var(--sh);margin-bottom:14px}
-.card-title{font-size:15px;font-weight:800;color:var(--nv);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+/* ── 카드 ── */
+.card{background:#fff;border-radius:var(--rlg);padding:16px 18px;box-shadow:var(--sh);margin-bottom:12px}
+.card-title{font-size:15px;font-weight:800;color:var(--nv);margin-bottom:13px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .badge{font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;background:var(--bg);color:var(--nv2)}
 
-/* 테이블 */
+/* ── 통계 ── */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.stat-card{background:#fff;border-radius:var(--r);padding:14px;box-shadow:var(--sh);text-align:center}
+.stat-num{font-size:26px;font-weight:900;color:var(--nv);line-height:1}
+.stat-label{font-size:11px;color:var(--sb);margin-top:4px;font-weight:600}
+@media(min-width:540px){.stats{grid-template-columns:repeat(4,1fr)}}
+
+/* ── 테이블 ── */
 .tbl-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:14px}
-th{background:var(--bg);padding:10px 12px;text-align:left;font-size:12px;font-weight:800;color:var(--sb);letter-spacing:.5px;border-bottom:1px solid var(--bd)}
-td{padding:10px 12px;border-bottom:1px solid var(--bg);vertical-align:middle}
+th{background:var(--bg);padding:9px 11px;text-align:left;font-size:12px;font-weight:800;color:var(--sb);letter-spacing:.3px;border-bottom:1px solid var(--bd)}
+td{padding:9px 11px;border-bottom:1px solid var(--bg);vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#FAFBFF}
 
-/* 토글 버튼 */
-.toggle{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:700;transition:all .14s}
-.toggle.on{background:var(--gnb);color:var(--gn);border:1.5px solid #86EFAC}
-.toggle.off{background:var(--rdb);color:var(--rd);border:1.5px solid #FECACA}
+/* ── 버튼 ── */
+.btn-save{padding:5px 12px;background:linear-gradient(135deg,var(--nv),var(--nv2));color:#fff;border-radius:7px;font-size:12px;font-weight:700}
+.btn-save:hover{opacity:.85}
+.btn-del{padding:5px 10px;background:var(--rdb);color:var(--rd);border:1.5px solid #FECACA;border-radius:7px;font-size:12px;font-weight:700}
+.btn-del:hover{background:#FEE2E2}
+.btn-avail{padding:5px 12px;border-radius:7px;font-size:12px;font-weight:700;transition:all .14s}
+.btn-avail.on{background:var(--gnb);color:var(--gn);border:1.5px solid #86EFAC}
+.btn-avail.off{background:var(--rdb);color:var(--rd);border:1.5px solid #FECACA}
 
-/* 수정 인풋 */
-.edit-input{width:70px;padding:5px 8px;border:1.5px solid var(--bd);border-radius:7px;font-size:14px;text-align:center;outline:none;transition:border-color .2s}
+/* ── 체크박스 ── */
+.cb{width:16px;height:16px;cursor:pointer;accent-color:var(--nv2)}
+
+/* ── 편집 인풋 ── */
+.edit-input{padding:5px 8px;border:1.5px solid var(--bd);border-radius:7px;font-size:13px;outline:none;transition:border-color .2s}
 .edit-input:focus{border-color:var(--nv2)}
-.save-btn{padding:5px 12px;background:linear-gradient(135deg,var(--nv),var(--nv2));color:#fff;border-radius:7px;font-size:12px;font-weight:700;transition:opacity .14s}
-.save-btn:hover{opacity:.85}
-.del-btn{padding:5px 10px;background:var(--rdb);color:var(--rd);border:1.5px solid #FECACA;border-radius:7px;font-size:12px;font-weight:700;transition:background .14s}
-.del-btn:hover{background:#FEE2E2}
+.edit-input.num{width:65px;text-align:center}
 
-/* 통계 카드 */
-.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
-.stat-card{background:#fff;border-radius:var(--rl);padding:16px;box-shadow:var(--sh);text-align:center}
-.stat-num{font-size:28px;font-weight:900;color:var(--nv);line-height:1}
-.stat-label{font-size:12px;color:var(--sb);margin-top:5px;font-weight:600}
-
-/* 로딩 */
-.spin-wrap{display:flex;align-items:center;justify-content:center;gap:10px;padding:32px;color:var(--sb);font-size:14px}
-.spinner{width:18px;height:18px;border:2px solid var(--bd);border-top-color:var(--nv2);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
-@keyframes spin{to{transform:rotate(360deg)}}
-.empty{text-align:center;padding:32px;color:var(--sb);font-size:14px}
-
-/* 교사시간 그룹 */
-.teacher-group{background:#fff;border-radius:var(--rlg);box-shadow:var(--sh);margin-bottom:12px;overflow:hidden}
-.tg-head{padding:14px 18px;background:linear-gradient(120deg,var(--nv),var(--nv2));display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
-.tg-head h3{font-size:15px;font-weight:700;color:#fff}
-.tg-head .tg-stats{font-size:12px;color:rgba(255,255,255,.7)}
+/* ── 교사 그룹 (타임슬롯 탭) ── */
+.tg{background:#fff;border-radius:var(--rlg);box-shadow:var(--sh);margin-bottom:10px;overflow:hidden}
+.tg-head{padding:13px 16px;background:linear-gradient(120deg,var(--nv),var(--nv2));display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.tg-head h3{font-size:14px;font-weight:700;color:#fff}
+.tg-stats{font-size:12px;color:rgba(255,255,255,.65)}
 .tg-arrow{color:rgba(255,255,255,.8);font-size:16px;transition:transform .2s}
-.tg-head.open .tg-arrow{transform:rotate(90deg)}
-.tg-body{display:none;padding:14px 18px}
+.tg-body{display:none;padding:0}
 .tg-body.open{display:block}
-.slot-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--bg)}
-.slot-row:last-child{border-bottom:none}
-.slot-time-txt{font-size:14px;font-weight:600;color:var(--tx);flex:1}
-.slot-booked-by{font-size:12px;color:var(--sb);flex:1}
 
-/* 예약현황 */
-.res-row-booked td:first-child{border-left:3px solid var(--gn)}
-.res-row-empty td:first-child{border-left:3px solid var(--bd)}
+/* ── 일괄 편집 바 ── */
+.bulk-bar{background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:10px;padding:10px 14px;margin:10px 16px;display:none;align-items:center;gap:10px;flex-wrap:wrap}
+.bulk-bar.show{display:flex}
+.bulk-bar span{font-size:13px;font-weight:700;color:var(--nv2)}
+.bulk-bar .btn-bulk-on{padding:6px 14px;background:var(--gnb);color:var(--gn);border:1.5px solid #86EFAC;border-radius:8px;font-size:13px;font-weight:700}
+.bulk-bar .btn-bulk-off{padding:6px 14px;background:var(--rdb);color:var(--rd);border:1.5px solid #FECACA;border-radius:8px;font-size:13px;font-weight:700}
 
-@media(min-width:600px){.stats{grid-template-columns:repeat(4,1fr)}}
-@media(max-width:500px){.tab{padding:11px 12px;font-size:13px}}
+/* ── 스피너 ── */
+.spin-wrap{display:flex;align-items:center;justify-content:center;gap:10px;padding:28px;color:var(--sb);font-size:14px}
+.spinner{width:17px;height:17px;border:2px solid var(--bd);border-top-color:var(--nv2);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:28px;color:var(--sb);font-size:14px}
+
+/* ── 모달 ── */
+#modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(8,18,60,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:16px}
+#modal-overlay.on{display:flex}
+.modal-box{background:#fff;border-radius:var(--rlg);padding:24px 22px;width:100%;max-width:480px;box-shadow:var(--shh);animation:fadeUp .25s cubic-bezier(.16,1,.3,1)}
+.modal-box h2{font-size:17px;font-weight:800;color:var(--nv);margin-bottom:16px}
+.form-row{margin-bottom:12px}
+.form-row label{display:block;font-size:12px;font-weight:700;color:var(--sb);margin-bottom:5px}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:9px 11px;border:1.5px solid var(--bd);border-radius:9px;font-size:14px;color:var(--tx);outline:none;transition:border-color .2s}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--nv2)}
+.modal-btns{display:flex;gap:8px;margin-top:18px}
+.modal-cancel{flex:1;padding:11px;background:var(--bg);border-radius:9px;font-size:14px;font-weight:700;color:var(--sb)}
+.modal-save{flex:2;padding:11px;background:linear-gradient(135deg,var(--nv),var(--nv2));border-radius:9px;font-size:14px;font-weight:800;color:#fff}
 </style>
 </head>
 <body>
 <div id="toast"></div>
 
-<!-- ══════════════════════════════
-     로그인 화면
-══════════════════════════════ -->
+<!-- ════════════ 로그인 ════════════ -->
 <div id="login-screen">
   <div class="login-box">
     <div class="login-icon">⚙️</div>
     <h1>관리자 페이지</h1>
     <p>PTC 예약 시스템 · Admin</p>
-    <input type="password" id="admin-pw" class="login-input" placeholder="관리자 비밀번호"
+    <input type="password" id="admin-pw" class="login-input" placeholder="비밀번호"
            maxlength="10" onkeydown="if(event.key==='Enter')checkAdmin()">
     <button class="login-btn" onclick="checkAdmin()">로그인</button>
     <a href="index.html" class="back-link">← 학생 예약 페이지로</a>
   </div>
 </div>
 
-<!-- ══════════════════════════════
-     관리자 메인
-══════════════════════════════ -->
+<!-- ════════════ 관리자 화면 ════════════ -->
 <div id="admin-screen">
-
   <div class="topbar">
-    <div>
+    <div class="topbar-left">
       <h1>PTC 관리자</h1>
       <p>Handong International School 2026</p>
     </div>
-    <div class="top-right">
+    <div class="top-btns">
       <button class="tbtn" onclick="refreshAll()">🔄 새로고침</button>
       <button class="tbtn" onclick="adminLogout()">로그아웃</button>
     </div>
   </div>
 
-  <!-- 탭 -->
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('timeslots')">⏰ 교사 시간 관리</button>
+    <button class="tab active" onclick="switchTab('timeslots')">⏰ 교사 시간</button>
+    <button class="tab" onclick="switchTab('subjects')">📚 수강과목</button>
     <button class="tab" onclick="switchTab('reservations')">📋 예약 현황</button>
-    <button class="tab" onclick="switchTab('students')">👤 학생 예약 횟수</button>
+    <button class="tab" onclick="switchTab('students')">👤 예약 횟수</button>
   </div>
 
-  <!-- ── 탭1: 교사 시간 관리 ── -->
+  <!-- ── 탭1: 교사 시간 ── -->
   <div id="tab-timeslots" class="content">
     <div class="filter-bar">
-      <input class="search-input" type="text" id="ts-search" placeholder="🔍 교사 이름 검색" oninput="renderTimeslots()">
+      <input class="flex1" type="text" id="ts-search" placeholder="🔍 교사 이름 검색" oninput="renderTimeslots()">
     </div>
-    <div id="ts-container">
-      <div class="spin-wrap"><div class="spinner"></div>불러오는 중...</div>
+    <div id="ts-container"><div class="spin-wrap"><div class="spinner"></div>불러오는 중...</div></div>
+  </div>
+
+  <!-- ── 탭2: 수강과목 ── -->
+  <div id="tab-subjects" class="content" style="display:none">
+    <div class="filter-bar">
+      <select id="sub-grade" onchange="renderSubjects()">
+        <option value="">전체 학년</option>
+        <option>7</option><option>8</option><option>9</option>
+        <option>10</option><option>11</option><option>12</option>
+      </select>
+      <select id="sub-class" onchange="renderSubjects()">
+        <option value="">전체 반</option>
+        <option>A</option><option>B</option><option>C</option>
+      </select>
+      <input class="flex1" type="text" id="sub-search" placeholder="🔍 학생/교사/과목 검색" oninput="renderSubjects()">
+    </div>
+    <div class="card">
+      <div class="card-title">
+        수강과목 목록
+        <span class="badge" id="sub-count">0건</span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>학년</th><th>반</th><th>분류</th><th>학생</th><th>과목</th><th>교사</th><th>수정</th>
+          </tr></thead>
+          <tbody id="sub-tbody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <!-- ── 탭2: 예약 현황 ── -->
+  <!-- ── 탭3: 예약 현황 ── -->
   <div id="tab-reservations" class="content" style="display:none">
-    <div class="stats" id="rv-stats">
+    <div class="stats">
       <div class="stat-card"><div class="stat-num" id="stat-total">-</div><div class="stat-label">총 예약</div></div>
-      <div class="stat-card"><div class="stat-num" id="stat-students">-</div><div class="stat-label">예약 학생 수</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-students">-</div><div class="stat-label">예약 학생</div></div>
       <div class="stat-card"><div class="stat-num" id="stat-teachers">-</div><div class="stat-label">예약된 교사</div></div>
       <div class="stat-card"><div class="stat-num" id="stat-slots">-</div><div class="stat-label">남은 슬롯</div></div>
     </div>
@@ -199,13 +230,10 @@ tr:hover td{background:#FAFBFF}
         <option value="">전체 반</option>
         <option>A</option><option>B</option><option>C</option>
       </select>
-      <input class="search-input" type="text" id="rv-search" placeholder="🔍 학생/교사 이름 검색" oninput="renderReservations()">
+      <input class="flex1" type="text" id="rv-search" placeholder="🔍 학생/교사 검색" oninput="renderReservations()">
     </div>
     <div class="card">
-      <div class="card-title">
-        예약 목록
-        <span class="badge" id="rv-count">0건</span>
-      </div>
+      <div class="card-title">예약 목록 <span class="badge" id="rv-count">0건</span></div>
       <div class="tbl-wrap">
         <table>
           <thead><tr>
@@ -217,7 +245,7 @@ tr:hover td{background:#FAFBFF}
     </div>
   </div>
 
-  <!-- ── 탭3: 학생 예약 횟수 ── -->
+  <!-- ── 탭4: 예약 횟수 ── -->
   <div id="tab-students" class="content" style="display:none">
     <div class="filter-bar">
       <select id="st-grade" onchange="renderStudents()">
@@ -229,35 +257,70 @@ tr:hover td{background:#FAFBFF}
         <option value="">전체 반</option>
         <option>A</option><option>B</option><option>C</option>
       </select>
-      <input class="search-input" type="text" id="st-search" placeholder="🔍 학생 이름 검색" oninput="renderStudents()">
+      <input class="flex1" type="text" id="st-search" placeholder="🔍 학생 이름 검색" oninput="renderStudents()">
     </div>
     <div class="card">
       <div class="card-title">
         학생 예약 횟수 설정
         <div style="display:flex;gap:8px;align-items:center">
-          <input id="bulk-count" type="number" min="1" max="20" value="5"
-                 style="width:70px;padding:6px 8px;border:1.5px solid var(--bd);border-radius:8px;font-size:14px;text-align:center;outline:none">
-          <button class="save-btn" onclick="bulkUpdate()">전체 일괄 변경</button>
+          <input id="bulk-count" type="number" min="1" max="20" value="5" class="edit-input num">
+          <button class="btn-save" onclick="bulkUpdate()">전체 일괄 변경</button>
         </div>
       </div>
       <div class="tbl-wrap">
         <table>
           <thead><tr>
-            <th>학생</th><th>학년</th><th>반</th><th>현재 예약횟수</th><th>수정</th>
+            <th>학생</th><th>학년</th><th>반</th><th>현재 횟수</th><th>수정</th>
           </tr></thead>
           <tbody id="st-tbody"></tbody>
         </table>
       </div>
     </div>
   </div>
+</div>
 
+<!-- ── 수강과목 편집 모달 ── -->
+<div id="modal-overlay">
+  <div class="modal-box">
+    <h2 id="modal-title">수강과목 수정</h2>
+    <input type="hidden" id="modal-key">
+    <div class="form-row">
+      <label>학년</label>
+      <input type="text" id="m-grade" readonly style="background:var(--bg)">
+    </div>
+    <div class="form-row">
+      <label>반</label>
+      <input type="text" id="m-class" readonly style="background:var(--bg)">
+    </div>
+    <div class="form-row">
+      <label>분류</label>
+      <select id="m-type">
+        <option>교과</option><option>담임</option><option>진로</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>학생 이름</label>
+      <input type="text" id="m-student">
+    </div>
+    <div class="form-row">
+      <label>과목명</label>
+      <input type="text" id="m-subject">
+    </div>
+    <div class="form-row">
+      <label>교사 이름</label>
+      <input type="text" id="m-teacher">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">취소</button>
+      <button class="modal-save" onclick="saveSubject()">저장</button>
+    </div>
+  </div>
 </div>
 
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
-// ── Firebase 초기화 ──────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyCz-baFM_1-ecp2HUKxrF2aPXhtDv1xxrc",
   authDomain: "his-ptc-2026.firebaseapp.com",
@@ -270,71 +333,56 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// ── 관리자 비밀번호 ──────────────────────────────
 const ADMIN_PW = '1751';
+let allTimeslots = {}, allReservations = {}, allStudents = {}, allSubjects = {};
 
-// ── 캐시 데이터 ──────────────────────────────────
-let allTimeslots    = {};  // { key: slot }
-let allReservations = {};  // { key: reservation }
-let allStudents     = {};  // { key: student }
-let currentTab = 'timeslots';
-
-// ── 로그인 ───────────────────────────────────────
+// ── 로그인 ──────────────────────────────────────
 function checkAdmin() {
   const pw = document.getElementById('admin-pw').value;
-  if (pw !== ADMIN_PW) {
-    toast('비밀번호가 올바르지 않습니다.', 'err');
-    document.getElementById('admin-pw').value = '';
-    return;
-  }
+  if (pw !== ADMIN_PW) { toast('비밀번호가 올바르지 않습니다.', 'err'); document.getElementById('admin-pw').value=''; return; }
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('admin-screen').style.display = 'block';
   loadAll();
 }
-
 function adminLogout() {
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('admin-screen').style.display = 'none';
   document.getElementById('admin-pw').value = '';
 }
 
-// ── 전체 데이터 로드 ─────────────────────────────
+// ── 데이터 로드 ──────────────────────────────────
 async function loadAll() {
   try {
-    const [tsSnap, rvSnap, stSnap] = await Promise.all([
+    const [tsSnap, rvSnap, stSnap, subSnap] = await Promise.all([
       db.ref('timeslots').once('value'),
       db.ref('reservations').once('value'),
       db.ref('students').once('value'),
+      db.ref('subjects').once('value'),
     ]);
     allTimeslots    = tsSnap.val()  || {};
     allReservations = rvSnap.val()  || {};
     allStudents     = stSnap.val()  || {};
+    allSubjects     = subSnap.val() || {};
     renderAll();
-  } catch(e) {
-    console.error(e);
-    toast('데이터 로드 실패', 'err');
-  }
+  } catch(e) { console.error(e); toast('데이터 로드 실패', 'err'); }
 }
-
 function refreshAll() { loadAll().then(() => toast('새로고침 완료', 'ok')); }
-function renderAll()  { renderTimeslots(); renderReservations(); renderStudents(); }
+function renderAll()  { renderTimeslots(); renderSubjects(); renderReservations(); renderStudents(); }
 
 // ── 탭 전환 ──────────────────────────────────────
+const TABS = ['timeslots','subjects','reservations','students'];
 function switchTab(tab) {
-  currentTab = tab;
-  ['timeslots','reservations','students'].forEach(t => {
-    document.getElementById('tab-'+t).style.display = t === tab ? 'block' : 'none';
-    document.querySelectorAll('.tab').forEach((el, i) => {
-      el.classList.toggle('active', ['timeslots','reservations','students'][i] === tab);
-    });
+  TABS.forEach((t,i) => {
+    document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
+    document.querySelectorAll('.tab')[i].classList.toggle('active', t===tab);
   });
 }
 
-// ════════════════════════════════════════════
-// TAB 1: 교사 시간 관리
-// ════════════════════════════════════════════
+// ════════════════════════════════════════════════
+// TAB 1: 교사 시간 관리 (체크박스 일괄편집)
+// ════════════════════════════════════════════════
 function renderTimeslots() {
-  const search = (document.getElementById('ts-search').value || '').trim().toLowerCase();
+  const search = (document.getElementById('ts-search').value||'').trim().toLowerCase();
   const container = document.getElementById('ts-container');
 
   // 교사별 그룹화
@@ -347,50 +395,60 @@ function renderTimeslots() {
   });
 
   const teachers = Object.keys(teacherMap).sort();
-  if (!teachers.length) {
-    container.innerHTML = '<div class="empty">데이터가 없습니다.</div>'; return;
-  }
+  if (!teachers.length) { container.innerHTML = '<div class="empty">데이터가 없습니다.</div>'; return; }
 
   container.innerHTML = teachers.map(tc => {
-    const slots = teacherMap[tc].sort((a,b) => (a.시간목록||'').localeCompare(b.시간목록||''));
-    const avail  = slots.filter(s => s.예약가능 === true).length;
-    const booked = slots.filter(s => String(s.예약완료||'').trim() !== '').length;
-    const total  = slots.length;
+    const slots  = teacherMap[tc].sort((a,b)=>(a.시간목록||'').localeCompare(b.시간목록||''));
+    const avail  = slots.filter(s=>s.예약가능===true).length;
+    const booked = slots.filter(s=>String(s.예약완료||'').trim()!=='').length;
 
     return `
-    <div class="teacher-group">
-      <div class="tg-head" onclick="toggleGroup(this)">
-        <h3>👨‍🏫 ${tc} 선생님</h3>
+    <div class="tg" id="tg_${esc(tc)}">
+      <div class="tg-head" onclick="toggleGroup('${esc(tc)}')">
+        <h3>👨‍🏫 ${tc}</h3>
         <div style="display:flex;align-items:center;gap:12px">
-          <span class="tg-stats">전체 ${total}개 · 예약 ${booked}개 · 가능 ${avail}개</span>
-          <span class="tg-arrow">›</span>
+          <span class="tg-stats">전체 ${slots.length} · 예약 ${booked} · 가능 ${avail}</span>
+          <span class="tg-arrow" id="arr_${esc(tc)}">›</span>
         </div>
       </div>
-      <div class="tg-body">
+      <!-- 일괄편집 바 -->
+      <div class="bulk-bar" id="bulk_${esc(tc)}">
+        <span id="bulk-sel-count_${esc(tc)}">0개 선택됨</span>
+        <button class="btn-bulk-on" onclick="bulkToggleAvail('${esc(tc)}',true)">✅ 가능으로 변경</button>
+        <button class="btn-bulk-off" onclick="bulkToggleAvail('${esc(tc)}',false)">❌ 불가로 변경</button>
+        <button class="btn-bulk-on" onclick="bulkCancelSlot('${esc(tc)}')">🗑 예약 취소</button>
+      </div>
+      <div class="tg-body" id="tgb_${esc(tc)}">
         <table style="width:100%;border-collapse:collapse;font-size:14px">
           <thead><tr>
-            <th style="background:var(--bg);padding:8px 10px;text-align:left;font-size:12px;font-weight:800;color:var(--sb)">시간</th>
-            <th style="background:var(--bg);padding:8px 10px;text-align:left;font-size:12px;font-weight:800;color:var(--sb)">예약가능</th>
-            <th style="background:var(--bg);padding:8px 10px;text-align:left;font-size:12px;font-weight:800;color:var(--sb)">예약자</th>
-            <th style="background:var(--bg);padding:8px 10px;font-size:12px;font-weight:800;color:var(--sb)">취소</th>
+            <th style="background:var(--bg);padding:8px 11px;font-size:12px;font-weight:800;color:var(--sb);width:36px">
+              <input type="checkbox" class="cb" onchange="selectAllSlots('${esc(tc)}',this.checked)" title="전체 선택">
+            </th>
+            <th style="background:var(--bg);padding:8px 11px;font-size:12px;font-weight:800;color:var(--sb)">시간</th>
+            <th style="background:var(--bg);padding:8px 11px;font-size:12px;font-weight:800;color:var(--sb)">예약가능</th>
+            <th style="background:var(--bg);padding:8px 11px;font-size:12px;font-weight:800;color:var(--sb)">예약자</th>
+            <th style="background:var(--bg);padding:8px 11px;font-size:12px;font-weight:800;color:var(--sb)">개별취소</th>
           </tr></thead>
           <tbody>
             ${slots.map(s => {
               const isAvail  = s.예약가능 === true;
               const bookedBy = String(s.예약완료||'').trim();
-              const isBooked = bookedBy !== '';
               return `<tr>
-                <td style="padding:9px 10px;border-bottom:1px solid var(--bg);font-weight:600">${s.시간목록||'-'}</td>
-                <td style="padding:9px 10px;border-bottom:1px solid var(--bg)">
-                  <button class="toggle ${isAvail?'on':'off'}" onclick="toggleAvail('${esc(s.key)}',${isAvail})">
+                <td style="padding:8px 11px;border-bottom:1px solid var(--bg)">
+                  <input type="checkbox" class="cb slot-cb_${esc(tc)}" data-key="${s.key}"
+                         onchange="updateBulkBar('${esc(tc)}')">
+                </td>
+                <td style="padding:8px 11px;border-bottom:1px solid var(--bg);font-weight:600">${s.시간목록||'-'}</td>
+                <td style="padding:8px 11px;border-bottom:1px solid var(--bg)">
+                  <button class="btn-avail ${isAvail?'on':'off'}" onclick="toggleAvail('${esc(s.key)}','${esc(tc)}',${isAvail})">
                     ${isAvail ? '✅ 가능' : '❌ 불가'}
                   </button>
                 </td>
-                <td style="padding:9px 10px;border-bottom:1px solid var(--bg);color:${isBooked?'var(--gn)':'var(--sb)'}">
-                  ${isBooked ? `<strong>${bookedBy}</strong>` : '—'}
+                <td style="padding:8px 11px;border-bottom:1px solid var(--bg);color:${bookedBy?'var(--gn)':'var(--sb)'}">
+                  ${bookedBy ? `<strong>${bookedBy}</strong>` : '—'}
                 </td>
-                <td style="padding:9px 10px;border-bottom:1px solid var(--bg);text-align:center">
-                  ${isBooked ? `<button class="del-btn" onclick="cancelSlot('${esc(s.key)}','${esc(bookedBy)}')">취소</button>` : '—'}
+                <td style="padding:8px 11px;border-bottom:1px solid var(--bg)">
+                  ${bookedBy ? `<button class="btn-del" onclick="cancelSlot('${esc(s.key)}','${esc(bookedBy)}','${esc(tc)}')">취소</button>` : '—'}
                 </td>
               </tr>`;
             }).join('')}
@@ -401,84 +459,240 @@ function renderTimeslots() {
   }).join('');
 }
 
-function toggleGroup(headEl) {
-  headEl.classList.toggle('open');
-  const body = headEl.nextElementSibling;
-  body.classList.toggle('open');
+// 교사 그룹 열기/닫기 (상태 유지)
+const openGroups = new Set();
+function toggleGroup(tc) {
+  const body = document.getElementById('tgb_'+tc);
+  const arr  = document.getElementById('arr_'+tc);
+  if (!body) return;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  arr.style.transform = isOpen ? '' : 'rotate(90deg)';
+  if (isOpen) openGroups.delete(tc); else openGroups.add(tc);
 }
 
-// 예약가능 토글
-async function toggleAvail(key, currentVal) {
+// 단일 예약가능 토글 — collapse 없이 버튼만 업데이트
+async function toggleAvail(key, tc, current) {
   try {
-    await db.ref(`timeslots/${key}/예약가능`).set(!currentVal);
-    allTimeslots[key].예약가능 = !currentVal;
-    renderTimeslots();
-    toast(`예약 ${!currentVal ? '가능' : '불가'}으로 변경됨`, 'ok');
+    const newVal = !current;
+    await db.ref(`timeslots/${key}/예약가능`).set(newVal);
+    allTimeslots[key].예약가능 = newVal;
+    // 해당 버튼만 업데이트 (collapse 방지)
+    const btn = document.querySelector(`button[onclick="toggleAvail('${key}','${tc}',${current})"]`);
+    if (btn) {
+      btn.className = `btn-avail ${newVal?'on':'off'}`;
+      btn.textContent = newVal ? '✅ 가능' : '❌ 불가';
+      btn.setAttribute('onclick', `toggleAvail('${key}','${tc}',${newVal})`);
+    }
+    // 헤더 통계 업데이트
+    updateTgStats(tc);
+    toast(`${allTimeslots[key]['시간목록']} → ${newVal?'가능':'불가'}`, 'ok');
   } catch(e) { toast('변경 실패', 'err'); }
 }
 
-// 슬롯 예약 취소 (관리자)
-async function cancelSlot(slotKey, studentName) {
-  if (!confirm(`"${studentName}" 의 예약을 취소하시겠습니까?`)) return;
-  try {
-    // timeslots 예약완료 초기화
-    await db.ref(`timeslots/${slotKey}/예약완료`).set('');
-    allTimeslots[slotKey].예약완료 = '';
+function updateTgStats(tc) {
+  const slots = Object.values(allTimeslots).filter(s=>s.교사===tc);
+  const avail  = slots.filter(s=>s.예약가능===true).length;
+  const booked = slots.filter(s=>String(s.예약완료||'').trim()!=='').length;
+  const el = document.querySelector(`#tg_${tc} .tg-stats`);
+  if (el) el.textContent = `전체 ${slots.length} · 예약 ${booked} · 가능 ${avail}`;
+}
 
-    // reservations에서 해당 예약 찾아서 삭제
-    const slot = allTimeslots[slotKey];
-    Object.entries(allReservations).forEach(async ([rvKey, rv]) => {
-      if (rv.학생 === studentName && rv.교사 === slot.교사) {
-        await db.ref(`reservations/${rvKey}`).remove();
-        delete allReservations[rvKey];
+// 전체 선택
+function selectAllSlots(tc, checked) {
+  document.querySelectorAll(`.slot-cb_${tc}`).forEach(cb => cb.checked = checked);
+  updateBulkBar(tc);
+}
+
+// 선택 개수 업데이트 → 일괄편집 바 표시
+function updateBulkBar(tc) {
+  const cbs = document.querySelectorAll(`.slot-cb_${tc}`);
+  const sel = Array.from(cbs).filter(c=>c.checked).length;
+  const bar = document.getElementById(`bulk_${tc}`);
+  const cnt = document.getElementById(`bulk-sel-count_${tc}`);
+  if (bar) bar.classList.toggle('show', sel > 0);
+  if (cnt) cnt.textContent = `${sel}개 선택됨`;
+}
+
+// 일괄 예약가능 변경
+async function bulkToggleAvail(tc, newVal) {
+  const cbs = Array.from(document.querySelectorAll(`.slot-cb_${tc}`)).filter(c=>c.checked);
+  if (!cbs.length) return;
+  try {
+    // 개별 update (루트 권한 불필요)
+    await Promise.all(cbs.map(cb => {
+      const key = cb.dataset.key;
+      allTimeslots[key].예약가능 = newVal;
+      return db.ref(`timeslots/${key}/예약가능`).set(newVal);
+    }));
+    toast(`${cbs.length}개 → ${newVal?'가능':'불가'} 변경 완료`, 'ok');
+    renderTimeslots();
+    // 열려있던 그룹 다시 열기
+    setTimeout(() => openGroups.forEach(tc2 => {
+      const b = document.getElementById('tgb_'+tc2);
+      const a = document.getElementById('arr_'+tc2);
+      if (b) { b.classList.add('open'); if (a) a.style.transform='rotate(90deg)'; }
+    }), 50);
+  } catch(e) { toast('변경 실패: '+e.message, 'err'); }
+}
+
+// 일괄 예약 취소
+async function bulkCancelSlot(tc) {
+  const cbs = Array.from(document.querySelectorAll(`.slot-cb_${tc}`)).filter(c=>c.checked);
+  const booked = cbs.filter(cb => String(allTimeslots[cb.dataset.key]?.['예약완료']||'').trim()!=='');
+  if (!booked.length) { toast('선택 중 예약된 슬롯이 없습니다.', 'warn'); return; }
+  if (!confirm(`${booked.length}개 예약을 취소하시겠습니까?`)) return;
+  try {
+    await Promise.all(booked.map(async cb => {
+      const key      = cb.dataset.key;
+      const student  = String(allTimeslots[key]['예약완료']||'').trim();
+      allTimeslots[key]['예약완료'] = '';
+      await db.ref(`timeslots/${key}/예약완료`).set('');
+      // reservations에서도 삭제
+      const rvSnap = await db.ref('reservations').orderByChild('학생').equalTo(student).once('value');
+      rvSnap.forEach(child => {
+        if (child.val().교사 === tc) {
+          db.ref(`reservations/${child.key}`).remove();
+          delete allReservations[child.key];
+        }
+      });
+    }));
+    toast(`${booked.length}개 예약 취소 완료`, 'ok');
+    renderTimeslots();
+    setTimeout(() => openGroups.forEach(tc2 => {
+      const b = document.getElementById('tgb_'+tc2);
+      const a = document.getElementById('arr_'+tc2);
+      if (b) { b.classList.add('open'); if (a) a.style.transform='rotate(90deg)'; }
+    }), 50);
+  } catch(e) { toast('취소 실패: '+e.message, 'err'); }
+}
+
+// 단일 슬롯 예약 취소
+async function cancelSlot(slotKey, studentName, tc) {
+  if (!confirm(`"${studentName}"의 예약을 취소하시겠습니까?`)) return;
+  try {
+    await db.ref(`timeslots/${slotKey}/예약완료`).set('');
+    allTimeslots[slotKey]['예약완료'] = '';
+    const rvSnap = await db.ref('reservations').orderByChild('학생').equalTo(studentName).once('value');
+    rvSnap.forEach(child => {
+      if (child.val().교사 === tc) {
+        db.ref(`reservations/${child.key}`).remove();
+        delete allReservations[child.key];
       }
     });
-
     renderTimeslots();
     renderReservations();
-    toast('예약이 취소되었습니다.', 'ok');
+    toast('예약 취소 완료', 'ok');
   } catch(e) { toast('취소 실패', 'err'); }
 }
 
-// ════════════════════════════════════════════
-// TAB 2: 예약 현황
-// ════════════════════════════════════════════
+// ════════════════════════════════════════════════
+// TAB 2: 수강과목
+// ════════════════════════════════════════════════
+function renderSubjects() {
+  const grade  = document.getElementById('sub-grade').value;
+  const cls    = document.getElementById('sub-class').value;
+  const search = (document.getElementById('sub-search').value||'').trim().toLowerCase();
+
+  let list = Object.entries(allSubjects).map(([k,v])=>({key:k,...v}));
+  if (grade)  list = list.filter(s=>String(s.학년)===grade);
+  if (cls)    list = list.filter(s=>s.반===cls);
+  if (search) list = list.filter(s=>
+    (s.이름||'').toLowerCase().includes(search)||
+    (s.교사||'').toLowerCase().includes(search)||
+    (s.과목||'').toLowerCase().includes(search)
+  );
+  list.sort((a,b)=>{
+    if(String(a.학년)!==String(b.학년)) return String(a.학년).localeCompare(String(b.학년),undefined,{numeric:true});
+    if(a.반!==b.반) return a.반.localeCompare(b.반);
+    return (a.이름||'').localeCompare(b.이름||'');
+  });
+
+  document.getElementById('sub-count').textContent = `${list.length}건`;
+  const tbody = document.getElementById('sub-tbody');
+  if (!list.length) { tbody.innerHTML='<tr><td colspan="7" class="empty">데이터가 없습니다.</td></tr>'; return; }
+
+  tbody.innerHTML = list.map(s=>`
+    <tr>
+      <td>${s.학년||'-'}</td>
+      <td>${s.반||'-'}</td>
+      <td><span style="font-size:12px;padding:2px 7px;border-radius:12px;background:var(--bg);color:var(--nv2)">${s.분류||'-'}</span></td>
+      <td><strong>${s.이름||'-'}</strong></td>
+      <td style="font-size:13px;color:var(--sb);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.과목||'-'}</td>
+      <td><strong>${s.교사||'-'}</strong></td>
+      <td style="white-space:nowrap">
+        <button class="btn-save" onclick="openEditModal('${esc(s.key)}')">수정</button>
+      </td>
+    </tr>`).join('');
+}
+
+// 수강과목 편집 모달
+function openEditModal(key) {
+  const s = allSubjects[key];
+  if (!s) return;
+  document.getElementById('modal-key').value     = key;
+  document.getElementById('m-grade').value       = s.학년||'';
+  document.getElementById('m-class').value       = s.반||'';
+  document.getElementById('m-type').value        = s.분류||'교과';
+  document.getElementById('m-student').value     = s.이름||'';
+  document.getElementById('m-subject').value     = s.과목||'';
+  document.getElementById('m-teacher').value     = s.교사||'';
+  document.getElementById('modal-overlay').classList.add('on');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('on'); }
+
+async function saveSubject() {
+  const key     = document.getElementById('modal-key').value;
+  const grade   = document.getElementById('m-grade').value;
+  const cls     = document.getElementById('m-class').value;
+  const type    = document.getElementById('m-type').value;
+  const student = document.getElementById('m-student').value.trim();
+  const subject = document.getElementById('m-subject').value.trim();
+  const teacher = document.getElementById('m-teacher').value.trim();
+
+  if (!subject || !teacher) { toast('과목명과 교사 이름을 입력해주세요.', 'err'); return; }
+
+  try {
+    const updated = { 학년:Number(grade), 반:cls, 분류:type, 이름:student, 과목:subject, 교사:teacher };
+    await db.ref(`subjects/${key}`).update(updated);
+    allSubjects[key] = { ...allSubjects[key], ...updated };
+    toast('수정 완료', 'ok');
+    closeModal();
+    renderSubjects();
+  } catch(e) { toast('저장 실패: '+e.message, 'err'); }
+}
+
+// ════════════════════════════════════════════════
+// TAB 3: 예약 현황
+// ════════════════════════════════════════════════
 function renderReservations() {
   const grade  = document.getElementById('rv-grade').value;
   const cls    = document.getElementById('rv-class').value;
-  const search = (document.getElementById('rv-search').value || '').trim().toLowerCase();
+  const search = (document.getElementById('rv-search').value||'').trim().toLowerCase();
 
-  let list = Object.entries(allReservations).map(([k,v]) => ({key:k,...v}));
-
-  if (grade)  list = list.filter(r => String(r.학년) === grade);
-  if (cls)    list = list.filter(r => r.반 === cls);
-  if (search) list = list.filter(r =>
-    (r.학생||'').toLowerCase().includes(search) ||
+  let list = Object.entries(allReservations).map(([k,v])=>({key:k,...v}));
+  if (grade)  list = list.filter(r=>String(r.학년)===grade);
+  if (cls)    list = list.filter(r=>r.반===cls);
+  if (search) list = list.filter(r=>
+    (r.학생||'').toLowerCase().includes(search)||
     (r.교사||'').toLowerCase().includes(search)
   );
+  list.sort((a,b)=>(a.시간||'').localeCompare(b.시간||''));
 
-  // 통계
-  const uniqueStudents = new Set(list.map(r=>r.학생)).size;
-  const uniqueTeachers = new Set(list.map(r=>r.교사)).size;
-  const totalSlots     = Object.values(allTimeslots).filter(s => s.예약가능 === true).length;
-  const bookedSlots    = Object.values(allTimeslots).filter(s => String(s.예약완료||'').trim() !== '').length;
-
+  const uStu = new Set(list.map(r=>r.학생)).size;
+  const uTc  = new Set(list.map(r=>r.교사)).size;
+  const tot  = Object.values(allTimeslots).filter(s=>s.예약가능===true).length;
+  const bkd  = Object.values(allTimeslots).filter(s=>String(s.예약완료||'').trim()!=='').length;
   document.getElementById('stat-total').textContent    = list.length;
-  document.getElementById('stat-students').textContent = uniqueStudents;
-  document.getElementById('stat-teachers').textContent = uniqueTeachers;
-  document.getElementById('stat-slots').textContent    = totalSlots - bookedSlots;
+  document.getElementById('stat-students').textContent = uStu;
+  document.getElementById('stat-teachers').textContent = uTc;
+  document.getElementById('stat-slots').textContent    = tot-bkd;
   document.getElementById('rv-count').textContent      = `${list.length}건`;
 
-  // 시간순 정렬
-  list.sort((a,b) => (a.시간||'').localeCompare(b.시간||''));
-
   const tbody = document.getElementById('rv-tbody');
-  if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--sb)">예약 내역이 없습니다.</td></tr>';
-    return;
-  }
+  if (!list.length) { tbody.innerHTML='<tr><td colspan="7" class="empty">예약 내역이 없습니다.</td></tr>'; return; }
 
-  tbody.innerHTML = list.map(r => {
+  tbody.innerHTML = list.map(r=>{
     const ts = r.예약시간 ? new Date(r.예약시간).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '-';
     return `<tr>
       <td><strong>${r.학생||'-'}</strong></td>
@@ -487,129 +701,107 @@ function renderReservations() {
       <td style="font-size:12px;color:var(--sb)">${r.과목||'-'}</td>
       <td><strong>${r.시간||'-'}</strong></td>
       <td style="font-size:12px;color:var(--sb)">${ts}</td>
-      <td><button class="del-btn" onclick="adminCancelRv('${esc(r.key)}','${esc(r.교사||'')}','${esc(r.학생||'')}')">취소</button></td>
+      <td><button class="btn-del" onclick="adminCancelRv('${esc(r.key)}','${esc(r.교사||'')}','${esc(r.학생||'')}')">취소</button></td>
     </tr>`;
   }).join('');
 }
 
-// 관리자 예약 취소
-async function adminCancelRv(rvKey, teacher, student) {
-  if (!confirm(`"${student} / ${teacher}" 예약을 취소하시겠습니까?`)) return;
+async function adminCancelRv(rvKey, teacher, studentName) {
+  if (!confirm(`"${studentName} / ${teacher}" 예약을 취소하시겠습니까?`)) return;
   try {
-    // reservations 삭제
     await db.ref(`reservations/${rvKey}`).remove();
     delete allReservations[rvKey];
-
-    // timeslots 예약완료 초기화
-    Object.entries(allTimeslots).forEach(async ([slotKey, slot]) => {
-      if (slot.교사 === teacher && String(slot.예약완료||'').trim() === student) {
+    // timeslots 복원
+    for (const [slotKey, slot] of Object.entries(allTimeslots)) {
+      if (slot.교사 === teacher && String(slot.예약완료||'').trim() === studentName) {
         await db.ref(`timeslots/${slotKey}/예약완료`).set('');
-        allTimeslots[slotKey].예약완료 = '';
+        allTimeslots[slotKey]['예약완료'] = '';
+        break;
       }
-    });
-
-    renderReservations();
-    renderTimeslots();
-    toast('예약이 취소되었습니다.', 'ok');
+    }
+    renderReservations(); renderTimeslots();
+    toast('예약 취소 완료', 'ok');
   } catch(e) { toast('취소 실패', 'err'); }
 }
 
-// ════════════════════════════════════════════
-// TAB 3: 학생 예약 횟수
-// ════════════════════════════════════════════
+// ════════════════════════════════════════════════
+// TAB 4: 학생 예약 횟수 (개별 update → permission_denied 수정)
+// ════════════════════════════════════════════════
 function renderStudents() {
   const grade  = document.getElementById('st-grade').value;
   const cls    = document.getElementById('st-class').value;
-  const search = (document.getElementById('st-search').value || '').trim().toLowerCase();
+  const search = (document.getElementById('st-search').value||'').trim().toLowerCase();
 
-  let list = Object.entries(allStudents).map(([k,v]) => ({key:k,...v}));
-
-  if (grade)  list = list.filter(s => String(s.학년) === grade);
-  if (cls)    list = list.filter(s => s.반 === cls);
-  if (search) list = list.filter(s => (s.이름||'').toLowerCase().includes(search));
-
-  // 학년→반→이름 정렬
-  list.sort((a,b) => {
-    if (String(a.학년) !== String(b.학년)) return String(a.학년).localeCompare(String(b.학년), undefined, {numeric:true});
-    if (a.반 !== b.반) return a.반.localeCompare(b.반);
+  let list = Object.entries(allStudents).map(([k,v])=>({key:k,...v}));
+  if (grade)  list = list.filter(s=>String(s.학년)===grade);
+  if (cls)    list = list.filter(s=>s.반===cls);
+  if (search) list = list.filter(s=>(s.이름||'').toLowerCase().includes(search));
+  list.sort((a,b)=>{
+    if(String(a.학년)!==String(b.학년)) return String(a.학년).localeCompare(String(b.학년),undefined,{numeric:true});
+    if(a.반!==b.반) return a.반.localeCompare(b.반);
     return (a.이름||'').localeCompare(b.이름||'');
   });
 
   const tbody = document.getElementById('st-tbody');
-  if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--sb)">학생이 없습니다.</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = list.map(s => `
+  if (!list.length) { tbody.innerHTML='<tr><td colspan="5" class="empty">학생이 없습니다.</td></tr>'; return; }
+  tbody.innerHTML = list.map(s=>`
     <tr>
       <td><strong>${s.이름||'-'}</strong></td>
       <td>${s.학년||'-'}학년</td>
       <td>${s.반||'-'}반</td>
-      <td>
-        <span style="font-size:16px;font-weight:800;color:var(--nv)">${s.예약횟수||5}</span>회
-      </td>
+      <td><span style="font-size:16px;font-weight:900;color:var(--nv)">${s.예약횟수||5}</span>회</td>
       <td style="display:flex;align-items:center;gap:6px">
-        <input class="edit-input" type="number" min="1" max="20"
+        <input class="edit-input num" type="number" min="1" max="20"
                value="${s.예약횟수||5}" id="cnt_${esc(s.key)}">
-        <button class="save-btn" onclick="saveStudentCount('${esc(s.key)}','${esc(s.이름||'')}')">저장</button>
+        <button class="btn-save" onclick="saveStudentCount('${esc(s.key)}','${esc(s.이름||'')}')">저장</button>
       </td>
     </tr>`).join('');
 }
 
-// 학생 예약횟수 저장
+// 개별 저장 (각 경로에 직접 set → permission_denied 방지)
 async function saveStudentCount(key, name) {
-  const input = document.getElementById(`cnt_${key}`);
+  const input = document.getElementById('cnt_'+key);
   if (!input) return;
   const val = parseInt(input.value);
-  if (isNaN(val) || val < 1 || val > 20) {
-    toast('1~20 사이 값을 입력해주세요.', 'err'); return;
-  }
+  if (isNaN(val)||val<1||val>20) { toast('1~20 사이 값을 입력해주세요.', 'err'); return; }
   try {
     await db.ref(`students/${key}/예약횟수`).set(val);
     allStudents[key].예약횟수 = val;
-    toast(`${name}: 예약횟수 ${val}회로 변경됨`, 'ok');
+    toast(`${name}: ${val}회로 변경됨`, 'ok');
     renderStudents();
-  } catch(e) { toast('저장 실패', 'err'); }
+  } catch(e) { toast('저장 실패: '+e.message, 'err'); }
 }
 
-// 일괄 변경
+// 일괄 변경 — 개별 set() 루프 사용 (루트 update() 대신)
 async function bulkUpdate() {
-  const val = parseInt(document.getElementById('bulk-count').value);
-  if (isNaN(val) || val < 1 || val > 20) {
-    toast('1~20 사이 값을 입력해주세요.', 'err'); return;
-  }
+  const val   = parseInt(document.getElementById('bulk-count').value);
+  const grade = document.getElementById('st-grade').value;
+  const cls   = document.getElementById('st-class').value;
+  if (isNaN(val)||val<1||val>20) { toast('1~20 사이 값을 입력해주세요.', 'err'); return; }
 
-  const grade  = document.getElementById('st-grade').value;
-  const cls    = document.getElementById('st-class').value;
-
-  const target = Object.entries(allStudents).filter(([k,s]) => {
-    if (grade && String(s.학년) !== grade) return false;
-    if (cls   && s.반 !== cls) return false;
+  const target = Object.entries(allStudents).filter(([k,s])=>{
+    if (grade && String(s.학년)!==grade) return false;
+    if (cls   && s.반!==cls) return false;
     return true;
   });
-
-  const count = target.length;
-  if (!confirm(`${count}명의 예약 횟수를 ${val}회로 일괄 변경하시겠습니까?`)) return;
+  if (!confirm(`${target.length}명의 예약 횟수를 ${val}회로 변경하시겠습니까?`)) return;
 
   try {
-    const updates = {};
-    target.forEach(([key]) => {
-      updates[`students/${key}/예약횟수`] = val;
+    // 개별 경로에 set() → students/{key}/예약횟수 권한만 필요
+    await Promise.all(target.map(([key])=> {
       allStudents[key].예약횟수 = val;
-    });
-    await db.ref().update(updates);
-    toast(`${count}명 일괄 변경 완료 (${val}회)`, 'ok');
+      return db.ref(`students/${key}/예약횟수`).set(val);
+    }));
+    toast(`${target.length}명 일괄 변경 완료 (${val}회)`, 'ok');
     renderStudents();
-  } catch(e) { toast('일괄 변경 실패', 'err'); }
+  } catch(e) { toast('일괄 변경 실패: '+e.message, 'err'); }
 }
 
-// ── 유틸 ─────────────────────────────────────────
+// ── 유틸 ──────────────────────────────────────────
 function toast(msg, type='') {
   const el = document.getElementById('toast');
   el.textContent = msg; el.className = type;
-  el.classList.add('on');
-  setTimeout(() => el.classList.remove('on'), 3500);
+  el.classList.add('on'); setTimeout(()=>el.classList.remove('on'), 3500);
 }
 function esc(s){ return String(s).replace(/'/g,"\\'"); }
 </script>

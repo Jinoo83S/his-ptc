@@ -330,23 +330,45 @@ async function doReserve() {
   reserving = true;
 
   try {
-    // ① 이미 이 선생님 예약이 있으면 기존 슬롯 먼저 해제
+    // ① 선택한 슬롯 시간 가져오기
+    const newSlotVal  = slotData[selectedSlotKey];
+    const newTimeText = newSlotVal ? (newSlotVal['시간목록'] || '') : '';
+
+    // ② 같은 시간대 다른 선생님 예약 여부 확인 (중복 시간 방지)
+    const rvSnap = await db.ref('reservations')
+      .orderByChild('학생').equalTo(student.이름).once('value');
+
+    let conflictTeacher = '';
+    rvSnap.forEach(child => {
+      const r = child.val();
+      if (String(r.학년) === String(student.학년) && r.반 === student.반
+          && r.교사 !== selectedSubject.교사   // 다른 선생님
+          && r.시간 === newTimeText) {          // 같은 시간
+        conflictTeacher = r.교사;
+      }
+    });
+
+    if (conflictTeacher) {
+      toast(`${newTimeText} 시간에 이미 ${conflictTeacher} 선생님 예약이 있습니다.`, 'err');
+      closeCf();
+      return;
+    }
+
+    // ③ 이미 이 선생님 예약이 있으면 기존 슬롯 먼저 해제
     if (myBookedSlotKey && myBookedSlotKey !== selectedSlotKey) {
       await db.ref(`timeslots/${myBookedSlotKey}/예약완료`).set('');
     }
 
-    // ② 새 슬롯 Transaction (선착순)
+    // ④ 새 슬롯 Transaction (선착순)
     const slotRef = db.ref(`timeslots/${selectedSlotKey}/예약완료`);
     const result = await slotRef.transaction(current => {
-      // 빈값이거나 내가 이미 이 슬롯에 예약한 경우만 허용
       if (current === null || current === '' || current === student.이름) {
         return student.이름;
       }
-      return; // 다른 사람이 예약 → abort
+      return; // 다른 사람 예약 → abort
     });
 
     if (!result.committed) {
-      // 선착순 실패 → 해제했던 기존 슬롯 복원
       if (myBookedSlotKey && myBookedSlotKey !== selectedSlotKey) {
         await db.ref(`timeslots/${myBookedSlotKey}/예약완료`).set(student.이름);
       }
@@ -355,13 +377,13 @@ async function doReserve() {
       return;
     }
 
-    // ③ 슬롯 정보 가져오기
+    // ⑤ 슬롯 정보 가져오기
     const slotSnap = await db.ref(`timeslots/${selectedSlotKey}`).once('value');
     const slotVal  = slotSnap.val();
     const timeText = slotVal['시간목록'] || '';
     const timeId   = slotVal['시간ID'] || selectedSlotKey;
 
-    // ④ reservations 업데이트 (같은 키로 덮어쓰기 → 선생님당 1개)
+    // ⑥ reservations 업데이트 (선생님당 1개)
     const rvKey = `${student.학년}_${student.반}_${student.이름}_${selectedSubject.교사}`;
     await db.ref(`reservations/${rvKey}`).set({
       학생:    student.이름,
@@ -374,9 +396,7 @@ async function doReserve() {
       예약시간: new Date().toISOString()
     });
 
-    // ⑤ 로컬 상태 업데이트
     myBookedSlotKey = selectedSlotKey;
-
     toast(`${selectedSubject.교사} ${timeText} 예약 완료! 🎉`, 'ok');
     closeCf();
 
