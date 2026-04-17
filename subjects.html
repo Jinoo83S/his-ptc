@@ -67,6 +67,8 @@ button{cursor:pointer;font-family:inherit;border:none}
 
 /* 예약된 시간 표시 */
 .booked-time{font-size:12px;color:var(--gn);font-weight:700;margin-top:2px}
+/* 이름 옆 과목 */
+.tc-name-sub{font-size:12px;font-weight:500;color:var(--sb)}
 
 /* 로딩 */
 .spin-wrap{display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.8);font-size:13px;padding:20px 0}
@@ -255,8 +257,7 @@ function renderTeachers(teacherMap) {
         <div class="${cardClass}" ${onClick}>
           <div class="tc-ico">${iconMap[type] || '👨‍🏫'}</div>
           <div class="tc-info">
-            <div class="tc-name">${tc.교사} 선생님</div>
-            <div class="tc-subj">${tc.과목}</div>
+            <div class="tc-name">${tc.교사} <span class="tc-name-sub">· ${tc.과목}</span></div>
             ${bookedTimeHtml}
           </div>
           <span class="tc-tag ${tagClass}">${tagLabel}</span>
