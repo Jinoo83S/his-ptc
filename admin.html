@@ -194,17 +194,20 @@ tr:hover td{background:#FAFBFF}
         <option value="">전체 반</option>
         <option>A</option><option>B</option><option>C</option>
       </select>
-      <input class="flex1" type="text" id="sub-search" placeholder="🔍 학생/교사/과목 검색" oninput="renderSubjects()">
+      <input class="flex1" type="text" id="sub-search" placeholder="🔍 교사/과목/분류 검색" oninput="renderSubjects()">
     </div>
     <div class="card">
       <div class="card-title">
         수강과목 목록
-        <span class="badge" id="sub-count">0건</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="badge" id="sub-count">0건</span>
+          <button class="btn-save" onclick="openAddModal()">+ 과목 추가</button>
+        </div>
       </div>
       <div class="tbl-wrap">
         <table>
           <thead><tr>
-            <th>학년</th><th>반</th><th>분류</th><th>학생</th><th>과목</th><th>교사</th><th>수정</th>
+            <th>학년</th><th>반</th><th>분류</th><th>과목</th><th>교사</th><th style="text-align:center">학생수</th><th>수정/삭제</th>
           </tr></thead>
           <tbody id="sub-tbody"></tbody>
         </table>
@@ -279,18 +282,21 @@ tr:hover td{background:#FAFBFF}
   </div>
 </div>
 
-<!-- ── 수강과목 편집 모달 ── -->
+<!-- ── 수강과목 편집/추가 모달 ── -->
 <div id="modal-overlay">
   <div class="modal-box">
     <h2 id="modal-title">수강과목 수정</h2>
-    <input type="hidden" id="modal-key">
-    <div class="form-row">
-      <label>학년</label>
-      <input type="text" id="m-grade" readonly style="background:var(--bg)">
-    </div>
-    <div class="form-row">
-      <label>반</label>
-      <input type="text" id="m-class" readonly style="background:var(--bg)">
+    <input type="hidden" id="modal-keys">
+    <p id="m-count" style="font-size:12px;color:var(--sb);margin-bottom:14px"></p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-row">
+        <label>학년</label>
+        <input type="text" id="m-grade" placeholder="예: 7">
+      </div>
+      <div class="form-row">
+        <label>반</label>
+        <input type="text" id="m-class" placeholder="예: A">
+      </div>
     </div>
     <div class="form-row">
       <label>분류</label>
@@ -299,16 +305,16 @@ tr:hover td{background:#FAFBFF}
       </select>
     </div>
     <div class="form-row">
-      <label>학생 이름</label>
-      <input type="text" id="m-student">
-    </div>
-    <div class="form-row">
       <label>과목명</label>
-      <input type="text" id="m-subject">
+      <input type="text" id="m-subject" placeholder="예: 국어 Korean Language Arts">
     </div>
     <div class="form-row">
       <label>교사 이름</label>
-      <input type="text" id="m-teacher">
+      <input type="text" id="m-teacher" placeholder="예: 이주일">
+    </div>
+    <div id="add-student-row" class="form-row" style="display:none">
+      <label>학생 이름 <span style="color:var(--sb);font-weight:400">(쉼표로 여러명: 김철수,이영희)</span></label>
+      <textarea id="m-students" rows="3" placeholder="김철수,이영희,박민수"></textarea>
     </div>
     <div class="modal-btns">
       <button class="modal-cancel" onclick="closeModal()">취소</button>
@@ -587,79 +593,157 @@ async function cancelSlot(slotKey, studentName, tc) {
 }
 
 // ════════════════════════════════════════════════
-// TAB 2: 수강과목
+// TAB 2: 수강과목 (중복제거 · 추가 · 삭제)
 // ════════════════════════════════════════════════
+// 그룹키: 학년_반_분류_과목_교사 (학생명 제외)
+function getSubjectGroupKey(s) {
+  return `${s.학년}_${s.반}_${s.분류}_${s.과목}_${s.교사}`;
+}
+
 function renderSubjects() {
   const grade  = document.getElementById('sub-grade').value;
   const cls    = document.getElementById('sub-class').value;
   const search = (document.getElementById('sub-search').value||'').trim().toLowerCase();
 
-  let list = Object.entries(allSubjects).map(([k,v])=>({key:k,...v}));
-  if (grade)  list = list.filter(s=>String(s.학년)===grade);
-  if (cls)    list = list.filter(s=>s.반===cls);
-  if (search) list = list.filter(s=>
-    (s.이름||'').toLowerCase().includes(search)||
-    (s.교사||'').toLowerCase().includes(search)||
-    (s.과목||'').toLowerCase().includes(search)
-  );
-  list.sort((a,b)=>{
-    if(String(a.학년)!==String(b.학년)) return String(a.학년).localeCompare(String(b.학년),undefined,{numeric:true});
-    if(a.반!==b.반) return a.반.localeCompare(b.반);
-    return (a.이름||'').localeCompare(b.이름||'');
+  // 전체 subjects → 그룹화
+  const groupMap = {};  // { groupKey: { info, keys:[] } }
+  Object.entries(allSubjects).forEach(([key, s]) => {
+    if (grade  && String(s.학년) !== grade) return;
+    if (cls    && s.반 !== cls) return;
+    if (search && !(
+      (s.교사||'').toLowerCase().includes(search) ||
+      (s.과목||'').toLowerCase().includes(search) ||
+      (s.분류||'').toLowerCase().includes(search)
+    )) return;
+    const gk = getSubjectGroupKey(s);
+    if (!groupMap[gk]) groupMap[gk] = { 학년:s.학년, 반:s.반, 분류:s.분류, 과목:s.과목, 교사:s.교사, keys:[] };
+    groupMap[gk].keys.push(key);
   });
 
-  document.getElementById('sub-count').textContent = `${list.length}건`;
-  const tbody = document.getElementById('sub-tbody');
-  if (!list.length) { tbody.innerHTML='<tr><td colspan="7" class="empty">데이터가 없습니다.</td></tr>'; return; }
+  const groups = Object.entries(groupMap).sort(([,a],[,b]) => {
+    if (String(a.학년) !== String(b.학년)) return String(a.학년).localeCompare(String(b.학년), undefined, {numeric:true});
+    if (a.반 !== b.반) return a.반.localeCompare(b.반);
+    return (a.과목||'').localeCompare(b.과목||'');
+  });
 
-  tbody.innerHTML = list.map(s=>`
-    <tr>
-      <td>${s.학년||'-'}</td>
-      <td>${s.반||'-'}</td>
-      <td><span style="font-size:12px;padding:2px 7px;border-radius:12px;background:var(--bg);color:var(--nv2)">${s.분류||'-'}</span></td>
-      <td><strong>${s.이름||'-'}</strong></td>
-      <td style="font-size:13px;color:var(--sb);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.과목||'-'}</td>
-      <td><strong>${s.교사||'-'}</strong></td>
-      <td style="white-space:nowrap">
-        <button class="btn-save" onclick="openEditModal('${esc(s.key)}')">수정</button>
+  document.getElementById('sub-count').textContent = `${groups.length}건`;
+  const tbody = document.getElementById('sub-tbody');
+  if (!groups.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">데이터가 없습니다.</td></tr>'; return;
+  }
+
+  tbody.innerHTML = groups.map(([gk, g]) => {
+    const keysJson = esc(JSON.stringify(g.keys));
+    const gInfo    = esc(JSON.stringify({ 학년:g.학년, 반:g.반, 분류:g.분류, 과목:g.과목, 교사:g.교사 }));
+    return `<tr>
+      <td>${g.학년||'-'}</td>
+      <td>${g.반||'-'}</td>
+      <td><span style="font-size:12px;padding:2px 7px;border-radius:12px;background:var(--bg);color:var(--nv2)">${g.분류||'-'}</span></td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;color:var(--sb)">${g.과목||'-'}</td>
+      <td><strong>${g.교사||'-'}</strong></td>
+      <td style="font-size:12px;color:var(--sb);text-align:center">${g.keys.length}명</td>
+      <td style="white-space:nowrap;display:flex;gap:5px">
+        <button class="btn-save" onclick="openEditModal('${keysJson}','${gInfo}')">수정</button>
+        <button class="btn-del"  onclick="deleteSubjectGroup('${keysJson}','${esc(g.과목||'')}','${esc(g.교사||'')}')">삭제</button>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
-// 수강과목 편집 모달
-function openEditModal(key) {
-  const s = allSubjects[key];
-  if (!s) return;
-  document.getElementById('modal-key').value     = key;
-  document.getElementById('m-grade').value       = s.학년||'';
-  document.getElementById('m-class').value       = s.반||'';
-  document.getElementById('m-type').value        = s.분류||'교과';
-  document.getElementById('m-student').value     = s.이름||'';
-  document.getElementById('m-subject').value     = s.과목||'';
-  document.getElementById('m-teacher').value     = s.교사||'';
+// 수강과목 편집 모달 열기
+function openEditModal(keysJson, gInfoJson) {
+  let keys, g;
+  try { keys = JSON.parse(keysJson); g = JSON.parse(gInfoJson); } catch(e){ return; }
+  document.getElementById('modal-keys').value    = JSON.stringify(keys);
+  document.getElementById('m-grade').value       = g.학년||'';
+  document.getElementById('m-grade').readOnly    = true;
+  document.getElementById('m-grade').style.background = 'var(--bg)';
+  document.getElementById('m-class').value       = g.반||'';
+  document.getElementById('m-class').readOnly    = true;
+  document.getElementById('m-class').style.background = 'var(--bg)';
+  document.getElementById('m-type').value        = g.분류||'교과';
+  document.getElementById('m-subject').value     = g.과목||'';
+  document.getElementById('m-teacher').value     = g.교사||'';
+  document.getElementById('m-count').textContent = `${keys.length}개 레코드 일괄 수정`;
+  document.getElementById('add-student-row').style.display = 'none';
   document.getElementById('modal-overlay').classList.add('on');
 }
 function closeModal() { document.getElementById('modal-overlay').classList.remove('on'); }
 
+// 수강과목 저장 (수정 or 추가)
 async function saveSubject() {
-  const key     = document.getElementById('modal-key').value;
-  const grade   = document.getElementById('m-grade').value;
-  const cls     = document.getElementById('m-class').value;
+  let keys;
+  try { keys = JSON.parse(document.getElementById('modal-keys').value); } catch(e){ keys=[]; }
+  const grade   = document.getElementById('m-grade').value.trim();
+  const cls     = document.getElementById('m-class').value.trim();
   const type    = document.getElementById('m-type').value;
-  const student = document.getElementById('m-student').value.trim();
   const subject = document.getElementById('m-subject').value.trim();
   const teacher = document.getElementById('m-teacher').value.trim();
+  if (!subject||!teacher) { toast('과목명과 교사를 입력해주세요.', 'err'); return; }
 
-  if (!subject || !teacher) { toast('과목명과 교사 이름을 입력해주세요.', 'err'); return; }
+  // 추가 모드 (keys 비어있음)
+  if (keys.length === 0) {
+    if (!grade||!cls) { toast('학년과 반을 입력해주세요.', 'err'); return; }
+    const studentsRaw = (document.getElementById('m-students').value||'').trim();
+    const studentList = studentsRaw ? studentsRaw.split(',').map(s=>s.trim()).filter(Boolean) : [' '];
+    try {
+      await Promise.all(studentList.map(name => {
+        const newKey = `${grade}_${cls}_${name}_${teacher}`;
+        const data   = { 학년:Number(grade), 반:cls, 분류:type, 이름:name, 과목:subject, 교사:teacher };
+        allSubjects[newKey] = data;
+        return db.ref(`subjects/${newKey}`).set(data);
+      }));
+      toast(`${studentList.length}개 레코드 추가 완료`, 'ok');
+      closeModal();
+      renderSubjects();
+    } catch(e) { toast('추가 실패: '+e.message, 'err'); }
+    return;
+  }
 
+  // 수정 모드
   try {
-    const updated = { 학년:Number(grade), 반:cls, 분류:type, 이름:student, 과목:subject, 교사:teacher };
-    await db.ref(`subjects/${key}`).update(updated);
-    allSubjects[key] = { ...allSubjects[key], ...updated };
-    toast('수정 완료', 'ok');
+    await Promise.all(keys.map(key => {
+      const updated = { ...allSubjects[key], 분류:type, 과목:subject, 교사:teacher };
+      allSubjects[key] = updated;
+      return db.ref(`subjects/${key}`).update({ 분류:type, 과목:subject, 교사:teacher });
+    }));
+    toast(`${keys.length}개 레코드 수정 완료`, 'ok');
     closeModal();
     renderSubjects();
   } catch(e) { toast('저장 실패: '+e.message, 'err'); }
+}
+
+// 수강과목 그룹 삭제
+async function deleteSubjectGroup(keysJson, subject, teacher) {
+  let keys;
+  try { keys = JSON.parse(keysJson); } catch(e){ return; }
+  if (!confirm(`"${subject} / ${teacher}" 과목을 ${keys.length}개 레코드 모두 삭제하시겠습니까?`)) return;
+  try {
+    await Promise.all(keys.map(key => {
+      delete allSubjects[key];
+      return db.ref(`subjects/${key}`).remove();
+    }));
+    toast(`${keys.length}개 레코드 삭제 완료`, 'ok');
+    renderSubjects();
+  } catch(e) { toast('삭제 실패: '+e.message, 'err'); }
+}
+
+// 수강과목 추가 모달
+function openAddModal() {
+  document.getElementById('modal-keys').value    = '[]';
+  document.getElementById('m-grade').value       = '';
+  document.getElementById('m-grade').readOnly    = false;
+  document.getElementById('m-grade').style.background = '';
+  document.getElementById('m-class').value       = '';
+  document.getElementById('m-class').readOnly    = false;
+  document.getElementById('m-class').style.background = '';
+  document.getElementById('m-type').value        = '교과';
+  document.getElementById('m-subject').value     = '';
+  document.getElementById('m-teacher').value     = '';
+  document.getElementById('m-count').textContent = '새 과목 추가';
+  document.getElementById('add-student-row').style.display = 'block';
+  document.getElementById('m-students').value   = '';
+  document.getElementById('modal-overlay').classList.add('on');
 }
 
 // ════════════════════════════════════════════════

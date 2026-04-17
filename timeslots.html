@@ -61,6 +61,10 @@ button{cursor:pointer;font-family:inherit;border:none}
 .slot-taken .slot-time{color:var(--sb)}
 .slot-taken-label{font-size:10px;font-weight:800;color:var(--rd);margin-top:4px}
 
+/* 내가 다른 선생님과 같은 시간 예약한 슬롯 */
+.slot-conflict{background:#FFFBEB;border-color:#FCD34D;cursor:not-allowed}
+.slot-conflict .slot-time{color:var(--yl)}
+.slot-conflict-label{font-size:11px;font-weight:800;color:var(--yl);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* 내가 예약한 슬롯 */
 .slot-mine{background:#F0FDF4;border-color:var(--gn);cursor:default}
 .slot-mine .slot-time{color:var(--gn)}
@@ -180,9 +184,10 @@ const db = firebase.database();
 let student = null;
 let selectedSubject = null;
 let slotData = {};         // { firebaseKey: slotObject }
-let selectedSlotKey = '';  // 예약할 슬롯 키
-let myBookedSlotKey = '';  // 이미 예약한 슬롯 키 (있으면)
-let unsubscribe = null;    // 실시간 리스너 해제 함수
+let selectedSlotKey = '';
+let myBookedSlotKey = '';
+let myTimeMap = {};        // { "시간텍스트": "교사이름" } — 내가 이미 예약한 시간
+let unsubscribe = null;
 let reserving = false;
 
 // ── 초기화 ───────────────────────────────────────
@@ -196,32 +201,36 @@ function init() {
     location.href = 'subjects.html'; return;
   }
 
-  // 헤더 표시
   document.getElementById('tc-teacher').textContent = selectedSubject.교사;
   document.getElementById('tc-subject').textContent = selectedSubject.과목;
   document.getElementById('tc-student').textContent = `학생: ${student.이름}`;
   document.getElementById('tc-class').textContent   = `${student.학년}학년 ${student.반}반`;
 
-  // 이미 이 선생님 예약했는지 확인 후 슬롯 로드
   checkExistingReservation();
 }
 
 async function checkExistingReservation() {
   try {
-    const rvKey = `${student.학년}_${student.반}_${student.이름}_${selectedSubject.교사}`;
-    const snap = await db.ref(`reservations/${rvKey}`).once('value');
-    if (snap.exists()) {
-      const rv = snap.val();
-      // timeslots에서 이 학생이 예약한 슬롯 키 찾기
-      // 예약완료 값이 학생 이름인 슬롯을 탐색
-      const tsSnap = await db.ref('timeslots')
-        .orderByChild('교사').equalTo(selectedSubject.교사).once('value');
-      tsSnap.forEach(child => {
-        if (String(child.val()['예약완료'] || '').trim() === student.이름) {
-          myBookedSlotKey = child.key;
-        }
-      });
-    }
+    // ① 이 선생님 예약 슬롯 키 찾기
+    const tsSnap = await db.ref('timeslots')
+      .orderByChild('교사').equalTo(selectedSubject.교사).once('value');
+    tsSnap.forEach(child => {
+      if (String(child.val()['예약완료'] || '').trim() === student.이름) {
+        myBookedSlotKey = child.key;
+      }
+    });
+
+    // ② 내 모든 예약의 시간 맵 로드 (다른 선생님 포함)
+    const rvSnap = await db.ref('reservations')
+      .orderByChild('학생').equalTo(student.이름).once('value');
+    myTimeMap = {};
+    rvSnap.forEach(child => {
+      const r = child.val();
+      if (String(r.학년) === String(student.학년) && r.반 === student.반
+          && r.교사 !== selectedSubject.교사) {
+        myTimeMap[r.시간] = r.교사;  // { "13:30 - 13:40": "Adam" }
+      }
+    });
   } catch(e) { console.error(e); }
   subscribeSlots();
 }
@@ -267,7 +276,6 @@ function renderSlots() {
     return;
   }
 
-  // 시간순 정렬
   const sorted = keys.sort((a, b) => {
     const ta = slotData[a]['시간목록'] || '';
     const tb = slotData[b]['시간목록'] || '';
@@ -279,26 +287,33 @@ function renderSlots() {
     const timeText = s['시간목록'] || '-';
     const isAvail  = s['예약가능'] === true;
     const bookedBy = String(s['예약완료'] || '').trim();
-    const isMine   = bookedBy === student.이름;         // Firebase 실시간 값 기준
+    const isMine   = bookedBy === student.이름;
     const isTaken  = bookedBy !== '' && !isMine;
 
-    // ✅ 내 예약 슬롯 — 클릭 불가 (cursor:default)
+    // ✅ 내 예약 슬롯
     if (isMine) {
       return `<div class="slot slot-mine">
         <div class="slot-time">${timeText}</div>
         <div class="slot-mine-label">✓ 내 예약</div>
       </div>`;
     }
-    // 🔒 마감 또는 예약불가
+    // 🔒 다른 학생이 이미 예약한 슬롯
     if (!isAvail || isTaken) {
       return `<div class="slot slot-taken">
         <div class="slot-time">${timeText}</div>
         <div class="slot-taken-label">🔒 마감</div>
       </div>`;
     }
-    // ✅ 예약 가능 — 이미 이 선생님 예약이 있으면 "변경" 안내
+    // ⚠️ 내가 다른 선생님과 이미 같은 시간 예약 → 교사이름 표시
+    const conflictTeacher = myTimeMap[timeText] || '';
+    if (conflictTeacher) {
+      return `<div class="slot slot-conflict">
+        <div class="slot-time">${timeText}</div>
+        <div class="slot-conflict-label">📌 ${conflictTeacher}</div>
+      </div>`;
+    }
+    // ✅ 예약 가능
     const hasMyBooking = myBookedSlotKey !== '';
-    const label = hasMyBooking ? '시간 변경' : '';
     return `<div class="slot" onclick="pickSlot('${key}','${esc(timeText)}')">
       <div class="slot-time">${timeText}</div>
       ${hasMyBooking ? `<div style="font-size:10px;color:var(--yl);margin-top:3px">🔄 변경 가능</div>` : ''}
