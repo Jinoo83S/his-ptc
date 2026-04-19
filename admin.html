@@ -236,7 +236,14 @@ tr:hover td{background:#FAFBFF}
       <input class="flex1" type="text" id="rv-search" placeholder="🔍 학생/교사 검색" oninput="renderReservations()">
     </div>
     <div class="card">
-      <div class="card-title">예약 목록 <span class="badge" id="rv-count">0건</span></div>
+      <div class="card-title">예약 목록
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="badge" id="rv-count">0건</span>
+          <button class="btn-save" onclick="downloadExcel()" style="background:linear-gradient(135deg,#15803D,#16a34a)">
+            ⬇️ 엑셀 다운로드
+          </button>
+        </div>
+      </div>
       <div class="tbl-wrap">
         <table>
           <thead><tr>
@@ -595,7 +602,8 @@ async function cancelSlot(slotKey, studentName, tc) {
 // ════════════════════════════════════════════════
 // TAB 2: 수강과목 (중복제거 · 추가 · 삭제)
 // ════════════════════════════════════════════════
-// 그룹키: 학년_반_분류_과목_교사 (학생명 제외)
+let subjectGroups = [];  // 렌더링된 그룹 (index로 참조)
+
 function getSubjectGroupKey(s) {
   return `${s.학년}_${s.반}_${s.분류}_${s.과목}_${s.교사}`;
 }
@@ -605,8 +613,7 @@ function renderSubjects() {
   const cls    = document.getElementById('sub-class').value;
   const search = (document.getElementById('sub-search').value||'').trim().toLowerCase();
 
-  // 전체 subjects → 그룹화
-  const groupMap = {};  // { groupKey: { info, keys:[] } }
+  const groupMap = {};
   Object.entries(allSubjects).forEach(([key, s]) => {
     if (grade  && String(s.학년) !== grade) return;
     if (cls    && s.반 !== cls) return;
@@ -620,41 +627,48 @@ function renderSubjects() {
     groupMap[gk].keys.push(key);
   });
 
-  const groups = Object.entries(groupMap).sort(([,a],[,b]) => {
+  // 정렬: 학년 → 반 → 교사 이름 순
+  subjectGroups = Object.values(groupMap).sort((a, b) => {
     if (String(a.학년) !== String(b.학년)) return String(a.학년).localeCompare(String(b.학년), undefined, {numeric:true});
     if (a.반 !== b.반) return a.반.localeCompare(b.반);
-    return (a.과목||'').localeCompare(b.과목||'');
+    return (a.교사||'').localeCompare(b.교사||'');
   });
 
-  document.getElementById('sub-count').textContent = `${groups.length}건`;
+  document.getElementById('sub-count').textContent = `${subjectGroups.length}건`;
   const tbody = document.getElementById('sub-tbody');
-  if (!groups.length) {
+  if (!subjectGroups.length) {
     tbody.innerHTML = '<tr><td colspan="7" class="empty">데이터가 없습니다.</td></tr>'; return;
   }
 
-  tbody.innerHTML = groups.map(([gk, g]) => {
-    const keysJson = esc(JSON.stringify(g.keys));
-    const gInfo    = esc(JSON.stringify({ 학년:g.학년, 반:g.반, 분류:g.분류, 과목:g.과목, 교사:g.교사 }));
-    return `<tr>
+  tbody.innerHTML = subjectGroups.map((g, idx) => `
+    <tr>
       <td>${g.학년||'-'}</td>
       <td>${g.반||'-'}</td>
       <td><span style="font-size:12px;padding:2px 7px;border-radius:12px;background:var(--bg);color:var(--nv2)">${g.분류||'-'}</span></td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;color:var(--sb)">${g.과목||'-'}</td>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;color:var(--sb)">${g.과목||'-'}</td>
       <td><strong>${g.교사||'-'}</strong></td>
       <td style="font-size:12px;color:var(--sb);text-align:center">${g.keys.length}명</td>
       <td style="white-space:nowrap;display:flex;gap:5px">
-        <button class="btn-save" onclick="openEditModal('${keysJson}','${gInfo}')">수정</button>
-        <button class="btn-del"  onclick="deleteSubjectGroup('${keysJson}','${esc(g.과목||'')}','${esc(g.교사||'')}')">삭제</button>
+        <button class="btn-save" data-idx="${idx}" data-action="edit">수정</button>
+        <button class="btn-del"  data-idx="${idx}" data-action="del">삭제</button>
       </td>
-    </tr>`;
-  }).join('');
+    </tr>`).join('');
+
+  // 이벤트 위임 (onclick 인라인 JSON 문제 완전 회피)
+  tbody.onclick = e => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const idx = parseInt(btn.dataset.idx);
+    const g   = subjectGroups[idx];
+    if (!g) return;
+    if (btn.dataset.action === 'edit') openEditModal(g);
+    if (btn.dataset.action === 'del')  deleteSubjectGroup(g);
+  };
 }
 
 // 수강과목 편집 모달 열기
-function openEditModal(keysJson, gInfoJson) {
-  let keys, g;
-  try { keys = JSON.parse(keysJson); g = JSON.parse(gInfoJson); } catch(e){ return; }
-  document.getElementById('modal-keys').value    = JSON.stringify(keys);
+function openEditModal(g) {
+  document.getElementById('modal-keys').value    = JSON.stringify(g.keys);
   document.getElementById('m-grade').value       = g.학년||'';
   document.getElementById('m-grade').readOnly    = true;
   document.getElementById('m-grade').style.background = 'var(--bg)';
@@ -664,69 +678,11 @@ function openEditModal(keysJson, gInfoJson) {
   document.getElementById('m-type').value        = g.분류||'교과';
   document.getElementById('m-subject').value     = g.과목||'';
   document.getElementById('m-teacher').value     = g.교사||'';
-  document.getElementById('m-count').textContent = `${keys.length}개 레코드 일괄 수정`;
+  document.getElementById('m-count').textContent = `${g.keys.length}개 레코드 일괄 수정`;
   document.getElementById('add-student-row').style.display = 'none';
   document.getElementById('modal-overlay').classList.add('on');
 }
 function closeModal() { document.getElementById('modal-overlay').classList.remove('on'); }
-
-// 수강과목 저장 (수정 or 추가)
-async function saveSubject() {
-  let keys;
-  try { keys = JSON.parse(document.getElementById('modal-keys').value); } catch(e){ keys=[]; }
-  const grade   = document.getElementById('m-grade').value.trim();
-  const cls     = document.getElementById('m-class').value.trim();
-  const type    = document.getElementById('m-type').value;
-  const subject = document.getElementById('m-subject').value.trim();
-  const teacher = document.getElementById('m-teacher').value.trim();
-  if (!subject||!teacher) { toast('과목명과 교사를 입력해주세요.', 'err'); return; }
-
-  // 추가 모드 (keys 비어있음)
-  if (keys.length === 0) {
-    if (!grade||!cls) { toast('학년과 반을 입력해주세요.', 'err'); return; }
-    const studentsRaw = (document.getElementById('m-students').value||'').trim();
-    const studentList = studentsRaw ? studentsRaw.split(',').map(s=>s.trim()).filter(Boolean) : [' '];
-    try {
-      await Promise.all(studentList.map(name => {
-        const newKey = `${grade}_${cls}_${name}_${teacher}`;
-        const data   = { 학년:Number(grade), 반:cls, 분류:type, 이름:name, 과목:subject, 교사:teacher };
-        allSubjects[newKey] = data;
-        return db.ref(`subjects/${newKey}`).set(data);
-      }));
-      toast(`${studentList.length}개 레코드 추가 완료`, 'ok');
-      closeModal();
-      renderSubjects();
-    } catch(e) { toast('추가 실패: '+e.message, 'err'); }
-    return;
-  }
-
-  // 수정 모드
-  try {
-    await Promise.all(keys.map(key => {
-      const updated = { ...allSubjects[key], 분류:type, 과목:subject, 교사:teacher };
-      allSubjects[key] = updated;
-      return db.ref(`subjects/${key}`).update({ 분류:type, 과목:subject, 교사:teacher });
-    }));
-    toast(`${keys.length}개 레코드 수정 완료`, 'ok');
-    closeModal();
-    renderSubjects();
-  } catch(e) { toast('저장 실패: '+e.message, 'err'); }
-}
-
-// 수강과목 그룹 삭제
-async function deleteSubjectGroup(keysJson, subject, teacher) {
-  let keys;
-  try { keys = JSON.parse(keysJson); } catch(e){ return; }
-  if (!confirm(`"${subject} / ${teacher}" 과목을 ${keys.length}개 레코드 모두 삭제하시겠습니까?`)) return;
-  try {
-    await Promise.all(keys.map(key => {
-      delete allSubjects[key];
-      return db.ref(`subjects/${key}`).remove();
-    }));
-    toast(`${keys.length}개 레코드 삭제 완료`, 'ok');
-    renderSubjects();
-  } catch(e) { toast('삭제 실패: '+e.message, 'err'); }
-}
 
 // 수강과목 추가 모달
 function openAddModal() {
@@ -742,8 +698,60 @@ function openAddModal() {
   document.getElementById('m-teacher').value     = '';
   document.getElementById('m-count').textContent = '새 과목 추가';
   document.getElementById('add-student-row').style.display = 'block';
-  document.getElementById('m-students').value   = '';
+  document.getElementById('m-students').value    = '';
   document.getElementById('modal-overlay').classList.add('on');
+}
+
+// 수강과목 저장 (수정 or 추가)
+async function saveSubject() {
+  let keys;
+  try { keys = JSON.parse(document.getElementById('modal-keys').value); } catch(e){ keys=[]; }
+  const grade   = String(document.getElementById('m-grade').value).trim();
+  const cls     = document.getElementById('m-class').value.trim();
+  const type    = document.getElementById('m-type').value;
+  const subject = document.getElementById('m-subject').value.trim();
+  const teacher = document.getElementById('m-teacher').value.trim();
+  if (!subject||!teacher) { toast('과목명과 교사를 입력해주세요.', 'err'); return; }
+
+  if (keys.length === 0) {
+    // 추가 모드
+    if (!grade||!cls) { toast('학년과 반을 입력해주세요.', 'err'); return; }
+    const studentsRaw = (document.getElementById('m-students').value||'').trim();
+    const studentList = studentsRaw ? studentsRaw.split(',').map(s=>s.trim()).filter(Boolean) : [' '];
+    try {
+      await Promise.all(studentList.map(name => {
+        const newKey = `${grade}_${cls}_${name}_${teacher}`;
+        const data   = { 학년:Number(grade), 반:cls, 분류:type, 이름:name, 과목:subject, 교사:teacher };
+        allSubjects[newKey] = data;
+        return db.ref(`subjects/${newKey}`).set(data);
+      }));
+      toast(`${studentList.length}개 레코드 추가 완료`, 'ok');
+      closeModal(); renderSubjects();
+    } catch(e) { toast('추가 실패: '+e.message, 'err'); }
+  } else {
+    // 수정 모드
+    try {
+      await Promise.all(keys.map(key => {
+        allSubjects[key] = { ...allSubjects[key], 분류:type, 과목:subject, 교사:teacher };
+        return db.ref(`subjects/${key}`).update({ 분류:type, 과목:subject, 교사:teacher });
+      }));
+      toast(`${keys.length}개 레코드 수정 완료`, 'ok');
+      closeModal(); renderSubjects();
+    } catch(e) { toast('저장 실패: '+e.message, 'err'); }
+  }
+}
+
+// 수강과목 그룹 삭제
+async function deleteSubjectGroup(g) {
+  if (!confirm(`"${g.과목} / ${g.교사}" 과목을 ${g.keys.length}개 레코드 모두 삭제하시겠습니까?`)) return;
+  try {
+    await Promise.all(g.keys.map(key => {
+      delete allSubjects[key];
+      return db.ref(`subjects/${key}`).remove();
+    }));
+    toast(`${g.keys.length}개 레코드 삭제 완료`, 'ok');
+    renderSubjects();
+  } catch(e) { toast('삭제 실패: '+e.message, 'err'); }
 }
 
 // ════════════════════════════════════════════════
@@ -879,6 +887,60 @@ async function bulkUpdate() {
     toast(`${target.length}명 일괄 변경 완료 (${val}회)`, 'ok');
     renderStudents();
   } catch(e) { toast('일괄 변경 실패: '+e.message, 'err'); }
+}
+
+// ════════════════════════════════════════════════
+// 엑셀 다운로드 (CSV → .xlsx 아이콘으로 열림)
+// ════════════════════════════════════════════════
+function downloadExcel() {
+  const grade  = document.getElementById('rv-grade').value;
+  const cls    = document.getElementById('rv-class').value;
+  const search = (document.getElementById('rv-search').value||'').trim().toLowerCase();
+
+  let list = Object.values(allReservations);
+  if (grade)  list = list.filter(r=>String(r.학년)===grade);
+  if (cls)    list = list.filter(r=>r.반===cls);
+  if (search) list = list.filter(r=>
+    (r.학생||'').toLowerCase().includes(search)||
+    (r.교사||'').toLowerCase().includes(search)
+  );
+  list.sort((a,b)=>{
+    const ga = Number(a.학년)||0, gb = Number(b.학년)||0;
+    if (ga!==gb) return ga-gb;
+    if ((a.반||'')!==(b.반||'')) return (a.반||'').localeCompare(b.반||'');
+    return (a.시간||'').localeCompare(b.시간||'');
+  });
+
+  if (!list.length) { toast('다운로드할 예약 데이터가 없습니다.', 'warn'); return; }
+
+  // BOM + CSV 생성 (한글 엑셀 호환)
+  const headers = ['학생','학년','반','교사','과목','시간','예약시간'];
+  const rows = list.map(r => [
+    r.학생||'',
+    r.학년||'',
+    r.반||'',
+    r.교사||'',
+    r.과목||'',
+    r.시간||'',
+    r.예약시간 ? new Date(r.예약시간).toLocaleString('ko-KR') : ''
+  ]);
+
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(','))
+    .join('\r\n');
+
+  const bom = '\uFEFF';
+  const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const now  = new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','');
+  a.href     = url;
+  a.download = `HIS_PTC_예약현황_${now}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast(`${list.length}건 엑셀 다운로드 완료`, 'ok');
 }
 
 // ── 유틸 ──────────────────────────────────────────
