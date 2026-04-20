@@ -117,7 +117,7 @@ hr.div{border:none;border-top:1px dashed var(--bd);margin:18px 0}
     <div id="s1">
       <div class="step-hd">
         <div class="sn active" id="n1">1</div>
-        <span class="slabel">학년 선택</span>
+        <span class="slabel">학년 선택 Select Grade</span>
         <span class="sval hidden" id="v1"></span>
       </div>
       <div class="bgrid">
@@ -136,11 +136,11 @@ hr.div{border:none;border-top:1px dashed var(--bd);margin:18px 0}
     <div id="s2" class="locked">
       <div class="step-hd">
         <div class="sn" id="n2">2</div>
-        <span class="slabel">반 선택</span>
+        <span class="slabel">반 선택 Select a class</span>
         <span class="sval hidden" id="v2"></span>
       </div>
       <div class="bgrid" id="cls-btns">
-        <p style="font-size:13px;color:var(--sb)">학년을 먼저 선택하세요</p>
+        <p style="font-size:13px;color:var(--sb)">학년을 먼저 선택하세요<br>Please select a grade first</p>
       </div>
     </div>
 
@@ -164,14 +164,14 @@ hr.div{border:none;border-top:1px dashed var(--bd);margin:18px 0}
     <div id="s4" class="locked">
       <div class="step-hd">
         <div class="sn" id="n4">4</div>
-        <span class="slabel">비밀번호 입력</span>
+        <span class="slabel">비밀번호 입력 Enter password</span>
       </div>
       <div class="pw-row">
-        <input type="password" id="pw" class="pw-in" placeholder="비밀번호"
+        <input type="password" id="pw" class="pw-in" placeholder="비밀번호 Password"
                onkeydown="if(event.key==='Enter')doLogin()">
         <button class="btn-login" id="btn-login" onclick="doLogin()">로그인</button>
       </div>
-      <p style="font-size:11px;color:var(--sb);margin-top:8px">※ 비밀번호는 생년월일 6자리 입니다.<br>The password is your 6-digit date of birth.</p>
+      <p style="font-size:11px;color:var(--sb);margin-top:12px">※ 비밀번호는 생년월일 6자리 입니다.<br>The password is your 6-digit date of birth.</p>
     </div>
 
   </div>
