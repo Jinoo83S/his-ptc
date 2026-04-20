@@ -93,8 +93,8 @@ button{cursor:pointer;font-family:inherit;border:none}
         <p>Handong International School · PTC 2026</p>
       </div>
       <div class="top-btns">
-        <button class="btn gold" onclick="location.href='reservations.html'">📋 내 예약</button>
-        <button class="btn" onclick="logout()">로그아웃</button>
+        <button class="btn gold" onclick="location.href='reservations.html'">📋 내 예약 My Reservations</button>
+        <button class="btn" onclick="logout()">로그아웃 Log out</button>
       </div>
     </div>
 
@@ -104,12 +104,12 @@ button{cursor:pointer;font-family:inherit;border:none}
         <div class="stu-name" id="stu-name">—</div>
         <div class="stu-info" id="stu-info">—</div>
       </div>
-      <div class="quota-pill" id="quota">예약 0 / 0</div>
+      <div class="quota-pill" id="quota">예약 Reservation 0 / 0</div>
     </div>
 
     <!-- 교사 목록 -->
     <div id="teacher-container">
-      <div class="spin-wrap"><div class="spinner"></div>선생님 목록을 불러오는 중...</div>
+      <div class="spin-wrap"><div class="spinner"></div>선생님 목록을 불러오는 중...<br>Loading the list of teachers...</div>
     </div>
 
   </div>
@@ -210,7 +210,7 @@ async function loadData() {
     console.error(e);
     toast('데이터를 불러오지 못했습니다.', 'err');
     document.getElementById('teacher-container').innerHTML =
-      '<div class="empty">⚠️ 데이터 로드 실패. 새로고침 해주세요.</div>';
+      '<div class="empty">⚠️ 데이터 로드 실패. 새로고침 해주세요. Data loading failed. Please refresh the page.</div>';
   }
 }
 
@@ -222,7 +222,7 @@ function renderTeachers(teacherMap) {
   const teachers = Object.entries(teacherMap);
 
   if (!teachers.length) {
-    container.innerHTML = '<div class="empty">배정된 선생님이 없습니다.<br>관리자에게 문의해주세요.</div>';
+    container.innerHTML = '<div class="empty">배정된 선생님이 없습니다.<br>관리자에게 문의해주세요.<br>No teacher has been assigned.<br>Please contact the administrator.</div>';
     return;
   }
 
