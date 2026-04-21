@@ -77,6 +77,21 @@ button{cursor:pointer;font-family:inherit;border:none}
 
 .empty{background:rgba(255,255,255,.1);border:1px dashed rgba(255,255,255,.25);border-radius:16px;padding:28px 20px;text-align:center;color:rgba(255,255,255,.65);font-size:14px}
 
+.empty{background:rgba(255,255,255,.1);border:1px dashed rgba(255,255,255,.25);border-radius:16px;padding:28px 20px;text-align:center;color:rgba(255,255,255,.65);font-size:14px}
+
+/* ── 예약 잠금 오버레이 ── */
+#lock-overlay{position:fixed;inset:0;z-index:300;background:rgba(8,18,60,.75);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:20px}
+#lock-overlay.on{display:flex}
+.lock-box{background:#fff;border-radius:var(--rlg);padding:36px 28px;max-width:420px;width:100%;text-align:center;box-shadow:var(--shh);animation:fadeUp .4s cubic-bezier(.16,1,.3,1)}
+.lock-icon{font-size:54px;margin-bottom:14px;line-height:1}
+.lock-box h2{font-size:20px;font-weight:900;color:var(--nv);margin-bottom:10px}
+.lock-box .lock-desc{font-size:14px;color:var(--sb);line-height:1.65;white-space:pre-line}
+.lock-period-wrap{background:var(--bg);border:1.5px solid var(--bd);border-radius:12px;padding:14px 18px;margin:18px 0;text-align:left}
+.lock-period-wrap .lp-label{font-size:11px;font-weight:800;color:var(--sb);letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px}
+.lock-period-wrap .lp-row{font-size:14px;font-weight:700;color:var(--nv);line-height:1.8}
+.lock-period-wrap .lp-row span{display:inline-block;width:34px;font-size:12px;color:var(--sb);font-weight:600}
+.lock-note{font-size:12px;color:var(--sb)}
+
 @media(min-width:700px){.page{padding:32px 20px 60px}}
 </style>
 </head>
@@ -115,6 +130,20 @@ button{cursor:pointer;font-family:inherit;border:none}
   </div>
 </div>
 
+<!-- ── 예약 잠금 오버레이 ── -->
+<div id="lock-overlay">
+  <div class="lock-box">
+    <div class="lock-icon" id="lock-icon">🔒</div>
+    <h2 id="lock-title">예약 기간이 아닙니다</h2>
+    <p class="lock-desc" id="lock-desc">현재 예약 가능한 기간이 아닙니다.</p>
+    <div class="lock-period-wrap" id="lock-period-wrap" style="display:none">
+      <div class="lp-label">📅 예약 가능 기간</div>
+      <div class="lock-period-wrap__rows" id="lock-period-rows"></div>
+    </div>
+    <p class="lock-note">문의사항은 담당 선생님께 연락해주세요.</p>
+  </div>
+</div>
+
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -150,6 +179,7 @@ function init() {
   document.getElementById('stu-name').textContent = student.이름;
   document.getElementById('stu-info').textContent = `${student.학년}학년 ${student.반}반`;
 
+  checkPeriod();
   loadData();
 }
 
@@ -293,6 +323,54 @@ function selectTeacher(teacher, subject, type) {
     교사: teacher, 과목: subject, 분류: type
   }));
   location.href = 'timeslots.html';
+}
+
+// ── 예약 기간 체크 ───────────────────────────────
+async function checkPeriod() {
+  try {
+    const snap = await db.ref('settings/period').once('value');
+    const p = snap.val();
+    if (!p || !p.start || !p.end) return; // 미설정 → 제한 없음
+
+    const now = Date.now();
+    const s   = new Date(p.start);
+    const e   = new Date(p.end);
+    const fmt = d => d.toLocaleString('ko-KR', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: false
+    });
+
+    if (now < s.getTime()) {
+      // 아직 시작 전
+      showLock(
+        '⏳', '예약 준비 중',
+        '아직 예약 기간이 시작되지 않았습니다.\n아래 일정을 확인해주세요.',
+        s, e, fmt
+      );
+    } else if (now > e.getTime()) {
+      // 종료됨
+      showLock(
+        '🔒', '예약이 종료되었습니다',
+        '예약 기간이 종료되었습니다.\n문의사항은 담당 선생님께 연락해주세요.',
+        s, e, fmt
+      );
+    }
+    // 기간 내 → 잠금 없음
+  } catch(err) {
+    console.error('Period check error:', err);
+    // 오류 시 제한 없음으로 처리 (서비스 중단 방지)
+  }
+}
+
+function showLock(icon, title, desc, s, e, fmt) {
+  document.getElementById('lock-icon').textContent  = icon;
+  document.getElementById('lock-title').textContent = title;
+  document.getElementById('lock-desc').textContent  = desc;
+  document.getElementById('lock-period-rows').innerHTML =
+    `<div class="lp-row"><span>시작</span>${fmt(s)}</div>` +
+    `<div class="lp-row"><span>종료</span>${fmt(e)}</div>`;
+  document.getElementById('lock-period-wrap').style.display = '';
+  document.getElementById('lock-overlay').classList.add('on');
 }
 
 // ── 유틸 ─────────────────────────────────────────
