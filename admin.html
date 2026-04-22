@@ -124,26 +124,6 @@ tr:hover td{background:#FAFBFF}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{text-align:center;padding:28px;color:var(--sb);font-size:14px}
 
-/* ── 예약 기간 배너 ── */
-.period-banner{background:#fff;border-bottom:2px solid var(--bd);padding:10px 16px;position:sticky;top:45px;z-index:90;box-shadow:0 2px 8px rgba(15,31,92,.06)}
-.period-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.period-label{font-size:13px;font-weight:800;color:var(--nv);white-space:nowrap;display:flex;align-items:center;gap:5px}
-.period-fields{display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:1;min-width:0}
-.period-field{display:flex;align-items:center;gap:5px}
-.period-field label{font-size:11px;font-weight:700;color:var(--sb);white-space:nowrap}
-.period-field input[type=datetime-local]{padding:6px 9px;border:1.5px solid var(--bd);border-radius:8px;font-size:13px;color:var(--tx);outline:none;transition:border-color .2s;background:#FAFBFF}
-.period-field input[type=datetime-local]:focus{border-color:var(--nv2)}
-.period-sep{font-size:15px;color:var(--sb);font-weight:700;padding:0 2px}
-.btn-period-save{padding:7px 16px;background:linear-gradient(135deg,var(--nv),var(--nv2));color:#fff;border-radius:8px;font-size:13px;font-weight:800;white-space:nowrap;transition:opacity .14s;box-shadow:0 2px 8px rgba(15,31,92,.2)}
-.btn-period-save:hover{opacity:.85}
-.btn-period-clear{padding:7px 11px;background:var(--rdb);color:var(--rd);border:1.5px solid #FECACA;border-radius:8px;font-size:13px;font-weight:700;white-space:nowrap;transition:background .14s}
-.btn-period-clear:hover{background:#FEE2E2}
-.period-status{font-size:12px;font-weight:700;padding:5px 12px;border-radius:20px;white-space:nowrap;border:1.5px solid transparent}
-.period-status.open{background:var(--gnb);color:var(--gn);border-color:#86EFAC}
-.period-status.closed{background:var(--rdb);color:var(--rd);border-color:#FECACA}
-.period-status.waiting{background:var(--ylb);color:var(--yl);border-color:#FCD34D}
-.period-status.unset{background:var(--bg);color:var(--sb);border-color:var(--bd)}
-
 /* ── 모달 ── */
 #modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(8,18,60,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:16px}
 #modal-overlay.on{display:flex}
@@ -192,27 +172,6 @@ tr:hover td{background:#FAFBFF}
     <button class="tab" onclick="switchTab('subjects')">📚 수강과목</button>
     <button class="tab" onclick="switchTab('reservations')">📋 예약 현황</button>
     <button class="tab" onclick="switchTab('students')">👤 예약 횟수</button>
-  </div>
-
-  <!-- ── 예약 기간 설정 배너 ── -->
-  <div class="period-banner" id="period-banner">
-    <div class="period-inner">
-      <span class="period-label">📅 예약 기간 설정</span>
-      <div class="period-fields">
-        <div class="period-field">
-          <label>시작</label>
-          <input type="datetime-local" id="period-start">
-        </div>
-        <span class="period-sep">~</span>
-        <div class="period-field">
-          <label>종료</label>
-          <input type="datetime-local" id="period-end">
-        </div>
-      </div>
-      <button class="btn-period-save" onclick="savePeriod()">💾 저장</button>
-      <button class="btn-period-clear" onclick="clearPeriod()">🔓 제한 해제</button>
-      <div class="period-status unset" id="period-status">미설정</div>
-    </div>
   </div>
 
   <!-- ── 탭1: 교사 시간 ── -->
@@ -376,13 +335,14 @@ tr:hover td{background:#FAFBFF}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyCz-baFM_1-ecp2HUKxrF2aPXhtDv1xxrc",
-  authDomain: "his-ptc-2026.firebaseapp.com",
-  databaseURL: "https://his-ptc-2026-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "his-ptc-2026",
-  storageBucket: "his-ptc-2026.firebasestorage.app",
-  messagingSenderId: "712671108934",
-  appId: "1:712671108934:web:0782167bb63c3d836b4f47"
+  apiKey: "AIzaSyBFoBcT-jvdlzl7nlWiG_MrA9WjzxTRjvY",
+  authDomain: "his-ptc.firebaseapp.com",
+  databaseURL: "https://his-ptc-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "his-ptc",
+  storageBucket: "his-ptc.firebasestorage.app",
+  messagingSenderId: "658097061370",
+  appId: "1:658097061370:web:63ddb52152d98b12bbf843",
+  measurementId: "G-4S36EVP497"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
@@ -417,7 +377,6 @@ async function loadAll() {
     allReservations = rvSnap.val()  || {};
     allStudents     = stSnap.val()  || {};
     allSubjects     = subSnap.val() || {};
-    await loadSettings();
     renderAll();
   } catch(e) { console.error(e); toast('데이터 로드 실패', 'err'); }
 }
@@ -983,77 +942,6 @@ function downloadExcel() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
   toast(`${list.length}건 엑셀 다운로드 완료`, 'ok');
-}
-
-// ════════════════════════════════════════════════
-// 예약 기간 설정
-// ════════════════════════════════════════════════
-async function loadSettings() {
-  try {
-    const snap = await db.ref('settings/period').once('value');
-    const p = snap.val();
-    if (p && p.start) document.getElementById('period-start').value = toLocalDT(p.start);
-    if (p && p.end)   document.getElementById('period-end').value   = toLocalDT(p.end);
-    updatePeriodStatus(p);
-  } catch(e) {
-    updatePeriodStatus(null);
-  }
-}
-
-// ISO 문자열 → datetime-local value 형식 (로컬 시간)
-function toLocalDT(isoStr) {
-  if (!isoStr) return '';
-  const d = new Date(isoStr);
-  const pad = n => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function updatePeriodStatus(p) {
-  const el = document.getElementById('period-status');
-  if (!p || !p.start || !p.end) {
-    el.textContent = '⚪ 미설정 (제한 없음)';
-    el.className = 'period-status unset';
-    return;
-  }
-  const now = Date.now();
-  const s = new Date(p.start).getTime();
-  const e = new Date(p.end).getTime();
-  if (now < s) {
-    el.textContent = '⏳ 예약 대기중';
-    el.className = 'period-status waiting';
-  } else if (now > e) {
-    el.textContent = '🔒 예약 종료됨';
-    el.className = 'period-status closed';
-  } else {
-    el.textContent = '✅ 예약 진행중';
-    el.className = 'period-status open';
-  }
-}
-
-async function savePeriod() {
-  const sv = document.getElementById('period-start').value;
-  const ev = document.getElementById('period-end').value;
-  if (!sv || !ev) { toast('시작·종료 시간을 모두 입력해주세요.', 'err'); return; }
-  const s = new Date(sv), e = new Date(ev);
-  if (s >= e) { toast('종료 시간은 시작 시간보다 늦어야 합니다.', 'err'); return; }
-  try {
-    const data = { start: s.toISOString(), end: e.toISOString() };
-    await db.ref('settings/period').set(data);
-    updatePeriodStatus(data);
-    const fmt = d => d.toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-    toast(`예약 기간 저장 완료: ${fmt(s)} ~ ${fmt(e)}`, 'ok');
-  } catch(err) { toast('저장 실패: ' + err.message, 'err'); }
-}
-
-async function clearPeriod() {
-  if (!confirm('예약 기간 제한을 해제하시겠습니까?\n(학생들이 언제든 예약할 수 있게 됩니다)')) return;
-  try {
-    await db.ref('settings/period').remove();
-    document.getElementById('period-start').value = '';
-    document.getElementById('period-end').value   = '';
-    updatePeriodStatus(null);
-    toast('예약 기간 제한이 해제되었습니다.', 'ok');
-  } catch(err) { toast('해제 실패: ' + err.message, 'err'); }
 }
 
 // ── 유틸 ──────────────────────────────────────────
