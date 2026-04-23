@@ -27,6 +27,7 @@ button{cursor:pointer;font-family:inherit;border:none}
 .page{min-height:100dvh;padding:24px 14px 54px}
 .wrap{max-width:760px;margin:0 auto}
 
+/* 상단 바 */
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
 .brand h1{font-family:'DM Serif Display',serif;font-size:20px;color:#fff;line-height:1.2}
 .brand p{margin-top:3px;font-size:12px;color:rgba(255,255,255,.65)}
@@ -35,6 +36,7 @@ button{cursor:pointer;font-family:inherit;border:none}
 .btn:hover{background:rgba(255,255,255,.22)}
 .btn.gold{background:linear-gradient(135deg,var(--gd2),var(--gd3));color:var(--nv);border:none}
 
+/* 학생 정보 카드 */
 .info-card{background:rgba(255,255,255,.14);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.22);border-radius:var(--rlg);padding:16px 20px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
 .stu-name{font-size:18px;font-weight:900;color:#fff}
 .stu-info{font-size:13px;color:rgba(255,255,255,.7);margin-top:3px}
@@ -42,8 +44,10 @@ button{cursor:pointer;font-family:inherit;border:none}
 .quota-pill.warn{background:rgba(251,209,85,.25);border-color:var(--gd3);color:var(--gd3)}
 .quota-pill.full{background:rgba(220,38,38,.25);border-color:#FCA5A5;color:#FCA5A5}
 
+/* 섹션 */
 .section-label{font-size:11px;font-weight:800;color:rgba(255,255,255,.6);letter-spacing:1.5px;text-transform:uppercase;margin:20px 0 8px}
 
+/* 교사 카드 */
 .tc-list{display:flex;flex-direction:column;gap:9px}
 .tc-card{background:#fff;border-radius:var(--rlg);padding:15px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--sh);cursor:pointer;transition:all .14s;border:2px solid transparent}
 .tc-card:hover{border-color:var(--nv2);transform:translateY(-1px);box-shadow:var(--shh)}
@@ -60,9 +64,13 @@ button{cursor:pointer;font-family:inherit;border:none}
 .tag-booked{background:var(--gnb);color:var(--gn)}
 .tc-arr{font-size:20px;color:var(--sb);flex-shrink:0}
 .tc-chk{font-size:20px;color:var(--gn);flex-shrink:0}
+
+/* 예약된 시간 표시 */
 .booked-time{font-size:12px;color:var(--gn);font-weight:700;margin-top:2px}
+/* 이름 옆 과목 */
 .tc-name-sub{font-size:12px;font-weight:500;color:var(--sb)}
 
+/* 로딩 */
 .spin-wrap{display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.8);font-size:13px;padding:20px 0}
 .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -90,6 +98,8 @@ button{cursor:pointer;font-family:inherit;border:none}
 
 <div class="page">
   <div class="wrap">
+
+    <!-- 상단 바 -->
     <div class="topbar">
       <div class="brand">
         <h1>상담 선생님 선택</h1>
@@ -101,6 +111,7 @@ button{cursor:pointer;font-family:inherit;border:none}
       </div>
     </div>
 
+    <!-- 학생 정보 -->
     <div class="info-card">
       <div>
         <div class="stu-name" id="stu-name">—</div>
@@ -109,9 +120,11 @@ button{cursor:pointer;font-family:inherit;border:none}
       <div class="quota-pill" id="quota">예약 Reservation 0 / 0</div>
     </div>
 
+    <!-- 교사 목록 -->
     <div id="teacher-container">
       <div class="spin-wrap"><div class="spinner"></div>선생님 목록을 불러오는 중...<br>Loading the list of teachers...</div>
     </div>
+
   </div>
 </div>
 
@@ -133,6 +146,7 @@ button{cursor:pointer;font-family:inherit;border:none}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
+// ── Firebase 초기화 ──────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyBFoBcT-jvdlzl7nlWiG_MrA9WjzxTRjvY",
   authDomain: "his-ptc.firebaseapp.com",
@@ -146,82 +160,131 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+// ── 상태 ─────────────────────────────────────────
 let student = null;
-let myReservations = {};
+let myReservations = {};  // { 교사이름: { 시간, 예약시간 } }
 
+// ── 초기화 ───────────────────────────────────────
 function init() {
-  try { student = JSON.parse(sessionStorage.getItem('his_student')); } catch(e) {}
-  if (!student) { location.href = 'index.html'; return; }
+  try {
+    student = JSON.parse(sessionStorage.getItem('his_student'));
+  } catch(e) {}
+
+  if (!student) {
+    location.href = 'index.html'; return;
+  }
+
+  // 학생 정보 표시
   document.getElementById('stu-name').textContent = student.이름;
   document.getElementById('stu-info').textContent = `${student.학년}학년 ${student.반}반`;
+
   checkPeriod();
   loadData();
 }
 
+// ── 교사 목록 + 내 예약 동시 로드 ─────────────────
 async function loadData() {
   try {
-    const rvSnap = await db.ref('reservations').orderByChild('학생').equalTo(student.이름).once('value');
+    // 1. 내 예약 현황 먼저 가져오기
+    const rvSnap = await db.ref('reservations')
+      .orderByChild('학생')
+      .equalTo(student.이름)
+      .once('value');
+
     myReservations = {};
     rvSnap.forEach(child => {
       const r = child.val();
-      if (String(r.학년) === String(student.학년) && r.반 === student.반)
+      // 같은 학년/반인지 확인
+      if (String(r.학년) === String(student.학년) && r.반 === student.반) {
         myReservations[r.교사] = { 시간: r.시간, 예약시간: r.예약시간 };
+      }
     });
 
-    const subSnap = await db.ref('subjects').orderByChild('이름').equalTo(student.이름).once('value');
-    const teacherMap = {};
+    // 2. 내 수강과목 교사 목록 가져오기
+    const subSnap = await db.ref('subjects')
+      .orderByChild('이름')
+      .equalTo(student.이름)
+      .once('value');
+
+    // 교사별 중복 제거
+    const teacherMap = {};  // { 교사이름: { 과목, 분류 } }
+
     subSnap.forEach(child => {
       const s = child.val();
-      if (String(s.학년) === String(student.학년) && s.반 === student.반)
-        if (!teacherMap[s.교사]) teacherMap[s.교사] = { 과목: s.과목, 분류: s.분류 };
+      if (String(s.학년) === String(student.학년) && s.반 === student.반) {
+        if (!teacherMap[s.교사]) {
+          teacherMap[s.교사] = { 과목: s.과목, 분류: s.분류 };
+        }
+      }
     });
 
-    const hmSnap = await db.ref('subjects').orderByChild('이름').equalTo(' ').once('value');
+    // 담임/진로 선생님 (학년+반 기준, 이름 공백)
+    const hmSnap = await db.ref('subjects')
+      .orderByChild('이름')
+      .equalTo(' ')
+      .once('value');
+
     hmSnap.forEach(child => {
       const s = child.val();
-      if (String(s.학년) === String(student.학년) && s.반 === student.반)
-        if (!teacherMap[s.교사]) teacherMap[s.교사] = { 과목: s.과목, 분류: s.분류 };
+      if (String(s.학년) === String(student.학년) && s.반 === student.반) {
+        if (!teacherMap[s.교사]) {
+          teacherMap[s.교사] = { 과목: s.과목, 분류: s.분류 };
+        }
+      }
     });
 
     renderTeachers(teacherMap);
+
   } catch(e) {
     console.error(e);
     toast('데이터를 불러오지 못했습니다.', 'err');
     document.getElementById('teacher-container').innerHTML =
-      '<div class="empty">⚠️ 데이터 로드 실패. 새로고침 해주세요.</div>';
+      '<div class="empty">⚠️ 데이터 로드 실패. 새로고침 해주세요. Data loading failed. Please refresh the page.</div>';
   }
 }
 
+// ── 교사 목록 렌더링 ────────────────────────────
 function renderTeachers(teacherMap) {
-  updateQuota();
+  updateQuota(teacherMap);
+
   const container = document.getElementById('teacher-container');
   const teachers = Object.entries(teacherMap);
+
   if (!teachers.length) {
-    container.innerHTML = '<div class="empty">배정된 선생님이 없습니다.<br>관리자에게 문의해주세요.</div>';
+    container.innerHTML = '<div class="empty">배정된 선생님이 없습니다.<br>관리자에게 문의해주세요.<br>No teacher has been assigned.<br>Please contact the administrator.</div>';
     return;
   }
+
+  // 분류별 그룹화
   const groups = { 담임: [], 진로: [], 교과: [] };
   teachers.forEach(([tcName, info]) => {
     const g = groups[info.분류] ? info.분류 : '교과';
     groups[g].push({ 교사: tcName, 과목: info.과목, 분류: info.분류 });
   });
+
   const labelMap = { 담임: '🏠 담임 선생님', 진로: '🧭 진로 상담', 교과: '📚 수강 과목 교사' };
   const iconMap  = { 담임: '🏠', 진로: '🧭', 교과: '👨‍🏫' };
+
   let html = '';
   ['담임','진로','교과'].forEach(type => {
     if (!groups[type].length) return;
     html += `<div class="section-label">${labelMap[type]}</div><div class="tc-list">`;
+
     groups[type].forEach(tc => {
       const booked = myReservations[tc.교사];
+      const tagClass = booked ? 'tag-booked' : `tag-${type}`;
+      const tagLabel = booked ? '예약완료' : (type === '담임' ? '담임' : type === '진로' ? '진로상담' : '교과');
       const cardClass = booked ? 'tc-card booked' : 'tc-card';
       const onClick = booked ? '' : `onclick="selectTeacher('${esc(tc.교사)}','${esc(tc.과목)}','${esc(tc.분류)}')"`;
-      const tagClass = booked ? 'tag-booked' : `tag-${type}`;
-      const tagLabel = booked ? '예약완료' : (type==='담임'?'담임':type==='진로'?'진로상담':'교과');
-      const rightIcon = booked ? `<span class="tc-chk">✓</span>` : `<span class="tc-arr">›</span>`;
-      const bookedTimeHtml = booked ? `<div class="booked-time">⏰ ${booked.시간}</div>` : '';
+      const rightIcon = booked
+        ? `<span class="tc-chk">✓</span>`
+        : `<span class="tc-arr">›</span>`;
+      const bookedTimeHtml = booked
+        ? `<div class="booked-time">⏰ ${booked.시간}</div>` : '';
+
       html += `
         <div class="${cardClass}" ${onClick}>
-          <div class="tc-ico">${iconMap[type]||'👨‍🏫'}</div>
+          <div class="tc-ico">${iconMap[type] || '👨‍🏫'}</div>
           <div class="tc-info">
             <div class="tc-name">${tc.교사} <span class="tc-name-sub">· ${tc.과목}</span></div>
             ${bookedTimeHtml}
@@ -230,40 +293,63 @@ function renderTeachers(teacherMap) {
           ${rightIcon}
         </div>`;
     });
+
     html += '</div>';
   });
+
   container.innerHTML = html;
 }
 
-function updateQuota() {
-  const max = student.예약횟수 || 5;
+// ── 예약 현황 업데이트 ───────────────────────────
+function updateQuota(teacherMap) {
+  const max  = student.예약횟수 || 5;
   const curr = Object.keys(myReservations).length;
-  const el = document.getElementById('quota');
+  const el   = document.getElementById('quota');
   el.textContent = `예약 ${curr} / ${max}`;
-  el.className = 'quota-pill' + (curr >= max ? ' full' : curr >= max-1 ? ' warn' : '');
+  el.className = 'quota-pill' + (curr >= max ? ' full' : curr >= max - 1 ? ' warn' : '');
 }
 
+// ── 교사 선택 → timeslots 페이지로 ──────────────
 function selectTeacher(teacher, subject, type) {
-  const max = student.예약횟수 || 5;
-  if (Object.keys(myReservations).length >= max) {
+  const max  = student.예약횟수 || 5;
+  const curr = Object.keys(myReservations).length;
+
+  if (curr >= max) {
     toast(`최대 예약 횟수(${max}회)에 도달했습니다.`, 'warn'); return;
   }
-  sessionStorage.setItem('his_selected_subject', JSON.stringify({ 교사: teacher, 과목: subject, 분류: type }));
+
+  sessionStorage.setItem('his_selected_subject', JSON.stringify({
+    교사: teacher, 과목: subject, 분류: type
+  }));
   location.href = 'timeslots.html';
 }
 
+// ── 예약 기간 체크 ───────────────────────────────
 async function checkPeriod() {
   try {
     const snap = await db.ref('settings/period').once('value');
     const p = snap.val();
-    if (!p || !p.start || !p.end) return;
-    const now = Date.now(), s = new Date(p.start), e = new Date(p.end);
-    const fmt = d => d.toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
-    if (now < s.getTime())
-      showLock('⏳','예약 준비 중','아직 예약 기간이 시작되지 않았습니다.\n아래 일정을 확인해주세요.',s,e,fmt);
-    else if (now > e.getTime())
-      showLock('🔒','예약이 종료되었습니다','예약 기간이 종료되었습니다.\n문의사항은 담당 선생님께 연락해주세요.',s,e,fmt);
-  } catch(err) { console.error('Period check error:', err); }
+    if (!p || !p.start || !p.end) return; // 미설정 → 제한 없음
+
+    const now = Date.now();
+    const s   = new Date(p.start);
+    const e   = new Date(p.end);
+    const fmt = d => d.toLocaleString('ko-KR', {
+      year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', hour12:false
+    });
+
+    if (now < s.getTime()) {
+      showLock('⏳', '예약 준비 중',
+        '아직 예약 기간이 시작되지 않았습니다.\n아래 일정을 확인해주세요.', s, e, fmt);
+    } else if (now > e.getTime()) {
+      showLock('🔒', '예약이 종료되었습니다',
+        '예약 기간이 종료되었습니다.\n문의사항은 담당 선생님께 연락해주세요.', s, e, fmt);
+    }
+  } catch(err) {
+    console.error('Period check error:', err);
+    // 오류 시 제한 없음으로 처리 (서비스 중단 방지)
+  }
 }
 
 function showLock(icon, title, desc, s, e, fmt) {
@@ -277,13 +363,18 @@ function showLock(icon, title, desc, s, e, fmt) {
   document.getElementById('lock-overlay').classList.add('on');
 }
 
+// ── 유틸 ─────────────────────────────────────────
 function toast(msg, type='') {
   const el = document.getElementById('toast');
   el.textContent = msg; el.className = type;
-  el.classList.add('on'); setTimeout(()=>el.classList.remove('on'), 3500);
+  el.classList.add('on');
+  setTimeout(() => el.classList.remove('on'), 3500);
 }
 function esc(s){ return String(s).replace(/'/g,"\\'"); }
-function logout(){ sessionStorage.clear(); location.href = 'index.html'; }
+function logout(){
+  sessionStorage.clear();
+  location.href = 'index.html';
+}
 
 init();
 </script>
