@@ -457,6 +457,12 @@ tr:hover td{background:#FAFBFF}
 
   <!-- ── 탭3: 예약 현황 ── -->
   <div id="tab-reservations" class="content" style="display:none">
+    <!-- 전체 초기화 버튼 -->
+    <div style="display:flex;justify-content:flex-end;padding:12px 20px 0">
+      <button onclick="resetAllReservations()" style="padding:9px 18px;background:linear-gradient(135deg,#DC2626,#b91c1c);color:#fff;border-radius:9px;font-size:13px;font-weight:800;border:none;cursor:pointer;box-shadow:0 2px 8px rgba(220,38,38,.3);display:inline-flex;align-items:center;gap:6px">
+        🗑️ 전체 예약 초기화
+      </button>
+    </div>
     <div class="stats">
       <div class="stat-card"><div class="stat-num" id="stat-total">-</div><div class="stat-label">총 예약</div></div>
       <div class="stat-card"><div class="stat-num" id="stat-students">-</div><div class="stat-label">예약 학생</div></div>
@@ -1622,6 +1628,44 @@ function exportCSV() {
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a'); a.href=url; a.download='students.csv'; a.click();
   URL.revokeObjectURL(url);
+}
+
+// ── 전체 예약 초기화 ─────────────────────────────
+async function resetAllReservations() {
+  const rvCount = Object.keys(allReservations).length;
+  if (!rvCount) { toast('초기화할 예약이 없습니다.', 'warn'); return; }
+
+  const confirmed = confirm(
+    `⚠️ 전체 예약 초기화\n\n` +
+    `예약 ${rvCount}건을 모두 삭제하고\n` +
+    `타임슬롯 예약완료 필드를 초기화합니다.\n\n` +
+    `이 작업은 되돌릴 수 없습니다.\n계속하시겠습니까?`
+  );
+  if (!confirmed) return;
+
+  // 2차 확인
+  const reconfirmed = confirm(`정말로 전체 예약 ${rvCount}건을 초기화하시겠습니까?`);
+  if (!reconfirmed) return;
+
+  try {
+    const updates = {};
+
+    // 1. reservations 전체 삭제
+    Object.keys(allReservations).forEach(key => {
+      updates[`reservations/${key}`] = null;
+    });
+
+    // 2. timeslots 예약완료 필드 초기화
+    Object.keys(allTimeslots).forEach(key => {
+      if (String(allTimeslots[key]['예약완료'] || '').trim() !== '') {
+        updates[`timeslots/${key}/예약완료`] = '';
+      }
+    });
+
+    await db.ref().update(updates);
+    toast(`✅ 전체 예약 ${rvCount}건 초기화 완료!`, 'ok');
+    await loadAll();
+  } catch(e) { toast('초기화 실패: ' + e.message, 'err'); }
 }
 
 // ── 유틸 ──────────────────────────────────────────
