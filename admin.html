@@ -436,6 +436,27 @@ tr:hover td{background:#FAFBFF}
       </select>
       <input class="flex1" type="text" id="sub-search" placeholder="🔍 교사/과목/분류 검색" oninput="renderSubjects()">
     </div>
+    <!-- 툴바: 엑셀 붙여넣기 + CSV -->
+    <div class="tool-bar">
+      <button class="btn-toggle-paste" id="sub-paste-toggle" onclick="togglePaste('sub')">📋 엑셀 붙여넣기 ▾</button>
+      <button class="btn-upload" onclick="document.getElementById('sub-csv-input').click()" style="padding:6px 12px">📂 CSV 업로드</button>
+      <input type="file" id="sub-csv-input" class="hidden-file" accept=".csv,.txt" onchange="uploadSubjectCSV(this)">
+      <button class="btn-upload export" onclick="exportSubjectCSV()" style="padding:6px 12px">⬇️ 내보내기</button>
+      <span class="upload-tip">CSV/엑셀: 학년,반,분류,과목명,교사이름</span>
+    </div>
+    <!-- 엑셀 붙여넣기 접기/펼치기 -->
+    <div class="paste-collapse" id="sub-paste-area">
+      <div class="ps-hint">
+        열 구성: <code>학년</code> <code>반</code> <code>분류</code> <code>과목명</code> <code>교사이름</code> — 탭으로 구분, 헤더 없이<br>
+        예) <code>7　A　교과　국어 Korean Language Arts　이주일</code>
+      </div>
+      <textarea class="paste-ta" id="sub-paste-ta" placeholder="엑셀 데이터를 붙여넣으세요 (Ctrl+V)" oninput="previewSubPaste()"></textarea>
+      <div class="paste-preview" id="sub-paste-preview"></div>
+      <div class="paste-btns">
+        <button class="btn-paste-add" onclick="pasteAddSubjects()">📥 과목 추가</button>
+        <button class="btn-paste-clear" onclick="document.getElementById('sub-paste-ta').value='';document.getElementById('sub-paste-preview').textContent=''">지우기</button>
+      </div>
+    </div>
     <div class="card">
       <div class="card-title">
         수강과목 목록
@@ -559,7 +580,21 @@ tr:hover td{background:#FAFBFF}
     </div>
     <div class="form-row">
       <label>과목명</label>
-      <input type="text" id="m-subject" placeholder="예: 국어 Korean Language Arts">
+      <input type="text" id="m-subject" placeholder="과목명 입력 또는 선택" list="subject-datalist" autocomplete="off">
+      <datalist id="subject-datalist">
+        <option value="국어 Korean Language Arts">
+        <option value="수학 Mathematics">
+        <option value="영어 English Language Arts">
+        <option value="과학 Science">
+        <option value="사회 Social Studies">
+        <option value="역사 History">
+        <option value="체육 P.E.">
+        <option value="미술 Art">
+        <option value="음악 Music">
+        <option value="컴퓨터 Computer Science">
+        <option value="담임 교사 Homeroom Teacher">
+        <option value="진로 상담 Career Guidance">
+      </datalist>
     </div>
     <div class="form-row">
       <label>교사 이름</label>
@@ -1666,6 +1701,97 @@ async function resetAllReservations() {
     toast(`✅ 전체 예약 ${rvCount}건 초기화 완료!`, 'ok');
     await loadAll();
   } catch(e) { toast('초기화 실패: ' + e.message, 'err'); }
+}
+
+// ════════════════════════════════════════════════
+// 수강과목 엑셀 붙여넣기 (MS/HS: 학년,반,분류,과목,교사)
+// ════════════════════════════════════════════════
+function parseSubPaste() {
+  const raw = document.getElementById('sub-paste-ta').value.trim();
+  if (!raw) return { rows:[], errors:[] };
+  const rows=[], errors=[];
+  raw.split('\n').forEach((line,i) => {
+    const cols = line.split('\t').map(c=>c.trim());
+    const [grade, cls, type, subject, teacher] = cols;
+    if (!grade&&!cls&&!type&&!subject&&!teacher) return;
+    if (!grade||!cls||!type||!subject||!teacher) { errors.push(`${i+1}행: 열이 부족합니다 → "${line}"`); return; }
+    if (!/^(7|8|9|10|11|12)$/.test(grade)) { errors.push(`${i+1}행: 학년은 7~12 → "${grade}"`); return; }
+    rows.push({ grade, cls, type, subject, teacher });
+  });
+  return { rows, errors };
+}
+
+function previewSubPaste() {
+  const { rows, errors } = parseSubPaste();
+  const el = document.getElementById('sub-paste-preview');
+  if (!rows.length && !errors.length) { el.textContent=''; return; }
+  const parts=[];
+  if (rows.length)   parts.push(`✅ ${rows.length}개 과목 인식됨`);
+  if (errors.length) parts.push(`⚠️ ${errors.length}행 오류`);
+  el.textContent = parts.join('  |  ');
+  el.className = 'paste-preview'+(errors.length?' err':'');
+}
+
+async function pasteAddSubjects() {
+  const { rows, errors } = parseSubPaste();
+  if (errors.length) { toast(`${errors.length}개 오류 (콘솔 확인)`,'err'); console.error(errors); }
+  if (!rows.length) { toast('추가할 과목이 없습니다.','err'); return; }
+  if (!confirm(`${rows.length}개 과목을 추가하시겠습니까?`)) return;
+  const updates = {};
+  rows.forEach(({ grade, cls, type, subject, teacher }, i) => {
+    const key = `${grade}_${cls}_\u0020_${teacher}_s${i}`;
+    updates[`subjects/${key}`] = { 학년:Number(grade), 반:cls, 분류:type, 이름:' ', 과목:subject, 교사:teacher };
+  });
+  try {
+    await db.ref().update(updates);
+    toast(`✅ ${rows.length}개 과목 추가 완료!`, 'ok');
+    document.getElementById('sub-paste-ta').value='';
+    document.getElementById('sub-paste-preview').textContent='';
+    await loadAll();
+  } catch(e) { toast('추가 실패: '+e.message,'err'); }
+}
+
+// ── 수강과목 CSV 업로드 / 내보내기 ────────────────
+// 형식: 학년,반,분류,과목명,교사이름
+function uploadSubjectCSV(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const lines = e.target.result.split('\n').map(l=>l.trim()).filter(Boolean);
+    const updates={}, errors=[];
+    lines.forEach((line,i) => {
+      const [grade,cls,type,subject,teacher] = line.split(',').map(s=>s.trim());
+      if (!grade||!cls||!type||!subject||!teacher) { errors.push(`${i+1}행 오류`); return; }
+      const key = `${grade}_${cls}_\u0020_${teacher}_s${i}`;
+      updates[`subjects/${key}`] = { 학년:Number(grade), 반:cls, 분류:type, 이름:' ', 과목:subject, 교사:teacher };
+    });
+    if (errors.length) toast(`⚠️ ${errors.length}개 오류`,'err');
+    if (!Object.keys(updates).length) { toast('업로드할 데이터 없음','err'); return; }
+    if (!confirm(`${Object.keys(updates).length}개 과목 업로드. 계속하시겠습니까?`)) { input.value=''; return; }
+    try {
+      await db.ref().update(updates);
+      toast(`✅ ${Object.keys(updates).length}개 업로드 완료!`,'ok');
+      await loadAll();
+    } catch(err) { toast('업로드 실패: '+err.message,'err'); }
+    input.value='';
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+function exportSubjectCSV() {
+  if (!Object.keys(allSubjects).length) { toast('내보낼 데이터가 없습니다.','err'); return; }
+  const seen=new Set(), rows=[];
+  Object.values(allSubjects)
+    .sort((a,b)=>String(a.학년).localeCompare(String(b.학년),undefined,{numeric:true})||(a.반||'').localeCompare(b.반||''))
+    .forEach(s => {
+      const key=`${s.학년}|${s.반}|${s.분류}|${s.과목}|${s.교사}`;
+      if (seen.has(key)) return; seen.add(key);
+      rows.push(`${s.학년},${s.반||''},${s.분류||'교과'},${s.과목||''},${s.교사||''}`);
+    });
+  const blob=new Blob(['\uFEFF'+rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='subjects.csv'; a.click();
+  URL.revokeObjectURL(url);
 }
 
 // ── 유틸 ──────────────────────────────────────────
