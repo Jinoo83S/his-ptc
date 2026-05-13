@@ -726,8 +726,6 @@ async function loadAll() {
 function refreshAll() { loadAll().then(() => toast('새로고침 완료', 'ok')); }
 function renderAll()  { renderTimeslots(); renderSubjects(); renderReservations(); renderStudents(); refreshTeacherDatalist(); }
 
-}
-
 // ── 탭 전환 ──────────────────────────────────────
 const TABS = ['timeslots','subjects','reservations','students','stulist'];
 function switchTab(tab) {
