@@ -283,29 +283,6 @@ tr:hover td{background:#FAFBFF}
     </div>
   </div>
 
-  <!-- 비밀번호 변경 팝업 -->
-  <div id="pw-modal-overlay" onclick="if(event.target===this)closePwModal()">
-    <div class="pw-modal-box">
-      <h2>🔐 관리자 비밀번호 변경</h2>
-      <div class="pw-modal-row">
-        <label>현재 비밀번호</label>
-        <input type="password" id="pw-old" placeholder="현재 비밀번호">
-      </div>
-      <div class="pw-modal-row">
-        <label>새 비밀번호</label>
-        <input type="password" id="pw-new" placeholder="새 비밀번호">
-      </div>
-      <div class="pw-modal-row">
-        <label>새 비밀번호 확인</label>
-        <input type="password" id="pw-new2" placeholder="다시 입력" onkeydown="if(event.key==='Enter')changeAdminPw()">
-      </div>
-      <div class="pw-modal-btns">
-        <button class="btn-pw-cancel" onclick="closePwModal()">취소</button>
-        <button class="btn-pw-save" onclick="changeAdminPw()">변경</button>
-      </div>
-    </div>
-  </div>
-
   <div class="tabs">
     <button class="tab active" onclick="switchTab('timeslots')">⏰ 교사 시간</button>
     <button class="tab" onclick="switchTab('subjects')">📚 수강과목</button>
@@ -343,6 +320,28 @@ tr:hover td{background:#FAFBFF}
   </div>
   </div><!-- /sticky-header -->
 
+  <!-- 비밀번호 변경 팝업 -->
+  <div id="pw-modal-overlay" onclick="if(event.target===this)closePwModal()">
+    <div class="pw-modal-box">
+      <h2>🔐 관리자 비밀번호 변경</h2>
+      <div class="pw-modal-row">
+        <label>현재 비밀번호</label>
+        <input type="password" id="pw-old" placeholder="현재 비밀번호">
+      </div>
+      <div class="pw-modal-row">
+        <label>새 비밀번호</label>
+        <input type="password" id="pw-new" placeholder="새 비밀번호">
+      </div>
+      <div class="pw-modal-row">
+        <label>새 비밀번호 확인</label>
+        <input type="password" id="pw-new2" placeholder="다시 입력" onkeydown="if(event.key==='Enter')changeAdminPw()">
+      </div>
+      <div class="pw-modal-btns">
+        <button class="btn-pw-cancel" onclick="closePwModal()">취소</button>
+        <button class="btn-pw-save" onclick="changeAdminPw()">변경</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ── 탭5: 학생 명단 ── -->
   <div id="tab-stulist" class="content" style="display:none">
@@ -497,7 +496,7 @@ tr:hover td{background:#FAFBFF}
       <div class="tbl-wrap">
         <table style="width:100%">
           <thead><tr>
-            <th style="width:40px">학년</th><th style="width:30px">반</th><th style="width:50px;white-space:nowrap">분류</th><th>과목</th><th style="white-space:nowrap">교사</th><th style="text-align:center;white-space:nowrap;width:60px">학생수</th><th style="white-space:nowrap;width:90px">수정/삭제</th>
+            <th style="width:38px">학년</th><th style="width:28px">반</th><th style="width:65px;white-space:nowrap">분류</th><th style="max-width:320px">과목</th><th style="width:120px;white-space:nowrap">교사</th><th style="text-align:center;white-space:nowrap;width:55px">학생수</th><th style="white-space:nowrap;width:88px">수정/삭제</th>
           </tr></thead>
           <tbody id="sub-tbody"></tbody>
         </table>
