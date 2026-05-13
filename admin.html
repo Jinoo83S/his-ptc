@@ -43,8 +43,9 @@ input,select,textarea{font-family:inherit}
 
 /* ── 관리자 화면 ── */
 #admin-screen{display:none}
-.sticky-header{position:sticky;top:0;z-index:100}
-.topbar{background:linear-gradient(120deg,var(--nv),var(--nv2) 55%,var(--nv3));padding:13px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 2px 12px rgba(15,31,92,.2)}
+#admin-screen.visible{padding-top:128px}
+.sticky-header{position:fixed;top:0;left:0;right:0;z-index:200;background:#fff}
+.topbar{background:linear-gradient(120deg,var(--nv),var(--nv2) 55%,var(--nv3));padding:13px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .topbar-left h1{font-family:'DM Serif Display',serif;font-size:17px;color:#fff}
 .topbar-left p{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px}
 .top-btns{display:flex;gap:8px}
@@ -219,7 +220,7 @@ tr:hover td{background:#FAFBFF}
 .empty{text-align:center;padding:28px;color:var(--sb);font-size:14px}
 
 /* ── 예약 기간 배너 ── */
-.period-banner{background:#fff;border-bottom:1px solid var(--bd);padding:7px 16px;z-index:90;box-shadow:0 1px 4px rgba(15,31,92,.05)}
+.period-banner{background:#fff;border-bottom:1px solid var(--bd);padding:7px 16px}
 .period-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;overflow-x:auto}
 .period-label{font-size:12px;font-weight:800;color:var(--nv);white-space:nowrap;display:flex;align-items:center;gap:4px}
 .period-fields{display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:1;min-width:0}
@@ -698,7 +699,14 @@ function adminLogout() {
 }
 async function showAdminScreen() {
   document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('admin-screen').style.display = 'block';
+  const as = document.getElementById('admin-screen');
+  as.style.display = 'block';
+  as.classList.add('visible');
+  // 실제 헤더 높이로 padding-top 동적 설정
+  requestAnimationFrame(() => {
+    const h = document.querySelector('.sticky-header')?.offsetHeight || 128;
+    as.style.paddingTop = h + 'px';
+  });
   loadAll();
 }
 async function initAdmin() {
