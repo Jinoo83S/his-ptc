@@ -58,7 +58,7 @@ input,select,textarea{font-family:inherit}
 .tab.active{color:var(--nv);border-bottom-color:var(--nv2)}
 
 /* ── 컨텐츠 ── */
-.content{padding:18px 16px;max-width:1100px;margin:0 auto}
+.content{padding:18px 16px}
 
 /* ── 필터 ── */
 .filter-bar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
@@ -117,6 +117,8 @@ input[type=file].hidden-file{display:none}
 .btn-tc-edit:hover{background:rgba(255,255,255,.32)}
 .btn-tc-del{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(220,38,38,.35);border:1px solid rgba(255,150,150,.4);color:#fff;cursor:pointer;transition:background .13s}
 .btn-tc-del:hover{background:rgba(220,38,38,.55)}
+.btn-tc-copy{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(251,209,85,.25);border:1px solid rgba(251,209,85,.6);color:#FBD155;cursor:pointer;transition:background .13s}
+.btn-tc-copy:hover{background:rgba(251,209,85,.4)}
 
 /* ── 학생 명단 탭 ── */
 .stu-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
@@ -133,15 +135,15 @@ input[type=file].hidden-file{display:none}
 .btn-add-stu:hover{opacity:.85}
 .stu-table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--bd)}
 .stu-table{width:100%;border-collapse:collapse;font-size:14px}
-.stu-table th{background:var(--nv);color:#fff;padding:10px 10px;text-align:left;font-size:12px;font-weight:700;white-space:nowrap}
-.stu-table td{padding:8px 10px;border-bottom:1px solid var(--bd);vertical-align:middle}
+.stu-table th{background:var(--nv);color:#fff;padding:8px 8px;text-align:left;font-size:11px;font-weight:700;white-space:nowrap}
+.stu-table td{padding:6px 8px;border-bottom:1px solid var(--bd);vertical-align:middle}
 .stu-table tr:last-child td{border-bottom:none}
 .stu-table tr:hover td{background:#F5F7FF}
 .stu-table td.td-pw{color:var(--sb);font-family:monospace;font-size:13px}
 .stu-table td input{padding:5px 8px;border:1.5px solid var(--nv2);border-radius:6px;font-size:13px;font-family:inherit;width:100%;outline:none;background:#fff}
-.btn-edit{padding:5px 11px;border-radius:6px;font-size:12px;font-weight:700;background:#EEF2FF;color:#4338CA;border:1px solid #C7D2FE;cursor:pointer;transition:background .13s}
+.btn-edit{padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;background:#EEF2FF;color:#4338CA;border:1px solid #C7D2FE;cursor:pointer;transition:background .13s;white-space:nowrap}
 .btn-edit:hover{background:#E0E7FF}
-.btn-del{padding:5px 10px;border-radius:6px;font-size:12px;font-weight:700;background:var(--rdb);color:var(--rd);border:1px solid #FECACA;cursor:pointer;transition:background .13s;margin-left:4px}
+.btn-del{padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700;background:var(--rdb);color:var(--rd);border:1px solid #FECACA;cursor:pointer;transition:background .13s;white-space:nowrap}
 .btn-del:hover{background:#FEE2E2}
 .stu-count{font-size:13px;color:var(--sb);margin-bottom:10px}
 
@@ -218,7 +220,7 @@ tr:hover td{background:#FAFBFF}
 
 /* ── 예약 기간 배너 ── */
 .period-banner{background:#fff;border-bottom:2px solid var(--bd);padding:10px 16px;position:sticky;top:0;z-index:90;box-shadow:0 2px 8px rgba(15,31,92,.06)}
-.period-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.period-inner{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .period-label{font-size:13px;font-weight:800;color:var(--nv);white-space:nowrap;display:flex;align-items:center;gap:5px}
 .period-fields{display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:1;min-width:0}
 .period-field{display:flex;align-items:center;gap:5px}
@@ -427,10 +429,7 @@ tr:hover td{background:#FAFBFF}
       <input type="file" id="ts-csv-input" class="hidden-file" accept=".csv,.txt" onchange="uploadTimeslotCSV(this)">
       <button class="btn-upload export" onclick="exportTimeslotCSV()">⬇️ 내보내기</button>
       <button class="btn-upload" onclick="openTimeEditModal()" style="background:#EEF2FF;border-color:#C7D2FE;color:var(--nv2)">🕐 전체 시간 수정</button>
-      <select id="copy-teacher-sel" style="padding:6px 10px;border:1.5px solid var(--bd);border-radius:8px;font-size:13px;color:var(--tx);background:#fff;outline:none" title="기준 교사 선택">
-        <option value="">교사 선택 후 전체 적용</option>
-      </select>
-      <button class="btn-global-avail on" onclick="copyTeacherTimes()">📋 선택 교사 → 전체 적용</button>
+
     </div>
     <!-- 엑셀 붙여넣기 접기/펼치기 -->
     <div class="paste-collapse" id="ts-paste-area">
@@ -725,15 +724,8 @@ async function loadAll() {
   } catch(e) { console.error(e); toast('데이터 로드 실패', 'err'); }
 }
 function refreshAll() { loadAll().then(() => toast('새로고침 완료', 'ok')); }
-function renderAll()  { renderTimeslots(); renderSubjects(); renderReservations(); renderStudents(); refreshTeacherDatalist(); refreshCopyTeacherSel(); }
+function renderAll()  { renderTimeslots(); renderSubjects(); renderReservations(); renderStudents(); refreshTeacherDatalist(); }
 
-function refreshCopyTeacherSel() {
-  const sel = document.getElementById('copy-teacher-sel');
-  if (!sel) return;
-  const teachers = [...new Set(Object.values(allTimeslots).map(s=>s.교사).filter(Boolean))].sort();
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">교사 선택 후 전체 적용</option>' +
-    teachers.map(t=>`<option value="${t}"${t===cur?' selected':''}>${t}</option>`).join('');
 }
 
 // ── 탭 전환 ──────────────────────────────────────
@@ -778,6 +770,7 @@ function renderTimeslots() {
           <span class="tg-stats">전체 ${slots.length} · 예약 ${booked} · 가능 ${avail}</span>
           <button class="btn-tc-edit" onclick="event.stopPropagation();renameTeacher('${esc(tc)}')">✏️ 수정</button>
           <button class="btn-tc-del"  onclick="event.stopPropagation();deleteTeacher('${esc(tc)}')">🗑 삭제</button>
+          <button class="btn-tc-copy" onclick="event.stopPropagation();copyTeacherTimes('${esc(tc)}')">📋 전체 적용</button>
           <span class="tg-arrow" id="arr_${esc(tc)}">›</span>
         </div>
       </div>
@@ -1004,10 +997,8 @@ async function applyTimeEdit() {
   } catch(e) { toast('적용 실패: '+e.message, 'err'); }
 }
 
-async function copyTeacherTimes() {
-  const sel = document.getElementById('copy-teacher-sel');
-  const srcTeacher = sel.value;
-  if (!srcTeacher) { toast('기준 교사를 먼저 선택해주세요.', 'err'); return; }
+async function copyTeacherTimes(srcTeacher) {
+  if (!srcTeacher) { toast('기준 교사가 없습니다.', 'err'); return; }
 
   const srcSlots = Object.values(allTimeslots)
     .filter(s => s.교사 === srcTeacher)
@@ -1016,7 +1007,10 @@ async function copyTeacherTimes() {
   if (!srcSlots.length) { toast('선택한 교사의 슬롯이 없습니다.', 'err'); return; }
 
   const teachers = [...new Set(Object.values(allTimeslots).map(s=>s.교사).filter(Boolean))];
-  if (!confirm(`"${srcTeacher}" 교사의 시간 ${srcSlots.length}개를\n나머지 ${teachers.length-1}명 교사에게 모두 적용합니다.\n기존 슬롯이 교체되며 예약 정보는 유지됩니다.\n계속하시겠습니까?`)) return;
+  const others = teachers.filter(t => t !== srcTeacher);
+  if (!others.length) { toast('다른 교사가 없습니다.', 'err'); return; }
+
+  if (!confirm(`"${srcTeacher}" 교사의 시간 ${srcSlots.length}개를\n나머지 ${others.length}명 교사에게 모두 적용합니다.\n기존 슬롯이 교체되며 예약 정보는 유지됩니다.\n계속하시겠습니까?`)) return;
 
   try {
     const updates = {};
@@ -1024,18 +1018,17 @@ async function copyTeacherTimes() {
     Object.values(allTimeslots).forEach(s => {
       if (String(s.예약완료||'').trim()) bookedMap[`${s.교사}_${s.시간}`] = s.예약완료;
     });
-    // 원본 교사 제외한 모든 교사의 슬롯 교체
     Object.entries(allTimeslots).forEach(([key, s]) => {
       if (s.교사 !== srcTeacher) updates[`timeslots/${key}`] = null;
     });
-    teachers.filter(t => t !== srcTeacher).forEach(teacher => {
+    others.forEach(teacher => {
       srcSlots.forEach((slot, i) => {
         const key = `${teacher}_SL${String(i+1).padStart(3,'0')}`;
         updates[`timeslots/${key}`] = { 교사:teacher, 시간:slot.시간, 예약가능:slot.예약가능??true, 예약완료: bookedMap[`${teacher}_${slot.시간}`]||'' };
       });
     });
     await db.ref().update(updates);
-    toast(`✅ "${srcTeacher}" 시간 → ${teachers.length-1}명 적용 완료!`, 'ok');
+    toast(`✅ "${srcTeacher}" 시간 → ${others.length}명 적용 완료!`, 'ok');
     await loadAll();
   } catch(e) { toast('적용 실패: '+e.message, 'err'); }
 }
@@ -1759,7 +1752,7 @@ function renderStuList() {
     <tr id="row-${esc(s.key)}">
       <td>${s.학년}학년</td>
       <td>${s.반}반</td>
-      <td id="td-name-${esc(s.key)}">${s.이름}</td>
+      <td id="td-name-${esc(s.key)}" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.이름}</td>
       <td class="td-pw" id="td-pw-${esc(s.key)}">${s.비밀번호}</td>
       <td>
         <div style="display:flex;gap:4px;flex-wrap:nowrap;align-items:center">
