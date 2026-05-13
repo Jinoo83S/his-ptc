@@ -58,7 +58,7 @@ input,select,textarea{font-family:inherit}
 .tab.active{color:var(--nv);border-bottom-color:var(--nv2)}
 
 /* ── 컨텐츠 ── */
-.content{padding:18px 16px}
+.content{padding:18px 16px;max-width:1100px;margin:0 auto}
 
 /* ── 필터 ── */
 .filter-bar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
@@ -220,7 +220,7 @@ tr:hover td{background:#FAFBFF}
 
 /* ── 예약 기간 배너 ── */
 .period-banner{background:#fff;border-bottom:2px solid var(--bd);padding:10px 16px;position:sticky;top:0;z-index:90;box-shadow:0 2px 8px rgba(15,31,92,.06)}
-.period-inner{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.period-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .period-label{font-size:13px;font-weight:800;color:var(--nv);white-space:nowrap;display:flex;align-items:center;gap:5px}
 .period-fields{display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:1;min-width:0}
 .period-field{display:flex;align-items:center;gap:5px}
@@ -494,9 +494,9 @@ tr:hover td{background:#FAFBFF}
         </div>
       </div>
       <div class="tbl-wrap">
-        <table>
+        <table style="width:100%">
           <thead><tr>
-            <th>학년</th><th>반</th><th>분류</th><th>과목</th><th>교사</th><th style="text-align:center">학생수</th><th>수정/삭제</th>
+            <th>학년</th><th>반</th><th>분류</th><th style="width:99%">과목</th><th style="white-space:nowrap">교사</th><th style="text-align:center;white-space:nowrap">학생수</th><th style="white-space:nowrap">수정/삭제</th>
           </tr></thead>
           <tbody id="sub-tbody"></tbody>
         </table>
@@ -537,7 +537,7 @@ tr:hover td{background:#FAFBFF}
         </div>
       </div>
       <div class="tbl-wrap">
-        <table>
+        <table style="width:100%">
           <thead><tr>
             <th class="sortable" onclick="sortRv('학생')">학생 <span id="sort-icon-학생">↕</span></th>
             <th class="sortable" onclick="sortRv('학년')">학년/반 <span id="sort-icon-학년">↕</span></th>
