@@ -81,10 +81,10 @@ hr.div{border:none;border-top:1px dashed var(--bd);margin:18px 0}
 .spinner{width:16px;height:16px;border:2px solid var(--bd);border-top-color:var(--nv2);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-.pw-row{display:flex;gap:9px;align-items:stretch}
-.pw-in{flex:1;padding:13px 14px;border:2px solid var(--bd);border-radius:10px;font-family:inherit;font-size:15px;color:var(--tx);background:#FAFBFF;outline:none;transition:border-color .2s,box-shadow .2s}
+.pw-row{display:flex;gap:9px;align-items:stretch;flex-wrap:wrap}
+.pw-in{flex:1;min-width:0;padding:13px 14px;border:2px solid var(--bd);border-radius:10px;font-family:inherit;font-size:15px;color:var(--tx);background:#FAFBFF;outline:none;transition:border-color .2s,box-shadow .2s}
 .pw-in:focus{border-color:var(--nv2);box-shadow:0 0 0 4px rgba(27,47,122,.08)}
-.btn-login{padding:13px 18px;background:linear-gradient(135deg,var(--nv),var(--nv2));color:#fff;border-radius:10px;font-size:14px;font-weight:800;box-shadow:0 4px 14px rgba(15,31,92,.28);transition:transform .13s,box-shadow .13s;white-space:nowrap}
+.btn-login{padding:13px 18px;background:linear-gradient(135deg,var(--nv),var(--nv2));color:#fff;border-radius:10px;font-size:14px;font-weight:800;box-shadow:0 4px 14px rgba(15,31,92,.28);transition:transform .13s,box-shadow .13s;white-space:nowrap;width:100%}
 .btn-login:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(15,31,92,.32)}
 .btn-login:disabled{opacity:.5;transform:none;cursor:not-allowed}
 

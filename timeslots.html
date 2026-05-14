@@ -277,11 +277,11 @@ function renderSlots() {
     return;
   }
 
-  const sorted = keys.sort((a, b) => {
-    const ta = slotData[a]['시간목록'] || '';
-    const tb = slotData[b]['시간목록'] || '';
-    return ta.localeCompare(tb);
-  });
+  const tMin = s => {
+    const t = (s['시간목록']||s['시간']||'').match(/^(\d+):(\d+)/);
+    return t ? Number(t[1])*60+Number(t[2]) : 9999;
+  };
+  const sorted = keys.sort((a,b) => tMin(slotData[a]) - tMin(slotData[b]));
 
   grid.innerHTML = sorted.map(key => {
     const s        = slotData[key];

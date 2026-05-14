@@ -235,6 +235,21 @@ async function loadData() {
       }
     });
 
+    // 2: 타임슬롯 로드해서 슬롯 수 추가
+    try {
+      const tsSnap = await db.ref('timeslots').once('value');
+      const slots = tsSnap.val() || {};
+      const slotMap = {}; // {교사: {total, avail}}
+      Object.values(slots).forEach(s => {
+        const t = s.교사; if(!t) return;
+        if(!slotMap[t]) slotMap[t] = {total:0, avail:0};
+        slotMap[t].total++;
+        if(s.예약가능 !== false && !String(s.예약완료||'').trim()) slotMap[t].avail++;
+      });
+      Object.keys(teacherMap).forEach(t => {
+        if(slotMap[t]) { teacherMap[t].slotTotal = slotMap[t].total; teacherMap[t].slotAvail = slotMap[t].avail; }
+      });
+    } catch(e) {}
     renderTeachers(teacherMap);
 
   } catch(e) {
@@ -277,18 +292,22 @@ function renderTeachers(teacherMap) {
       const tagClass = booked ? 'tag-booked' : `tag-${type}`;
       const tagLabel = booked ? '예약완료' : (type === '담임' ? '담임' : type === '진로' ? '진로상담' : '교과');
       const cardClass = booked ? 'tc-card booked' : 'tc-card';
-      const onClick = booked ? '' : `onclick="selectTeacher('${esc(tc.교사)}','${esc(tc.과목)}','${esc(tc.분류)}')"`;
+      // 5: 예약완료 교사도 클릭 가능 (시간 변경용)
+      const onClick = `onclick="selectTeacher('${esc(tc.교사)}','${esc(tc.과목)}','${esc(tc.분류)}')"`;
       const rightIcon = booked
         ? `<span class="tc-chk">✓</span>`
         : `<span class="tc-arr">›</span>`;
       const bookedTimeHtml = booked
         ? `<div class="booked-time">⏰ ${booked.시간}</div>` : '';
+      // 2: 남은슬롯/전체 표시
+      const slotInfo = tc.slotTotal !== undefined
+        ? `<span style="font-size:10px;color:var(--sb);margin-left:4px">${tc.slotAvail}/${tc.slotTotal}</span>` : '';
 
       html += `
-        <div class="${cardClass}" ${onClick}>
+        <div class="${cardClass}" ${onClick} style="cursor:pointer">
           <div class="tc-ico">${iconMap[type] || '👨‍🏫'}</div>
           <div class="tc-info">
-            <div class="tc-name">${tc.교사} <span class="tc-name-sub">· ${tc.과목}</span></div>
+            <div class="tc-name">${tc.교사} <span class="tc-name-sub">· ${tc.과목}</span>${slotInfo}</div>
             ${bookedTimeHtml}
           </div>
           <span class="tc-tag ${tagClass}">${tagLabel}</span>
