@@ -276,7 +276,7 @@ function renderTeachers(teacherMap) {
   const groups = { 담임: [], 진로: [], 교과: [] };
   teachers.forEach(([tcName, info]) => {
     const g = groups[info.분류] ? info.분류 : '교과';
-    groups[g].push({ 교사: tcName, 과목: info.과목, 분류: info.분류 });
+    groups[g].push({ 교사: tcName, 과목: info.과목, 분류: info.분류, slotTotal: info.slotTotal, slotAvail: info.slotAvail });
   });
 
   const labelMap = { 담임: '🏠 담임 선생님', 진로: '🧭 진로 상담', 교과: '📚 수강 과목 교사' };
