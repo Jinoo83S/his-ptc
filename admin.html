@@ -430,6 +430,7 @@ tr:hover td{background:#FAFBFF}
       <input type="file" id="ts-csv-input" class="hidden-file" accept=".csv,.txt" onchange="uploadTimeslotCSV(this)">
       <button class="btn-upload export" onclick="exportTimeslotCSV()">⬇️ 내보내기</button>
       <button class="btn-upload" onclick="openTimeEditModal()" style="background:#EEF2FF;border-color:#C7D2FE;color:var(--nv2)">🕐 전체 시간 수정</button>
+      <button class="btn-upload" onclick="deleteAllTimeslots()" style="background:#FEF2F2;border-color:#FCA5A5;color:#DC2626">🗑️ 전체 삭제</button>
 
     </div>
     <!-- 엑셀 붙여넣기 접기/펼치기 -->
@@ -471,6 +472,7 @@ tr:hover td{background:#FAFBFF}
       <button class="btn-upload" onclick="document.getElementById('sub-csv-input').click()" style="padding:6px 12px">📂 CSV 업로드</button>
       <input type="file" id="sub-csv-input" class="hidden-file" accept=".csv,.txt" onchange="uploadSubjectCSV(this)">
       <button class="btn-upload export" onclick="exportSubjectCSV()" style="padding:6px 12px">⬇️ 내보내기</button>
+      <button class="btn-upload" onclick="deleteAllSubjects()" style="padding:6px 12px;background:#FEF2F2;border-color:#FCA5A5;color:#DC2626">🗑️ 전체 삭제</button>
       <span class="upload-tip">CSV/엑셀: 학년,반,분류,과목명,교사이름</span>
     </div>
     <!-- 엑셀 붙여넣기 접기/펼치기 -->
@@ -1602,6 +1604,22 @@ function exportTimeslotCSV() {
   URL.revokeObjectURL(url);
 }
 
+async function deleteAllTimeslots() {
+  const cnt = Object.keys(allTimeslots).length;
+  if (!cnt) { toast('삭제할 시간표가 없습니다.', 'warn'); return; }
+  const rvCnt = Object.keys(allReservations).length;
+  const warnRv = rvCnt
+    ? `\n\n⚠️ 현재 예약이 ${rvCnt}건 남아있습니다. 시간표만 삭제하면 예약 기록은 그대로 남으니,\n필요하면 예약 탭에서 먼저 "전체 초기화"를 해주세요.`
+    : '';
+  if (!confirm(`🗑️ 교사 시간표 전체 삭제\n\n등록된 시간표 ${cnt}건을 모두 삭제합니다.${warnRv}\n\n이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?`)) return;
+  if (!confirm('정말로 전체 시간표를 삭제하시겠습니까?')) return;
+  try {
+    await db.ref('timeslots').remove();
+    toast(`✅ 시간표 ${cnt}건 전체 삭제 완료`, 'ok');
+    await loadAll();
+  } catch(e) { toast('삭제 실패: '+e.message, 'err'); }
+}
+
 // ════════════════════════════════════════════════
 // 붙여넣기 접기/펼치기
 // ════════════════════════════════════════════════
@@ -1977,6 +1995,18 @@ function exportSubjectCSV() {
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a'); a.href=url; a.download='subjects.csv'; a.click();
   URL.revokeObjectURL(url);
+}
+
+async function deleteAllSubjects() {
+  const cnt = Object.keys(allSubjects).length;
+  if (!cnt) { toast('삭제할 과목이 없습니다.', 'warn'); return; }
+  if (!confirm(`🗑️ 수강과목 전체 삭제\n\n등록된 과목/교사 배정 ${cnt}건을 모두 삭제합니다.\n\n이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?`)) return;
+  if (!confirm('정말로 전체 과목 데이터를 삭제하시겠습니까?')) return;
+  try {
+    await db.ref('subjects').remove();
+    toast(`✅ 과목 ${cnt}건 전체 삭제 완료`, 'ok');
+    await loadAll();
+  } catch(e) { toast('삭제 실패: '+e.message, 'err'); }
 }
 
 // ── 유틸 ──────────────────────────────────────────
