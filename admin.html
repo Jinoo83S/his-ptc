@@ -491,7 +491,7 @@ tr:hover td{background:#FAFBFF}
       <div class="ps-hint">
         열 구성: <code>학년</code> <code>반</code> <code>분류</code> <code>과목명</code> <code>교사이름</code> — 탭으로 구분, 헤더 없이<br>
         예) <code>7　A　교과　국어 Korean Language Arts　이주일</code><br>
-        또는 시트 원본(<code>이름 학년 반 … 과목 1 Course 1 과목 2 Course 2 … 교사 학적 …</code> 헤더 포함)을 그대로 붙여넣으면 학생별로 자동 반영됩니다 — 상단 배너의 "학기" 설정에 따라 과목 1/2 중 하나를 쓰고, 학적≠0인 학생은 자동 제외됩니다.
+        또는 시트 원본(<code>이름 학년 반 … 과목 1 Course 1 과목 2 Course 2 … 교사 학적 …</code> 헤더 포함)을 그대로 붙여넣으면 학생별로 자동 반영됩니다 — 상단 배너의 "학기" 설정에 따라 과목 1/2 중 하나를 쓰고("과목명 Course명" 형식으로 합쳐짐), 학적≠0인 학생은 자동 제외됩니다.
       </div>
       <textarea class="paste-ta" id="sub-paste-ta" placeholder="엑셀 데이터를 붙여넣으세요 (Ctrl+V)" oninput="previewSubPaste()"></textarea>
       <div class="paste-preview" id="sub-paste-preview"></div>
@@ -2011,7 +2011,7 @@ function parseSubPaste() {
       const subject = (cols[subjCol]||'').trim();
       const course  = courseCol!==undefined ? (cols[courseCol]||'').trim() : '';
       if (!name||!grade||!cls||!teacher||!subject) { errors.push(`${i+2}행: 데이터 부족 → "${line.slice(0,40)}..."`); return; }
-      const label = course ? `${subject} (${course})` : subject;
+      const label = course ? `${subject} ${course}`.trim() : subject;
       rows.push({ grade, cls, type:'교과', subject:label, teacher, name });
     });
     return { rows, errors, skippedStatus, isSheet:true, sem };
