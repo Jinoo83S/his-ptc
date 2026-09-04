@@ -480,6 +480,7 @@ tr:hover td{background:#FAFBFF}
     <!-- 툴바: 엑셀 붙여넣기 + CSV -->
     <div class="tool-bar">
       <button class="btn-toggle-paste" id="sub-paste-toggle" onclick="togglePaste('sub')">📋 엑셀 붙여넣기 ▾</button>
+      <button class="btn-toggle-paste" id="hr-paste-toggle" onclick="togglePaste('hr')" style="background:#EEF2FF;border-color:#C7D2FE;color:var(--nv2)">🏠 담임교사 붙여넣기 ▾</button>
       <button class="btn-upload" onclick="document.getElementById('sub-csv-input').click()" style="padding:6px 12px">📂 CSV 업로드</button>
       <input type="file" id="sub-csv-input" class="hidden-file" accept=".csv,.txt" onchange="uploadSubjectCSV(this)">
       <button class="btn-upload export" onclick="exportSubjectCSV()" style="padding:6px 12px">⬇️ 내보내기</button>
@@ -498,6 +499,20 @@ tr:hover td{background:#FAFBFF}
       <div class="paste-btns">
         <button class="btn-paste-add" onclick="pasteAddSubjects()">📥 과목 추가</button>
         <button class="btn-paste-clear" onclick="document.getElementById('sub-paste-ta').value='';document.getElementById('sub-paste-preview').textContent=''">지우기</button>
+      </div>
+    </div>
+    <!-- 담임교사 붙여넣기 접기/펼치기 -->
+    <div class="paste-collapse" id="hr-paste-area">
+      <div class="ps-hint">
+        열 구성: <code>학년+반</code> <code>담임교사명</code> — 탭으로 구분, 헤더 없이<br>
+        예) <code>7A　Henry</code><br>
+        학급당 담임 1명 기준이며, 같은 학년+반을 다시 붙여넣으면 담임교사만 갱신됩니다(중복 생성 안 됨).
+      </div>
+      <textarea class="paste-ta" id="hr-paste-ta" placeholder="7A␉Henry 형식으로 붙여넣으세요 (Ctrl+V)" oninput="previewHrPaste()"></textarea>
+      <div class="paste-preview" id="hr-paste-preview"></div>
+      <div class="paste-btns">
+        <button class="btn-paste-add" onclick="pasteAddHomerooms()">📥 담임교사 추가</button>
+        <button class="btn-paste-clear" onclick="document.getElementById('hr-paste-ta').value='';document.getElementById('hr-paste-preview').textContent=''">지우기</button>
       </div>
     </div>
     <div class="card">
@@ -2097,6 +2112,56 @@ async function pasteAddSubjects() {
     toast(`✅ ${rows.length}개 과목 추가 완료!`, 'ok');
     document.getElementById('sub-paste-ta').value='';
     document.getElementById('sub-paste-preview').textContent='';
+    await loadAll();
+  } catch(e) { toast('추가 실패: '+e.message,'err'); }
+}
+
+// ════════════════════════════════════════════════
+// 담임교사 붙여넣기 (학년+반 ␉ 교사명, 학급당 1명)
+// ════════════════════════════════════════════════
+function parseHrPaste() {
+  const raw = document.getElementById('hr-paste-ta').value.trim();
+  if (!raw) return { rows:[], errors:[] };
+  const rows=[], errors=[];
+  raw.split('\n').forEach((line,i) => {
+    const cols = line.split('\t').map(c=>c.trim());
+    const [gc, teacher] = cols;
+    if (!gc && !teacher) return;
+    const m = (gc||'').match(/^(\d{1,2})([A-Za-z]+)$/);
+    if (!m || !teacher) { errors.push(`${i+1}행: 형식 오류 (예: 7A\\tHenry) → "${line}"`); return; }
+    const grade = m[1], cls = m[2].toUpperCase();
+    if (!/^(7|8|9|10|11|12)$/.test(grade)) { errors.push(`${i+1}행: 학년은 7~12 → "${grade}"`); return; }
+    rows.push({ grade, cls, teacher });
+  });
+  return { rows, errors };
+}
+
+function previewHrPaste() {
+  const { rows, errors } = parseHrPaste();
+  const el = document.getElementById('hr-paste-preview');
+  if (!rows.length && !errors.length) { el.textContent=''; return; }
+  const parts=[];
+  if (rows.length)   parts.push(`✅ ${rows.length}개 학급 인식됨`);
+  if (errors.length) parts.push(`⚠️ ${errors.length}행 오류`);
+  el.textContent = parts.join('  |  ');
+  el.className = 'paste-preview'+(errors.length?' err':'');
+}
+
+async function pasteAddHomerooms() {
+  const { rows, errors } = parseHrPaste();
+  if (errors.length) { toast(`${errors.length}개 오류 (콘솔 확인)`,'err'); console.error(errors); }
+  if (!rows.length) { toast('추가할 담임교사가 없습니다.','err'); return; }
+  if (!confirm(`${rows.length}개 학급의 담임교사를 등록/갱신하시겠습니까?\n(같은 학년+반은 기존 담임 정보를 덮어씁니다)`)) return;
+  const updates = {};
+  rows.forEach(({ grade, cls, teacher }) => {
+    const key = `hr_${grade}_${cls}`;
+    updates[`subjects/${key}`] = { 학년:Number(grade), 반:cls, 분류:'담임', 이름:' ', 과목:'담임', 교사:teacher };
+  });
+  try {
+    await db.ref().update(updates);
+    toast(`✅ 담임교사 ${rows.length}개 학급 등록 완료!`, 'ok');
+    document.getElementById('hr-paste-ta').value='';
+    document.getElementById('hr-paste-preview').textContent='';
     await loadAll();
   } catch(e) { toast('추가 실패: '+e.message,'err'); }
 }
