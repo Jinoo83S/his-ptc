@@ -484,15 +484,14 @@ tr:hover td{background:#FAFBFF}
       <input type="file" id="sub-csv-input" class="hidden-file" accept=".csv,.txt" onchange="uploadSubjectCSV(this)">
       <button class="btn-upload export" onclick="exportSubjectCSV()" style="padding:6px 12px">⬇️ 내보내기</button>
       <button class="btn-upload" onclick="deleteAllSubjects()" style="padding:6px 12px;background:#FEF2F2;border-color:#FCA5A5;color:#DC2626">🗑️ 전체 삭제</button>
-      <button class="btn-upload" onclick="document.getElementById('sis-file-input').click()" style="padding:6px 12px;background:#FFFBEB;border-color:#FDE68A;color:#92400E">📄 학사자료(SIS) 업로드</button>
-      <input type="file" id="sis-file-input" class="hidden-file" accept=".csv,.txt,.tsv" onchange="uploadSisFile(this)">
       <span class="upload-tip">CSV/엑셀: 학년,반,분류,과목명,교사이름</span>
     </div>
     <!-- 엑셀 붙여넣기 접기/펼치기 -->
     <div class="paste-collapse" id="sub-paste-area">
       <div class="ps-hint">
         열 구성: <code>학년</code> <code>반</code> <code>분류</code> <code>과목명</code> <code>교사이름</code> — 탭으로 구분, 헤더 없이<br>
-        예) <code>7　A　교과　국어 Korean Language Arts　이주일</code>
+        예) <code>7　A　교과　국어 Korean Language Arts　이주일</code><br>
+        또는 시트 원본(<code>이름 학년 반 … 과목 1 Course 1 과목 2 Course 2 … 교사 학적 …</code> 헤더 포함)을 그대로 붙여넣으면 학생별로 자동 반영됩니다 — 상단 배너의 "학기" 설정에 따라 과목 1/2 중 하나를 쓰고, 학적≠0인 학생은 자동 제외됩니다.
       </div>
       <textarea class="paste-ta" id="sub-paste-ta" placeholder="엑셀 데이터를 붙여넣으세요 (Ctrl+V)" oninput="previewSubPaste()"></textarea>
       <div class="paste-preview" id="sub-paste-preview"></div>
@@ -692,6 +691,7 @@ const db = firebase.database();
 const DEFAULT_PW = '1751';
 let ADMIN_PW = DEFAULT_PW;
 let allTimeslots = {}, allReservations = {}, allStudents = {}, allSubjects = {};
+let currentSemester = '2';
 
 // ── 관리자 PW Firebase 로드 ───────────────────────
 async function loadAdminPw() {
@@ -1481,7 +1481,8 @@ async function loadSettings() {
     if (p && p.end)   document.getElementById('period-end').value   = toLocalDT(p.end);
     updatePeriodStatus(p);
     if (dSnap.val()) document.getElementById('ptc-date-input').value = dSnap.val();
-    document.getElementById('semester-input').value = semSnap.val() || '2';
+    currentSemester = semSnap.val() || '2';
+    document.getElementById('semester-input').value = currentSemester;
   } catch(e) { updatePeriodStatus(null); }
 }
 
@@ -1489,6 +1490,7 @@ async function saveSemester() {
   const val = document.getElementById('semester-input').value;
   try {
     await db.ref('settings/semester').set(val);
+    currentSemester = val;
     toast(`✅ ${val}학기로 설정되었습니다.`, 'ok');
   } catch(e) { toast('저장 실패: '+e.message, 'err'); }
 }
@@ -1977,9 +1979,46 @@ async function deleteAllStudents() {
 // ════════════════════════════════════════════════
 function parseSubPaste() {
   const raw = document.getElementById('sub-paste-ta').value.trim();
-  if (!raw) return { rows:[], errors:[] };
+  if (!raw) return { rows:[], errors:[], skippedStatus:0, isSheet:false };
+  const lines = raw.split('\n');
   const rows=[], errors=[];
-  raw.split('\n').forEach((line,i) => {
+  let skippedStatus = 0;
+
+  // 시트 원본(이름/학년/반/교사/학적/과목 N 헤더) 자동 인식
+  const firstCols = lines[0].split('\t').map(c=>c.trim());
+  const hIdx = {};
+  firstCols.forEach((h,i) => { if (h) hIdx[h]=i; });
+  const isSheet = ['이름','학년','반','교사','학적'].every(h => hIdx[h] !== undefined);
+
+  if (isSheet) {
+    const sem = currentSemester || '2';
+    const nameCol=hIdx['이름'], gradeCol=hIdx['학년'], clsCol=hIdx['반'],
+          teacherCol=hIdx['교사'], statusCol=hIdx['학적'],
+          subjCol=hIdx[`과목 ${sem}`], courseCol=hIdx[`Course ${sem}`];
+    if (subjCol === undefined) {
+      errors.push(`헤더에 "과목 ${sem}" 열이 없습니다. 상단 배너에서 학기 설정을 확인해주세요.`);
+      return { rows:[], errors, skippedStatus:0, isSheet:true, sem };
+    }
+    lines.slice(1).forEach((line,i) => {
+      if (!line.trim()) return;
+      const cols = line.split('\t');
+      const status = (cols[statusCol]||'').trim();
+      if (status !== '0') { skippedStatus++; return; }
+      const name    = (cols[nameCol]||'').trim();
+      const grade   = (cols[gradeCol]||'').trim();
+      const cls     = (cols[clsCol]||'').trim();
+      const teacher = (cols[teacherCol]||'').trim();
+      const subject = (cols[subjCol]||'').trim();
+      const course  = courseCol!==undefined ? (cols[courseCol]||'').trim() : '';
+      if (!name||!grade||!cls||!teacher||!subject) { errors.push(`${i+2}행: 데이터 부족 → "${line.slice(0,40)}..."`); return; }
+      const label = course ? `${subject} (${course})` : subject;
+      rows.push({ grade, cls, type:'교과', subject:label, teacher, name });
+    });
+    return { rows, errors, skippedStatus, isSheet:true, sem };
+  }
+
+  // 기존 단순 형식: 학년,반,분류,과목명,교사이름 (반 전체 공통 배정)
+  lines.forEach((line,i) => {
     const cols = line.split('\t').map(c=>c.trim());
     const [grade, cls, type, subject, teacher] = cols;
     if (!grade&&!cls&&!type&&!subject&&!teacher) return;
@@ -1987,24 +2026,66 @@ function parseSubPaste() {
     if (!/^(7|8|9|10|11|12)$/.test(grade)) { errors.push(`${i+1}행: 학년은 7~12 → "${grade}"`); return; }
     rows.push({ grade, cls, type, subject, teacher });
   });
-  return { rows, errors };
+  return { rows, errors, skippedStatus:0, isSheet:false };
 }
 
 function previewSubPaste() {
-  const { rows, errors } = parseSubPaste();
+  const { rows, errors, skippedStatus, isSheet, sem } = parseSubPaste();
   const el = document.getElementById('sub-paste-preview');
   if (!rows.length && !errors.length) { el.textContent=''; return; }
   const parts=[];
-  if (rows.length)   parts.push(`✅ ${rows.length}개 과목 인식됨`);
+  if (rows.length) parts.push(isSheet ? `✅ ${sem}학기 기준 ${rows.length}명 인식됨` : `✅ ${rows.length}개 과목 인식됨`);
+  if (skippedStatus) parts.push(`학적 제외 ${skippedStatus}건`);
   if (errors.length) parts.push(`⚠️ ${errors.length}행 오류`);
   el.textContent = parts.join('  |  ');
   el.className = 'paste-preview'+(errors.length?' err':'');
 }
 
 async function pasteAddSubjects() {
-  const { rows, errors } = parseSubPaste();
+  const { rows, errors, isSheet, sem } = parseSubPaste();
   if (errors.length) { toast(`${errors.length}개 오류 (콘솔 확인)`,'err'); console.error(errors); }
   if (!rows.length) { toast('추가할 과목이 없습니다.','err'); return; }
+
+  const sanitize = s => String(s||'').trim().replace(/[.#$\[\]/]/g, '_');
+
+  if (isSheet) {
+    // 학생별 배정: 기존 이름 있는 데이터 교체 + 새 데이터 upsert
+    const existSnap = await db.ref('subjects').once('value');
+    const existVal  = existSnap.val() || {};
+    const oldKeys   = Object.keys(existVal).filter(k => String(existVal[k].이름||'').trim() !== '');
+
+    if (!confirm(
+      `📋 붙여넣기 반영 — ${sem}학기 기준\n\n`+
+      `${rows.length}명 반영 예정\n\n`+
+      `기존 학생별 과목 배정 ${oldKeys.length}건을 삭제하고 새 데이터로 교체합니다.\n`+
+      `(담임/진로 등 반 전체 배정 데이터는 유지됩니다)\n\n`+
+      `계속하시겠습니까?`
+    )) return;
+
+    const updates = {};
+    oldKeys.forEach(k => { updates[`subjects/${k}`] = null; });
+    rows.forEach(({ grade, cls, subject, teacher, name }) => {
+      const key = `${grade}_${cls}_${sanitize(name)}_${sanitize(teacher)}_${sanitize(subject)}`;
+      updates[`subjects/${key}`] = { 학년:Number(grade), 반:cls, 분류:'교과', 이름:name, 과목:subject, 교사:teacher };
+    });
+
+    try {
+      const allKeys = Object.keys(updates);
+      const CHUNK = 400;
+      for (let i=0; i<allKeys.length; i+=CHUNK) {
+        const chunk = {};
+        allKeys.slice(i, i+CHUNK).forEach(k => chunk[k]=updates[k]);
+        await db.ref().update(chunk);
+      }
+      toast(`✅ ${rows.length}명 반영 완료! (기존 ${oldKeys.length}건 교체)`, 'ok');
+      document.getElementById('sub-paste-ta').value='';
+      document.getElementById('sub-paste-preview').textContent='';
+      await loadAll();
+    } catch(e) { toast('추가 실패: '+e.message,'err'); }
+    return;
+  }
+
+  // 기존 단순 형식: 반 전체 공통 배정 추가
   if (!confirm(`${rows.length}개 과목을 추가하시겠습니까?`)) return;
   const updates = {};
   rows.forEach(({ grade, cls, type, subject, teacher }, i) => {
@@ -2075,105 +2156,6 @@ async function deleteAllSubjects() {
   } catch(e) { toast('삭제 실패: '+e.message, 'err'); }
 }
 
-// ════════════════════════════════════════════════
-// 학사자료(SIS) 원본 업로드 → 수강과목(학생별) 반영
-// 헤더 예: 이름 학년 반 성별 선택분류 선택 AP 공통/배정/선택 교과(군) 번호
-//          과목 1 Course 1 과목 2 Course 2 #Credits 언어 Language
-//          과목코드 과목코드_검색 교사 학적 (공백) 수업교실
-// settings/semester 값(1 또는 2)에 따라 "과목 N"/"Course N" 열을 사용.
-// 학적=0 인 행만 반영, 과목명은 "과목 (Course)" 형식.
-// 학년+반+이름+교사+과목 키로 upsert (재업로드해도 중복 안 생김).
-// ════════════════════════════════════════════════
-async function uploadSisFile(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async e => {
-    try {
-      const raw = e.target.result.replace(/^\uFEFF/, '');
-      const lines = raw.split(/\r?\n/).filter(l => l.trim() !== '');
-      if (lines.length < 2) { toast('데이터가 없습니다.', 'err'); input.value=''; return; }
-
-      const delim = lines[0].includes('\t') ? '\t' : ',';
-      const header = lines[0].split(delim).map(h => h.trim());
-      const idx = {};
-      header.forEach((h,i) => { if (h) idx[h] = i; });
-
-      const semSnap = await db.ref('settings/semester').once('value');
-      const sem = semSnap.val() || '2';
-      const nameCol    = idx['이름'];
-      const gradeCol   = idx['학년'];
-      const clsCol     = idx['반'];
-      const teacherCol = idx['교사'];
-      const statusCol  = idx['학적'];
-      const subjCol    = idx[`과목 ${sem}`];
-      const courseCol  = idx[`Course ${sem}`];
-
-      if ([nameCol,gradeCol,clsCol,teacherCol,statusCol,subjCol].some(v => v===undefined)) {
-        console.error('헤더 인식 결과:', header, {nameCol,gradeCol,clsCol,teacherCol,statusCol,subjCol});
-        toast(`필요한 열을 찾지 못했습니다 (이름/학년/반/교사/학적/과목 ${sem}). 콘솔을 확인해주세요.`, 'err');
-        input.value=''; return;
-      }
-
-      const sanitize = s => String(s||'').trim().replace(/[.#$\[\]/]/g, '_');
-      const entries = {};
-      let total=0, skippedStatus=0, skippedEmpty=0;
-
-      lines.slice(1).forEach(line => {
-        const cols = line.split(delim);
-        total++;
-        const status = (cols[statusCol]||'').trim();
-        if (status !== '0') { skippedStatus++; return; }
-        const name    = (cols[nameCol]||'').trim();
-        const grade   = (cols[gradeCol]||'').trim();
-        const cls     = (cols[clsCol]||'').trim();
-        const teacher = (cols[teacherCol]||'').trim();
-        const subj    = (cols[subjCol]||'').trim();
-        const course  = courseCol!==undefined ? (cols[courseCol]||'').trim() : '';
-        if (!name || !grade || !cls || !teacher || !subj) { skippedEmpty++; return; }
-        const label = course ? `${subj} (${course})` : subj;
-        const key = `${grade}_${cls}_${sanitize(name)}_${sanitize(teacher)}_${sanitize(subj)}`;
-        entries[key] = { 학년:Number(grade), 반:cls, 이름:name, 분류:'교과', 과목:label, 교사:teacher };
-      });
-
-      const newCount = Object.keys(entries).length;
-      if (!newCount) { toast('추가할 데이터가 없습니다. (학적 필터 후 0건)', 'err'); input.value=''; return; }
-
-      const existSnap = await db.ref('subjects').once('value');
-      const existVal  = existSnap.val() || {};
-      const oldKeys   = Object.keys(existVal).filter(k => String(existVal[k].이름||'').trim() !== '');
-
-      if (!confirm(
-        `📄 학사자료(SIS) 업로드 — ${sem}학기 기준\n\n`+
-        `원본 ${total}행 중 반영 대상 ${newCount}건\n`+
-        `(학적≠0 제외 ${skippedStatus}건, 데이터 누락 ${skippedEmpty}건)\n\n`+
-        `기존 학생별 과목 배정 ${oldKeys.length}건을 삭제하고 새 데이터로 교체합니다.\n`+
-        `(담임/진로 등 반 전체 배정 데이터는 유지됩니다)\n\n`+
-        `계속하시겠습니까?`
-      )) { input.value=''; return; }
-
-      const updates = {};
-      oldKeys.forEach(k => { updates[`subjects/${k}`] = null; });
-      Object.entries(entries).forEach(([k,v]) => { updates[`subjects/${k}`] = v; });
-
-      const allKeys = Object.keys(updates);
-      const CHUNK = 400;
-      for (let i=0; i<allKeys.length; i+=CHUNK) {
-        const chunk = {};
-        allKeys.slice(i, i+CHUNK).forEach(k => chunk[k]=updates[k]);
-        await db.ref().update(chunk);
-      }
-
-      toast(`✅ ${sem}학기 학사자료 반영 완료! ${newCount}건 등록 (기존 ${oldKeys.length}건 교체)`, 'ok');
-      await loadAll();
-    } catch(err) {
-      console.error(err);
-      toast('업로드 실패: '+err.message, 'err');
-    }
-    input.value = '';
-  };
-  reader.readAsText(file, 'UTF-8');
-}
 function toast(msg, type='') {
   const el = document.getElementById('toast');
   el.textContent = msg; el.className = type;
