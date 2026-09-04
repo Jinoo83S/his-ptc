@@ -208,14 +208,15 @@ async function loadData() {
       .equalTo(student.이름)
       .once('value');
 
-    // 교사별 중복 제거
-    const teacherMap = {};  // { 교사이름: { 과목, 분류 } }
+    // 교사별+분류별 중복 제거 (같은 선생님이 담임 겸 교과인 경우 둘 다 표시)
+    const teacherMap = {};  // { "교사__분류": { 교사, 과목, 분류 } }
 
     subSnap.forEach(child => {
       const s = child.val();
       if (String(s.학년) === String(student.학년) && s.반 === student.반) {
-        if (!teacherMap[s.교사]) {
-          teacherMap[s.교사] = { 과목: s.과목, 분류: s.분류 };
+        const key = `${s.교사}__${s.분류}`;
+        if (!teacherMap[key]) {
+          teacherMap[key] = { 교사: s.교사, 과목: s.과목, 분류: s.분류 };
         }
       }
     });
@@ -229,8 +230,9 @@ async function loadData() {
     hmSnap.forEach(child => {
       const s = child.val();
       if (String(s.학년) === String(student.학년) && s.반 === student.반) {
-        if (!teacherMap[s.교사]) {
-          teacherMap[s.교사] = { 과목: s.과목, 분류: s.분류 };
+        const key = `${s.교사}__${s.분류}`;
+        if (!teacherMap[key]) {
+          teacherMap[key] = { 교사: s.교사, 과목: s.과목, 분류: s.분류 };
         }
       }
     });
@@ -246,8 +248,9 @@ async function loadData() {
         slotMap[t].total++;
         if(s.예약가능 !== false && !String(s.예약완료||'').trim()) slotMap[t].avail++;
       });
-      Object.keys(teacherMap).forEach(t => {
-        if(slotMap[t]) { teacherMap[t].slotTotal = slotMap[t].total; teacherMap[t].slotAvail = slotMap[t].avail; }
+      Object.values(teacherMap).forEach(info => {
+        const t = info.교사;
+        if(slotMap[t]) { info.slotTotal = slotMap[t].total; info.slotAvail = slotMap[t].avail; }
       });
     } catch(e) {}
     renderTeachers(teacherMap);
@@ -274,9 +277,9 @@ function renderTeachers(teacherMap) {
 
   // 분류별 그룹화
   const groups = { 담임: [], 진로: [], 교과: [] };
-  teachers.forEach(([tcName, info]) => {
+  teachers.forEach(([, info]) => {
     const g = groups[info.분류] ? info.분류 : '교과';
-    groups[g].push({ 교사: tcName, 과목: info.과목, 분류: info.분류, slotTotal: info.slotTotal, slotAvail: info.slotAvail });
+    groups[g].push({ 교사: info.교사, 과목: info.과목, 분류: info.분류, slotTotal: info.slotTotal, slotAvail: info.slotAvail });
   });
 
   const labelMap = { 담임: '🏠 담임 선생님', 진로: '🧭 진로 상담', 교과: '📚 수강 과목 교사' };
