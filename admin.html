@@ -810,7 +810,7 @@ function renderTimeslots() {
                   <input type="checkbox" class="cb slot-cb_${esc(tc)}" data-key="${s.key}"
                          onchange="updateBulkBar('${esc(tc)}')">
                 </td>
-                <td style="padding:8px 11px;border-bottom:1px solid var(--bg);font-weight:600">${s.시간목록||'-'}</td>
+                <td style="padding:8px 11px;border-bottom:1px solid var(--bg);font-weight:600">${s.시간목록||s.시간||'-'}</td>
                 <td style="padding:8px 11px;border-bottom:1px solid var(--bg)">
                   <button class="btn-avail ${isAvail?'on':'off'}" onclick="toggleAvail('${esc(s.key)}','${esc(tc)}',${isAvail})">
                     ${isAvail ? '✅ 가능' : '❌ 불가'}
