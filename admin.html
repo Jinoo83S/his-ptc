@@ -362,15 +362,14 @@ tr:hover td{background:#FAFBFF}
       <input type="file" id="csv-file-input" accept=".csv,.txt" onchange="uploadCSV(this)">
       <button class="btn-upload export" onclick="exportCSV()">⬇️ CSV 내보내기</button>
       <button class="btn-upload" onclick="deleteAllStudents()" style="background:#FEF2F2;border-color:#FCA5A5;color:#DC2626">🗑️ 전체 삭제</button>
-      <button class="btn-upload" onclick="document.getElementById('sis-stu-input').click()" style="background:#FFFBEB;border-color:#FDE68A;color:#92400E">📄 학사자료(SIS) 업로드</button>
-      <input type="file" id="sis-stu-input" class="hidden-file" accept=".csv,.txt,.tsv" onchange="uploadSisStudentFile(this)">
-      <span class="upload-tip">CSV/엑셀: 학년,반,이름,비밀번호</span>
+      <span class="upload-tip">CSV/엑셀: 학년,반,이름,비밀번호 (또는 시트 원본 그대로 붙여넣기)</span>
     </div>
     <!-- 엑셀 붙여넣기 -->
     <div class="paste-collapse" id="stu-paste-area">
       <div class="ps-hint">
         열 구성: <code>학년</code> <code>반</code> <code>이름</code> <code>비밀번호</code> — 탭으로 구분, 헤더 없이<br>
-        예) <code>7　A　김철수　010101</code>
+        예) <code>7　A　김철수　010101</code><br>
+        또는 시트 원본(<code>Grade Class Number Name Eng Name 이동 NEIS Sex Birthdate</code> 헤더 포함)을 그대로 붙여넣어도 자동 인식됩니다. 생년월일(<code>2013.12.20.</code>)은 비밀번호(<code>131220</code>)로 자동 변환됩니다.
       </div>
       <textarea class="paste-ta" id="stu-paste-ta" placeholder="엑셀 데이터를 붙여넣으세요 (Ctrl+V)" oninput="previewStuPaste()"></textarea>
       <div class="paste-preview" id="stu-paste-preview"></div>
@@ -1863,8 +1862,36 @@ async function delStudent(key,name) {
 function parseStuPaste() {
   const raw=document.getElementById('stu-paste-ta').value.trim();
   if (!raw) return { rows:[], errors:[] };
+  const lines = raw.split('\n');
   const rows=[], errors=[];
-  raw.split('\n').forEach((line,i) => {
+
+  // 시트 원본(Grade/Class/Name/Birthdate 헤더) 자동 인식
+  const firstCols = lines[0].split('\t').map(c=>c.trim());
+  const hIdx = {};
+  firstCols.forEach((h,i) => { if (h) hIdx[h]=i; });
+  const isSheetFormat = ['Grade','Class','Name','Birthdate'].every(h => hIdx[h] !== undefined);
+
+  if (isSheetFormat) {
+    const gradeCol=hIdx['Grade'], clsCol=hIdx['Class'], nameCol=hIdx['Name'], bdCol=hIdx['Birthdate'];
+    lines.slice(1).forEach((line,i) => {
+      if (!line.trim()) return;
+      const cols = line.split('\t');
+      const grade = (cols[gradeCol]||'').trim();
+      const cls   = (cols[clsCol]||'').trim();
+      const name  = (cols[nameCol]||'').trim();
+      const bdRaw = (cols[bdCol]||'').trim();
+      const m = bdRaw.match(/^(\d{4})\.(\d{1,2})\.(\d{1,2})\.?$/);
+      if (!grade&&!cls&&!name&&!bdRaw) return;
+      if (!grade||!cls||!name||!m) { errors.push(`${i+2}행: 데이터 부족/생년월일 형식 오류 → "${line}"`); return; }
+      if (!/^(7|8|9|10|11|12)$/.test(grade)) { errors.push(`${i+2}행: 학년은 7~12 → "${grade}"`); return; }
+      const pw = m[1].slice(2)+m[2].padStart(2,'0')+m[3].padStart(2,'0');
+      rows.push({ grade, cls, name, pw });
+    });
+    return { rows, errors };
+  }
+
+  // 기존 단순 형식: 학년\t반\t이름\t비밀번호
+  lines.forEach((line,i) => {
     const cols=line.split('\t').map(c=>c.trim());
     const [grade,cls,name,pw]=cols;
     if (!grade&&!cls&&!name&&!pw) return;
@@ -1943,93 +1970,6 @@ async function deleteAllStudents() {
     toast(`✅ 학생 ${cnt}명 전체 삭제 완료`, 'ok');
     await loadAll();
   } catch(e) { toast('삭제 실패: '+e.message, 'err'); }
-}
-
-// ════════════════════════════════════════════════
-// 학사자료(SIS) 학생명단 업로드 → students 전체 교체
-// 헤더 예: Grade Class Number Name Eng Name 이동 NEIS Sex Birthdate
-// Birthdate "YYYY.MM.DD." → 비밀번호 "YYMMDD" 자동 변환
-// ════════════════════════════════════════════════
-async function uploadSisStudentFile(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async e => {
-    try {
-      const raw = e.target.result.replace(/^\uFEFF/, '');
-      const lines = raw.split(/\r?\n/).filter(l => l.trim() !== '');
-      if (lines.length < 2) { toast('데이터가 없습니다.', 'err'); input.value=''; return; }
-
-      const delim = lines[0].includes('\t') ? '\t' : ',';
-      const header = lines[0].split(delim).map(h => h.trim());
-      const idx = {};
-      header.forEach((h,i) => { if (h) idx[h] = i; });
-
-      const gradeCol = idx['Grade'];
-      const clsCol   = idx['Class'];
-      const nameCol  = idx['Name'];
-      const bdCol    = idx['Birthdate'];
-
-      if ([gradeCol,clsCol,nameCol,bdCol].some(v => v===undefined)) {
-        console.error('헤더 인식 결과:', header);
-        toast('필요한 열을 찾지 못했습니다 (Grade/Class/Name/Birthdate). 콘솔을 확인해주세요.', 'err');
-        input.value=''; return;
-      }
-
-      const sanitize = s => String(s||'').trim().replace(/[.#$\[\]/]/g, '_');
-      const entries = {};
-      let total=0, skipped=0;
-
-      lines.slice(1).forEach(line => {
-        const cols = line.split(delim);
-        total++;
-        const grade = (cols[gradeCol]||'').trim();
-        const cls   = (cols[clsCol]||'').trim();
-        const name  = (cols[nameCol]||'').trim();
-        const bdRaw = (cols[bdCol]||'').trim();
-        const m = bdRaw.match(/^(\d{4})\.(\d{1,2})\.(\d{1,2})\.?$/);
-        if (!grade || !cls || !name || !m) { skipped++; return; }
-        const pw = m[1].slice(2) + m[2].padStart(2,'0') + m[3].padStart(2,'0');
-        const key = `${grade}_${cls}_${sanitize(name)}`;
-        entries[key] = { 학년:Number(grade), 반:cls, 이름:name, 비밀번호:pw, 예약횟수:5 };
-      });
-
-      const newCount = Object.keys(entries).length;
-      if (!newCount) { toast('추가할 학생이 없습니다.', 'err'); input.value=''; return; }
-
-      const existSnap = await db.ref('students').once('value');
-      const existVal  = existSnap.val() || {};
-      const oldKeys   = Object.keys(existVal);
-
-      if (!confirm(
-        `📄 학사자료(SIS) 학생명단 업로드\n\n`+
-        `원본 ${total}행 중 ${newCount}명 반영 (형식 오류·생년월일 누락 ${skipped}행 제외)\n\n`+
-        `기존 학생 명단 ${oldKeys.length}명을 삭제하고 새 명단으로 통째로 교체합니다.\n`+
-        `비밀번호는 생년월일로 자동 변환됩니다 (예: 2013.12.20. → 131220)\n\n`+
-        `계속하시겠습니까?`
-      )) { input.value=''; return; }
-
-      const updates = {};
-      oldKeys.forEach(k => { updates[`students/${k}`] = null; });
-      Object.entries(entries).forEach(([k,v]) => { updates[`students/${k}`] = v; });
-
-      const allKeys = Object.keys(updates);
-      const CHUNK = 400;
-      for (let i=0; i<allKeys.length; i+=CHUNK) {
-        const chunk = {};
-        allKeys.slice(i, i+CHUNK).forEach(k => chunk[k]=updates[k]);
-        await db.ref().update(chunk);
-      }
-
-      toast(`✅ 학생명단 반영 완료! ${newCount}명 등록 (기존 ${oldKeys.length}명 교체)`, 'ok');
-      await loadStuList();
-    } catch(err) {
-      console.error(err);
-      toast('업로드 실패: '+err.message, 'err');
-    }
-    input.value = '';
-  };
-  reader.readAsText(file, 'UTF-8');
 }
 
 // ════════════════════════════════════════════════
