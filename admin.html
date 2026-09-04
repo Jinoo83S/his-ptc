@@ -302,6 +302,15 @@ tr:hover td{background:#FAFBFF}
         <input type="date" id="ptc-date-input" style="padding:5px 7px;border:1.5px solid var(--bd);border-radius:7px;font-size:12px;color:var(--tx);outline:none;width:130px;transition:border-color .2s">
         <button onclick="savePtcDate()" style="padding:5px 9px;background:var(--nv2);color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer">저장</button>
       </div>
+      <!-- 학기 선택 -->
+      <div class="period-field" style="border-right:1px solid var(--bd);padding-right:12px;margin-right:2px">
+        <label style="font-size:11px;font-weight:800;color:var(--sb)">🗓️ 학기</label>
+        <select id="semester-input" style="padding:5px 7px;border:1.5px solid var(--bd);border-radius:7px;font-size:12px;color:var(--tx);outline:none;width:78px">
+          <option value="1">1학기</option>
+          <option value="2">2학기</option>
+        </select>
+        <button onclick="saveSemester()" style="padding:5px 9px;background:var(--nv2);color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer">저장</button>
+      </div>
       <span class="period-label">📅 예약 기간 설정</span>
       <div class="period-fields">
         <div class="period-field">
@@ -474,6 +483,8 @@ tr:hover td{background:#FAFBFF}
       <input type="file" id="sub-csv-input" class="hidden-file" accept=".csv,.txt" onchange="uploadSubjectCSV(this)">
       <button class="btn-upload export" onclick="exportSubjectCSV()" style="padding:6px 12px">⬇️ 내보내기</button>
       <button class="btn-upload" onclick="deleteAllSubjects()" style="padding:6px 12px;background:#FEF2F2;border-color:#FCA5A5;color:#DC2626">🗑️ 전체 삭제</button>
+      <button class="btn-upload" onclick="document.getElementById('sis-file-input').click()" style="padding:6px 12px;background:#FFFBEB;border-color:#FDE68A;color:#92400E">📄 학사자료(SIS) 업로드</button>
+      <input type="file" id="sis-file-input" class="hidden-file" accept=".csv,.txt,.tsv" onchange="uploadSisFile(this)">
       <span class="upload-tip">CSV/엑셀: 학년,반,분류,과목명,교사이름</span>
     </div>
     <!-- 엑셀 붙여넣기 접기/펼치기 -->
@@ -1459,16 +1470,26 @@ function downloadExcel() {
 // ════════════════════════════════════════════════
 async function loadSettings() {
   try {
-    const [pSnap, dSnap] = await Promise.all([
+    const [pSnap, dSnap, semSnap] = await Promise.all([
       db.ref('settings/period').once('value'),
       db.ref('settings/ptcDate').once('value'),
+      db.ref('settings/semester').once('value'),
     ]);
     const p = pSnap.val();
     if (p && p.start) document.getElementById('period-start').value = toLocalDT(p.start);
     if (p && p.end)   document.getElementById('period-end').value   = toLocalDT(p.end);
     updatePeriodStatus(p);
     if (dSnap.val()) document.getElementById('ptc-date-input').value = dSnap.val();
+    document.getElementById('semester-input').value = semSnap.val() || '2';
   } catch(e) { updatePeriodStatus(null); }
+}
+
+async function saveSemester() {
+  const val = document.getElementById('semester-input').value;
+  try {
+    await db.ref('settings/semester').set(val);
+    toast(`✅ ${val}학기로 설정되었습니다.`, 'ok');
+  } catch(e) { toast('저장 실패: '+e.message, 'err'); }
 }
 
 async function savePtcDate() {
@@ -2025,7 +2046,105 @@ async function deleteAllSubjects() {
   } catch(e) { toast('삭제 실패: '+e.message, 'err'); }
 }
 
-// ── 유틸 ──────────────────────────────────────────
+// ════════════════════════════════════════════════
+// 학사자료(SIS) 원본 업로드 → 수강과목(학생별) 반영
+// 헤더 예: 이름 학년 반 성별 선택분류 선택 AP 공통/배정/선택 교과(군) 번호
+//          과목 1 Course 1 과목 2 Course 2 #Credits 언어 Language
+//          과목코드 과목코드_검색 교사 학적 (공백) 수업교실
+// settings/semester 값(1 또는 2)에 따라 "과목 N"/"Course N" 열을 사용.
+// 학적=0 인 행만 반영, 과목명은 "과목 (Course)" 형식.
+// 학년+반+이름+교사+과목 키로 upsert (재업로드해도 중복 안 생김).
+// ════════════════════════════════════════════════
+async function uploadSisFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const raw = e.target.result.replace(/^\uFEFF/, '');
+      const lines = raw.split(/\r?\n/).filter(l => l.trim() !== '');
+      if (lines.length < 2) { toast('데이터가 없습니다.', 'err'); input.value=''; return; }
+
+      const delim = lines[0].includes('\t') ? '\t' : ',';
+      const header = lines[0].split(delim).map(h => h.trim());
+      const idx = {};
+      header.forEach((h,i) => { if (h) idx[h] = i; });
+
+      const semSnap = await db.ref('settings/semester').once('value');
+      const sem = semSnap.val() || '2';
+      const nameCol    = idx['이름'];
+      const gradeCol   = idx['학년'];
+      const clsCol     = idx['반'];
+      const teacherCol = idx['교사'];
+      const statusCol  = idx['학적'];
+      const subjCol    = idx[`과목 ${sem}`];
+      const courseCol  = idx[`Course ${sem}`];
+
+      if ([nameCol,gradeCol,clsCol,teacherCol,statusCol,subjCol].some(v => v===undefined)) {
+        console.error('헤더 인식 결과:', header, {nameCol,gradeCol,clsCol,teacherCol,statusCol,subjCol});
+        toast(`필요한 열을 찾지 못했습니다 (이름/학년/반/교사/학적/과목 ${sem}). 콘솔을 확인해주세요.`, 'err');
+        input.value=''; return;
+      }
+
+      const sanitize = s => String(s||'').trim().replace(/[.#$\[\]/]/g, '_');
+      const entries = {};
+      let total=0, skippedStatus=0, skippedEmpty=0;
+
+      lines.slice(1).forEach(line => {
+        const cols = line.split(delim);
+        total++;
+        const status = (cols[statusCol]||'').trim();
+        if (status !== '0') { skippedStatus++; return; }
+        const name    = (cols[nameCol]||'').trim();
+        const grade   = (cols[gradeCol]||'').trim();
+        const cls     = (cols[clsCol]||'').trim();
+        const teacher = (cols[teacherCol]||'').trim();
+        const subj    = (cols[subjCol]||'').trim();
+        const course  = courseCol!==undefined ? (cols[courseCol]||'').trim() : '';
+        if (!name || !grade || !cls || !teacher || !subj) { skippedEmpty++; return; }
+        const label = course ? `${subj} (${course})` : subj;
+        const key = `${grade}_${cls}_${sanitize(name)}_${sanitize(teacher)}_${sanitize(subj)}`;
+        entries[key] = { 학년:Number(grade), 반:cls, 이름:name, 분류:'교과', 과목:label, 교사:teacher };
+      });
+
+      const newCount = Object.keys(entries).length;
+      if (!newCount) { toast('추가할 데이터가 없습니다. (학적 필터 후 0건)', 'err'); input.value=''; return; }
+
+      const existSnap = await db.ref('subjects').once('value');
+      const existVal  = existSnap.val() || {};
+      const oldKeys   = Object.keys(existVal).filter(k => String(existVal[k].이름||'').trim() !== '');
+
+      if (!confirm(
+        `📄 학사자료(SIS) 업로드 — ${sem}학기 기준\n\n`+
+        `원본 ${total}행 중 반영 대상 ${newCount}건\n`+
+        `(학적≠0 제외 ${skippedStatus}건, 데이터 누락 ${skippedEmpty}건)\n\n`+
+        `기존 학생별 과목 배정 ${oldKeys.length}건을 삭제하고 새 데이터로 교체합니다.\n`+
+        `(담임/진로 등 반 전체 배정 데이터는 유지됩니다)\n\n`+
+        `계속하시겠습니까?`
+      )) { input.value=''; return; }
+
+      const updates = {};
+      oldKeys.forEach(k => { updates[`subjects/${k}`] = null; });
+      Object.entries(entries).forEach(([k,v]) => { updates[`subjects/${k}`] = v; });
+
+      const allKeys = Object.keys(updates);
+      const CHUNK = 400;
+      for (let i=0; i<allKeys.length; i+=CHUNK) {
+        const chunk = {};
+        allKeys.slice(i, i+CHUNK).forEach(k => chunk[k]=updates[k]);
+        await db.ref().update(chunk);
+      }
+
+      toast(`✅ ${sem}학기 학사자료 반영 완료! ${newCount}건 등록 (기존 ${oldKeys.length}건 교체)`, 'ok');
+      await loadAll();
+    } catch(err) {
+      console.error(err);
+      toast('업로드 실패: '+err.message, 'err');
+    }
+    input.value = '';
+  };
+  reader.readAsText(file, 'UTF-8');
+}
 function toast(msg, type='') {
   const el = document.getElementById('toast');
   el.textContent = msg; el.className = type;
