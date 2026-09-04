@@ -2155,7 +2155,7 @@ async function pasteAddHomerooms() {
   const updates = {};
   rows.forEach(({ grade, cls, teacher }) => {
     const key = `hr_${grade}_${cls}`;
-    updates[`subjects/${key}`] = { 학년:Number(grade), 반:cls, 분류:'담임', 이름:' ', 과목:'담임', 교사:teacher };
+    updates[`subjects/${key}`] = { 학년:Number(grade), 반:cls, 분류:'담임', 이름:' ', 과목:'담임 교사 Homeroom Teacher', 교사:teacher };
   });
   try {
     await db.ref().update(updates);
