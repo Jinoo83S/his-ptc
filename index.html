@@ -109,7 +109,7 @@ hr.div{border:none;border-top:1px dashed var(--bd);margin:18px 0}
     <div class="emblem"><img src="logo.png" alt="Handong International School"></div>
     <h1>Handong International School</h1>
     <p class="sub">한동글로벌학교 중고등부</p>
-    <div class="ptc-chip" id="ptc-chip">📅 PTC 예약  · 5월 15일</div>
+    <div class="ptc-chip" id="ptc-chip">📅 PTC · 5월 15일</div>
     <div class="ptc-chip" id="period-chip" style="display:none"></div>
   </div>
 
@@ -200,7 +200,7 @@ const db = firebase.database();
 // PTC 날짜 동적 표시
 db.ref('settings/ptcDate').once('value').then(snap => {
   if (snap.val()) {
-    document.getElementById('ptc-chip').textContent = `📅 PTC 예약  · ${snap.val()}`;
+    document.getElementById('ptc-chip').textContent = `📅 PTC  · ${snap.val()}`;
   }
 }).catch(()=>{});
 
