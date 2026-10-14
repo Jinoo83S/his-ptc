@@ -201,8 +201,31 @@ tr:hover td{background:#FAFBFF}
 .bulk-bar .btn-bulk-off{padding:6px 14px;background:var(--rdb);color:var(--rd);border:1.5px solid #FECACA;border-radius:8px;font-size:13px;font-weight:700}
 
 /* ── 전체 시간 편집 모달 ── */
-#timeedit-overlay{position:fixed;inset:0;z-index:600;background:rgba(8,18,60,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:16px}
-#timeedit-overlay.on{display:flex}
+#timeedit-overlay,#copy-overlay{position:fixed;inset:0;z-index:600;background:rgba(8,18,60,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:16px}
+#timeedit-overlay.on,#copy-overlay.on{display:flex}
+#copy-overlay .timeedit-box{max-width:520px;max-height:92vh;overflow:auto}
+.copy-src{font-size:14px;font-weight:800;color:var(--nv2);background:#EEF2FF;border-radius:8px;padding:8px 12px;margin-bottom:10px}
+.copy-lbl{font-size:12px;font-weight:800;color:var(--sb);margin:10px 0 6px;display:flex;justify-content:space-between;align-items:center}
+.copy-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:4px;max-height:220px;overflow:auto;border:1.5px solid var(--bd);border-radius:8px;padding:8px}
+.copy-item{display:flex;align-items:center;gap:6px;font-size:13px;padding:3px 4px;border-radius:6px;cursor:pointer}
+.copy-item:hover{background:var(--bg)}
+.copy-in{width:100%;padding:9px 10px;border:1.5px solid var(--bd);border-radius:8px;font-size:13px;outline:none}
+.copy-in:focus{border-color:var(--nv2)}
+/* ── 데이터 점검 ── */
+.ck-sum{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 12px}
+.ck-chip{padding:7px 14px;border-radius:20px;font-size:13px;font-weight:800;border:1.5px solid var(--bd);background:#fff;color:var(--sb);cursor:pointer}
+.ck-chip.on{background:var(--nv);color:#fff;border-color:var(--nv)}
+.ck-chip.err{color:#DC2626;border-color:#FCA5A5}.ck-chip.err.on{background:#DC2626;color:#fff}
+.ck-chip.warn{color:#B45309;border-color:#FCD34D}.ck-chip.warn.on{background:#D97706;color:#fff;border-color:#D97706}
+.ck-stat{font-size:12px;color:var(--sb);margin-bottom:12px}
+.ck-cat{background:#fff;border:1px solid var(--bd);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.ck-cat h3{font-size:14px;font-weight:800;padding:11px 14px;display:flex;justify-content:space-between;gap:8px;background:var(--bg);color:var(--nv)}
+.ck-cat h3 small{font-weight:600;color:var(--sb);font-size:12px;display:block;margin-top:2px}
+.ck-row{display:flex;gap:10px;padding:8px 14px;border-top:1px solid var(--bg);font-size:13px;line-height:1.5}
+.ck-row .t{flex:0 0 36%;font-weight:700;word-break:break-all}
+.ck-row .m{flex:1;color:var(--sb);word-break:break-all}
+.ck-ok{padding:30px;text-align:center;color:var(--gn);font-weight:800;background:var(--gnb);border-radius:12px}
+@media(max-width:600px){.ck-row{flex-direction:column;gap:2px}.ck-row .t{flex:none}}
 .timeedit-box{background:#fff;border-radius:var(--rlg);padding:24px 22px;width:100%;max-width:440px;box-shadow:var(--shh);animation:fadeUp .25s cubic-bezier(.16,1,.3,1)}
 .timeedit-box h2{font-size:16px;font-weight:800;color:var(--nv);margin-bottom:8px}
 .timeedit-box .hint{font-size:12px;color:var(--sb);margin-bottom:12px;line-height:1.6}
@@ -290,6 +313,7 @@ tr:hover td{background:#FAFBFF}
     <button class="tab" onclick="switchTab('reservations')">📋 예약 현황</button>
     <button class="tab" onclick="switchTab('students')">👤 예약 횟수</button>
     <button class="tab" onclick="switchTab('stulist')">📝 학생 명단</button>
+    <button class="tab" onclick="switchTab('check')">🔍 데이터 점검</button>
   </div>
   </div>
 
@@ -430,6 +454,17 @@ tr:hover td{background:#FAFBFF}
         </table>
       </div>
     </div>
+  </div>
+
+  <!-- ── 데이터 점검 ── -->
+  <div id="tab-check" class="content" style="display:none">
+    <div class="tool-bar">
+      <button class="btn-upload" onclick="refreshCheck()">🔄 다시 불러와 점검</button>
+    </div>
+    <div class="ck-stat" id="ck-stat"></div>
+    <div class="ck-sum" id="ck-sum"></div>
+    <div class="filter-bar"><input class="flex1" type="text" id="ck-search" placeholder="🔍 교사/학생/과목 검색" oninput="renderCheck()"></div>
+    <div id="ck-body"></div>
   </div>
 
   <!-- ── 탭1: 교사 시간 ── -->
@@ -686,6 +721,24 @@ tr:hover td{background:#FAFBFF}
   </div>
 </div>
 
+<!-- ── 교사 시간 복사 모달 ── -->
+<div id="copy-overlay" onclick="if(event.target===this)closeCopyModal()">
+  <div class="timeedit-box">
+    <h2>📋 교사 시간 복사</h2>
+    <div class="hint">기준 교사의 시간 슬롯을 선택한 교사에게 적용하거나, 새 교사를 만들어 복사합니다.<br>같은 시간 슬롯은 예약가능 상태만 맞추고 예약 정보는 유지됩니다. 기준에 없는 시간은 삭제되지만 <b>예약이 있는 슬롯은 남겨둡니다</b>.</div>
+    <div class="copy-src" id="copy-src"></div>
+    <div class="copy-lbl"><span>적용할 기존 교사 <span id="copy-cnt">(0명 선택)</span></span>
+      <label style="font-weight:700;cursor:pointer"><input type="checkbox" class="cb" id="copy-all" onchange="copyToggleAll(this.checked)"> 전체 선택</label></div>
+    <div class="copy-list" id="copy-list"></div>
+    <div class="copy-lbl"><span>새 교사 추가 (쉼표 또는 줄바꿈으로 여러 명)</span></div>
+    <input class="copy-in" id="copy-new" placeholder="예) Adam, Brian, 김선생" oninput="updateCopyCount()">
+    <div class="timeedit-btns">
+      <button class="btn-timeedit-cancel" onclick="closeCopyModal()">취소</button>
+      <button class="btn-timeedit-save" onclick="applyCopyTimes()">적용</button>
+    </div>
+  </div>
+</div>
+
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -762,16 +815,17 @@ async function loadAll() {
   } catch(e) { console.error(e); toast('데이터 로드 실패', 'err'); }
 }
 function refreshAll() { loadAll().then(() => toast('새로고침 완료', 'ok')); }
-function renderAll()  { renderTimeslots(); renderSubjects(); renderReservations(); renderStudents(); refreshTeacherDatalist(); }
+function renderAll()  { renderTimeslots(); renderSubjects(); renderReservations(); renderStudents(); refreshTeacherDatalist(); try{ if(document.getElementById('tab-check').style.display==='block') renderCheck(); }catch(e){console.error(e);} }
 
 // ── 탭 전환 ──────────────────────────────────────
-const TABS = ['timeslots','subjects','reservations','students','stulist'];
+const TABS = ['timeslots','subjects','reservations','students','stulist','check'];
 function switchTab(tab) {
   TABS.forEach((t,i) => {
     document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
     document.querySelectorAll('.tab')[i].classList.toggle('active', t===tab);
   });
   if (tab === 'stulist') loadStuList();
+  if (tab === 'check') renderCheck();
 }
 
 // ════════════════════════════════════════════════
@@ -806,7 +860,7 @@ function renderTimeslots() {
           <span class="tg-stats">전체 ${slots.length} · 예약 ${booked} · 가능 ${avail}</span>
           <button class="btn-tc-edit" onclick="event.stopPropagation();renameTeacher('${esc(tc)}')">✏️ 수정</button>
           <button class="btn-tc-del"  onclick="event.stopPropagation();deleteTeacher('${esc(tc)}')">🗑 삭제</button>
-          <button class="btn-tc-copy" onclick="event.stopPropagation();copyTeacherTimes('${esc(tc)}')">📋 전체 적용</button>
+          <button class="btn-tc-copy" onclick="event.stopPropagation();copyTeacherTimes('${esc(tc)}')">📋 시간 복사</button>
           <span class="tg-arrow" id="arr_${esc(tc)}">›</span>
         </div>
       </div>
@@ -1033,38 +1087,91 @@ async function applyTimeEdit() {
   } catch(e) { toast('적용 실패: '+e.message, 'err'); }
 }
 
-async function copyTeacherTimes(srcTeacher) {
+// ── 교사 시간 복사 (선택 적용 / 신규 교사 추가) ─────────
+let copySrc = '';
+const _tm = s => String(s.시간||s.시간목록||'').trim();
+const _tmin = s => { const m=_tm(s).match(/^(\d+):(\d+)/); return m?Number(m[1])*60+Number(m[2]):9999; };
+function escH(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function copyTeacherTimes(srcTeacher) {
   if (!srcTeacher) { toast('기준 교사가 없습니다.', 'err'); return; }
+  const n = Object.values(allTimeslots).filter(s => s.교사 === srcTeacher).length;
+  if (!n) { toast('선택한 교사의 슬롯이 없습니다.', 'err'); return; }
+  copySrc = srcTeacher;
+  const others = [...new Set(Object.values(allTimeslots).map(s=>s.교사).filter(Boolean))].filter(t=>t!==srcTeacher).sort();
+  document.getElementById('copy-src').textContent = `기준: ${srcTeacher} (${n}슬롯)`;
+  document.getElementById('copy-list').innerHTML = others.length
+    ? others.map(t => `<label class="copy-item"><input type="checkbox" class="cb copy-cb" value="${escH(t)}" onchange="updateCopyCount()"> ${escH(t)}</label>`).join('')
+    : '<div style="color:var(--sb);font-size:12px">다른 교사가 없습니다. 아래에 새 교사를 입력하세요.</div>';
+  document.getElementById('copy-all').checked = false;
+  document.getElementById('copy-new').value = '';
+  updateCopyCount();
+  document.getElementById('copy-overlay').classList.add('on');
+}
+function closeCopyModal() { document.getElementById('copy-overlay').classList.remove('on'); }
+function copyToggleAll(v) { document.querySelectorAll('.copy-cb').forEach(c=>c.checked=v); updateCopyCount(); }
+function parseNewTeachers() {
+  return [...new Set(document.getElementById('copy-new').value.split(/[,\n\t]+/).map(x=>x.trim()).filter(Boolean))];
+}
+function updateCopyCount() {
+  const n = document.querySelectorAll('.copy-cb:checked').length;
+  const nn = parseNewTeachers().length;
+  document.getElementById('copy-cnt').textContent = `(기존 ${n}명 선택${nn?` · 신규 ${nn}명`:''})`;
+}
 
-  const srcSlots = Object.values(allTimeslots)
-    .filter(s => s.교사 === srcTeacher)
-    .sort((a,b) => { const t=s=>{const m=(s.시간||'').match(/^(\d+):(\d+)/);return m?Number(m[1])*60+Number(m[2]):9999;};return t(a)-t(b);});
+async function applyCopyTimes() {
+  const src = copySrc;
+  const srcSlots = Object.values(allTimeslots).filter(s => s.교사 === src).sort((a,b)=>_tmin(a)-_tmin(b));
+  if (!srcSlots.length) { toast('기준 교사의 슬롯이 없습니다.', 'err'); return; }
+  const existing = new Set(Object.values(allTimeslots).map(s=>s.교사).filter(Boolean));
+  const picked = [...document.querySelectorAll('.copy-cb:checked')].map(c=>c.value);
+  const typed = parseNewTeachers();
+  const bad = typed.filter(n => /[.$#\[\]\/]/.test(n));
+  if (bad.length) { toast(`사용할 수 없는 문자(. $ # [ ] /): ${bad.join(', ')}`, 'err'); return; }
+  if (typed.includes(src)) { toast('기준 교사와 같은 이름은 추가할 수 없습니다.', 'err'); return; }
+  const targets = [...new Set([...picked, ...typed])];
+  if (!targets.length) { toast('적용할 교사를 선택하거나 새 교사를 입력하세요.', 'err'); return; }
+  const newOnes = targets.filter(t => !existing.has(t));
+  const oldOnes = targets.filter(t => existing.has(t));
 
-  if (!srcSlots.length) { toast('선택한 교사의 슬롯이 없습니다.', 'err'); return; }
+  const usedKeys = new Set(Object.keys(allTimeslots));
+  const updates = {};
+  let added = 0, updated = 0, removed = 0, keptBooked = 0;
+  const srcTimes = new Set(srcSlots.map(_tm));
 
-  const teachers = [...new Set(Object.values(allTimeslots).map(s=>s.교사).filter(Boolean))];
-  const others = teachers.filter(t => t !== srcTeacher);
-  if (!others.length) { toast('다른 교사가 없습니다.', 'err'); return; }
+  targets.forEach(t => {
+    const tEntries = Object.entries(allTimeslots).filter(([,v]) => v.교사 === t);
+    const byTime = {};
+    tEntries.forEach(([k,v]) => { const tt=_tm(v); if (!(tt in byTime)) byTime[tt]=k; });
+    srcSlots.forEach(sl => {
+      const tt = _tm(sl), avail = sl.예약가능 !== false;
+      if (tt in byTime) {
+        updates[`timeslots/${byTime[tt]}/예약가능`] = avail; updated++;
+      } else {
+        let i = 1, key;
+        do { key = `${t}_SL${String(i).padStart(3,'0')}`; i++; } while (usedKeys.has(key));
+        usedKeys.add(key);
+        updates[`timeslots/${key}`] = { 교사:t, 시간:tt, 예약가능:avail, 예약완료:'' }; added++;
+      }
+    });
+    tEntries.forEach(([k,v]) => {
+      if (srcTimes.has(_tm(v))) return;
+      if (String(v.예약완료||'').trim()) keptBooked++;
+      else { updates[`timeslots/${k}`] = null; removed++; }
+    });
+  });
 
-  if (!confirm(`"${srcTeacher}" 교사의 시간 ${srcSlots.length}개를\n나머지 ${others.length}명 교사에게 모두 적용합니다.\n기존 슬롯이 교체되며 예약 정보는 유지됩니다.\n계속하시겠습니까?`)) return;
-
+  const list = a => a.length>8 ? a.slice(0,8).join(', ')+` 외 ${a.length-8}명` : a.join(', ');
+  const msg = `"${src}" 시간 ${srcSlots.length}개를 적용합니다.\n\n`
+    + (oldOnes.length ? `기존 교사 ${oldOnes.length}명: ${list(oldOnes)}\n` : '')
+    + (newOnes.length ? `새 교사 ${newOnes.length}명: ${list(newOnes)}\n` : '')
+    + `\n슬롯 추가 ${added} · 가능상태 맞춤 ${updated} · 삭제 ${removed}`
+    + (keptBooked ? ` · 예약 있어 유지 ${keptBooked}` : '') + `\n계속하시겠습니까?`;
+  if (!confirm(msg)) return;
   try {
-    const updates = {};
-    const bookedMap = {};
-    Object.values(allTimeslots).forEach(s => {
-      if (String(s.예약완료||'').trim()) bookedMap[`${s.교사}_${s.시간}`] = s.예약완료;
-    });
-    Object.entries(allTimeslots).forEach(([key, s]) => {
-      if (s.교사 !== srcTeacher) updates[`timeslots/${key}`] = null;
-    });
-    others.forEach(teacher => {
-      srcSlots.forEach((slot, i) => {
-        const key = `${teacher}_SL${String(i+1).padStart(3,'0')}`;
-        updates[`timeslots/${key}`] = { 교사:teacher, 시간:slot.시간, 예약가능:slot.예약가능??true, 예약완료: bookedMap[`${teacher}_${slot.시간}`]||'' };
-      });
-    });
     await db.ref().update(updates);
-    toast(`✅ "${srcTeacher}" 시간 → ${others.length}명 적용 완료!`, 'ok');
+    toast(`✅ ${targets.length}명 적용 완료 (추가 ${added} · 삭제 ${removed})`, 'ok');
+    closeCopyModal();
     await loadAll();
   } catch(e) { toast('적용 실패: '+e.message, 'err'); }
 }
@@ -2219,6 +2326,189 @@ async function deleteAllSubjects() {
     toast(`✅ 과목 ${cnt}건 전체 삭제 완료`, 'ok');
     await loadAll();
   } catch(e) { toast('삭제 실패: '+e.message, 'err'); }
+}
+
+// ════════════════════════════════════════════════
+// 데이터 점검
+// ════════════════════════════════════════════════
+let ckFilter = 'all';
+function refreshCheck() { loadAll().then(() => { renderCheck(); toast('다시 점검했습니다.', 'ok'); }); }
+function setCkFilter(f) { ckFilter = f; renderCheck(); }
+const _nz = x => String(x==null?'':x).replace(/\s+/g,'').toLowerCase();
+
+function runCheck() {
+  const issues = [];
+  const add = (sev, cat, target, msg) => issues.push({ sev, cat, target, msg });
+  const slots = Object.entries(allTimeslots).map(([k,s]) => ({ k, ...s }));
+  const subs  = Object.entries(allSubjects).map(([k,s]) => ({ k, ...s }));
+  const stus  = Object.entries(allStudents).map(([k,s]) => ({ k, 학년:String(s.학년==null?'':s.학년), 반:String(s.반||''), 이름:String(s.이름==null?'':s.이름), 비밀번호:String(s.비밀번호==null?'':s.비밀번호) }));
+  const rvs   = Object.entries(allReservations).map(([k,r]) => ({ k, ...r }));
+  const stuId = s => `${s.학년}|${s.반}|${s.이름}`;
+
+  const slotTeachers = new Set(slots.map(s=>s.교사).filter(Boolean));
+  const slotNorm = {}; slotTeachers.forEach(t => slotNorm[_nz(t)] = t);
+  const subTeachers = new Set(subs.map(s=>s.교사).filter(Boolean));
+  const subNorm = {}; subTeachers.forEach(t => subNorm[_nz(t)] = t);
+
+  // ── 교사: 과목엔 있는데 교사시간 없음
+  const subByTeacher = {};
+  subs.forEach(s => { const t=s.교사||''; (subByTeacher[t] = subByTeacher[t]||[]).push(s); });
+  Object.entries(subByTeacher).forEach(([t, arr]) => {
+    if (!t) return;
+    if (slotTeachers.has(t)) return;
+    const groups = new Set(arr.map(s=>`${s.학년}${s.반}${s.분류}${s.과목}`)).size;
+    const hint = slotNorm[_nz(t)] ? ` → 교사시간의 "${slotNorm[_nz(t)]}"와 공백/대소문자만 다름` : '';
+    add('err', '수강과목 교사에 교사시간이 없음', t, `수강과목 ${groups}건에 등록됐지만 교사시간 슬롯이 없음 (학생이 예약 불가)${hint}`);
+  });
+  // ── 교사: 교사시간엔 있는데 과목 없음
+  slotTeachers.forEach(t => {
+    if (subTeachers.has(t)) return;
+    const n = slots.filter(s=>s.교사===t).length;
+    const hint = subNorm[_nz(t)] ? ` → 수강과목의 "${subNorm[_nz(t)]}"와 공백/대소문자만 다름` : '';
+    add('warn', '교사시간은 있으나 수강과목에 없음', t, `슬롯 ${n}개 있지만 어떤 학생에게도 배정되지 않음${hint}`);
+  });
+  // ── 교사: 가용 슬롯 0
+  slotTeachers.forEach(t => {
+    if (!subTeachers.has(t)) return;
+    const mine = slots.filter(s=>s.교사===t);
+    const booked = mine.filter(s=>String(s.예약완료||'').trim()).length;
+    const off = mine.filter(s=>s.예약가능===false).length;
+    const avail = mine.filter(s=>s.예약가능!==false && !String(s.예약완료||'').trim()).length;
+    if (!avail) add('warn', '예약 가능한 슬롯이 0개인 교사', t, `전체 ${mine.length} · 예약됨 ${booked} · 불가 ${off}`);
+  });
+
+  // ── 교사시간 데이터 자체
+  slots.forEach(s => {
+    if (!s.교사) add('err', '교사시간 데이터 오류', s.k, '교사 이름이 비어 있음');
+    if (!_tm(s)) add('err', '교사시간 데이터 오류', `${s.교사||''} (${s.k})`, '시간 값이 비어 있음');
+  });
+  slotTeachers.forEach(t => {
+    const seen = {};
+    slots.filter(s=>s.교사===t).forEach(s => { const tt=_tm(s); if (tt) seen[tt]=(seen[tt]||0)+1; });
+    const dup = Object.entries(seen).filter(([,c])=>c>1).map(([tt,c])=>`${tt}(${c}개)`);
+    if (dup.length) add('warn', '같은 교사에 중복된 시간 슬롯', t, dup.join(', '));
+  });
+
+  // ── 수강과목 필드 / 그룹
+  const groups = {};
+  subs.forEach(s => {
+    const label = `${s.학년||'?'}학년 ${s.반||'?'}반 · ${s.분류||'-'} · ${s.과목||'-'} · ${s.교사||'(교사없음)'}`;
+    const problems = [];
+    if (!/^(7|8|9|10|11|12)$/.test(String(s.학년==null?'':s.학년))) problems.push(`학년 값 이상("${s.학년==null?'':s.학년}") — 학생 화면에 표시되지 않음`);
+    if (!String(s.반||'').trim()) problems.push('반 값이 비어 있음');
+    if (!String(s.교사||'').trim()) problems.push('교사 값이 비어 있음');
+    if (!String(s.과목||'').trim()) problems.push('과목 값이 비어 있음');
+    if (s.분류 && !['교과','담임','진로'].includes(s.분류)) problems.push(`분류 비표준("${s.분류}")`);
+    if (!s.분류) problems.push('분류 값이 비어 있음');
+    const nm = s.이름;
+    if (nm !== ' ' && !String(nm==null?'':nm).trim()) problems.push('이름이 빈 값(공백 1칸이 아님) — 반 전체 과목으로 인식되지 않음');
+    if (problems.length) add('err', '수강과목 필드 오류', label, problems.join(' / '));
+    const gk = `${s.학년}|${s.반}|${s.분류}|${s.과목}|${s.교사}`;
+    (groups[gk] = groups[gk] || { label, 학년:String(s.학년==null?'':s.학년), 반:String(s.반||''), recs:[] }).recs.push(s);
+  });
+
+  // 중복 레코드
+  const recSeen = {};
+  subs.forEach(s => { const k=`${s.학년}|${s.반}|${s.분류}|${s.과목}|${s.교사}|${s.이름}`; (recSeen[k]=recSeen[k]||[]).push(s); });
+  Object.values(recSeen).filter(a=>a.length>1).forEach(a => {
+    const s=a[0];
+    add('info', '중복된 수강과목 레코드', `${s.학년}학년 ${s.반}반 · ${s.분류} · ${s.과목} · ${s.교사}${s.이름&&s.이름.trim()?' · '+s.이름:''}`, `동일 내용 ${a.length}건 (삭제해도 무방)`);
+  });
+
+  // 그룹별 적용 학생
+  Object.values(groups).forEach(g => {
+    const hit = new Set(); const fails = [];
+    g.recs.forEach(r => {
+      if (r.이름 === ' ') {
+        stus.filter(st => st.학년===g.학년 && st.반===g.반).forEach(st => hit.add(stuId(st)));
+        return;
+      }
+      const nm = String(r.이름==null?'':r.이름);
+      if (!nm.trim()) return;
+      const ok = stus.filter(st => st.이름===nm && st.학년===g.학년 && st.반===g.반);
+      if (ok.length) { ok.forEach(st => hit.add(stuId(st))); return; }
+      const same = stus.filter(st => st.이름===nm);
+      if (same.length) fails.push(`${nm}(명단: ${same.map(x=>x.학년+'학년 '+x.반+'반').join(', ')})`);
+      else {
+        const near = stus.filter(st => _nz(st.이름)===_nz(nm));
+        fails.push(near.length ? `${nm}(명단에는 "${near[0].이름}" — 공백/대소문자 차이)` : `${nm}(명단에 없음)`);
+      }
+    });
+    const classWide = g.recs.some(r=>r.이름===' ');
+    if (fails.length && hit.size) add('warn', '지정 학생이 명단과 맞지 않음', g.label, `${fails.length}명 매칭 실패: ${fails.join(', ')}`);
+    if (!hit.size) {
+      const why = classWide ? `${g.학년}학년 ${g.반}반 학생이 명단에 없음` : (fails.length ? `지정 학생 전원 매칭 실패: ${fails.join(', ')}` : '지정 학생 없음');
+      add('err', '적용 가능한 학생이 0명인 수강과목', g.label, why);
+    }
+  });
+
+  // ── 학생: 배정 교사 계산 (학생 화면과 동일 규칙)
+  const stuTeachers = {};
+  stus.forEach(st => { stuTeachers[stuId(st)] = new Set(); });
+  subs.forEach(s => {
+    const g = String(s.학년==null?'':s.학년), c = String(s.반||'');
+    stus.forEach(st => {
+      if (st.학년!==g || st.반!==c) return;
+      if (s.이름===' ' || s.이름===st.이름) stuTeachers[stuId(st)].add(s.교사);
+    });
+  });
+  stus.forEach(st => {
+    const lbl = `${st.학년}학년 ${st.반}반 ${st.이름}`;
+    if (!stuTeachers[stuId(st)].size) add('warn', '배정된 선생님이 없는 학생', lbl, '학생 화면에 "배정된 선생님이 없습니다"가 표시됨');
+    if (!st.비밀번호.trim()) add('warn', '학생 명단 데이터 오류', lbl, '비밀번호가 비어 있어 로그인 불가');
+    if (!/^(7|8|9|10|11|12)$/.test(st.학년)) add('warn', '학생 명단 데이터 오류', lbl, `학년 값 이상("${st.학년}")`);
+  });
+
+  // ── 예약 정합성
+  const stuSet = new Set(stus.map(stuId));
+  const rvKeyOK = new Set();
+  rvs.forEach(r => {
+    const lbl = `${r.학년||'?'}학년 ${r.반||'?'}반 ${r.학생||'?'} → ${r.교사||'?'}`;
+    if (!slotTeachers.has(r.교사)) add('err', '예약 이상', lbl, '해당 교사의 교사시간이 없음 (고아 예약)');
+    else if (!slots.some(s => s.교사===r.교사 && String(s.예약완료||'').trim()===String(r.학생||'').trim()))
+      add('err', '예약 이상', lbl, `교사시간 슬롯에 예약자로 표시되어 있지 않음 (예약시간: ${r.시간||'-'})`);
+    const id = `${r.학년}|${r.반}|${r.학생}`;
+    if (!stuSet.has(id)) {
+      const same = stus.filter(x => x.이름===r.학생);
+      add('warn', '예약 이상', lbl, same.length ? `명단의 학년/반이 다름 (명단: ${same.map(x=>x.학년+'학년 '+x.반+'반').join(', ')})` : '학생 명단에 없는 학생');
+    } else if (!stuTeachers[id].has(r.교사)) {
+      add('warn', '예약 이상', lbl, '현재 수강과목에 없는 교사로 예약되어 있음');
+    }
+  });
+  slots.forEach(s => {
+    const who = String(s.예약완료||'').trim();
+    if (!who) return;
+    if (!rvs.some(r => r.교사===s.교사 && String(r.학생||'').trim()===who))
+      add('err', '예약 이상', `${s.교사} ${_tm(s)} ← ${who}`, '슬롯에는 예약자가 있으나 예약 목록(reservations)에 없음');
+  });
+
+  return { issues, counts: { teachers: slotTeachers.size, subs: subs.length, stus: stus.length, rvs: rvs.length, slots: slots.length } };
+}
+
+function renderCheck() {
+  const body = document.getElementById('ck-body');
+  if (!body) return;
+  let res;
+  try { res = runCheck(); } catch(e) { console.error(e); body.innerHTML = `<div class="empty">점검 중 오류: ${escH(e.message)}</div>`; return; }
+  const { issues, counts } = res;
+  const q = (document.getElementById('ck-search').value||'').trim().toLowerCase();
+  const n = { err:0, warn:0, info:0 };
+  issues.forEach(i => n[i.sev]++);
+  document.getElementById('ck-stat').textContent =
+    `점검 대상: 교사시간 교사 ${counts.teachers}명(슬롯 ${counts.slots}) · 수강과목 레코드 ${counts.subs} · 학생 ${counts.stus} · 예약 ${counts.rvs}`;
+  const chip = (f, label, cls) => `<button class="ck-chip ${cls||''} ${ckFilter===f?'on':''}" onclick="setCkFilter('${f}')">${label}</button>`;
+  document.getElementById('ck-sum').innerHTML =
+    chip('all', `전체 ${issues.length}`) + chip('err', `🔴 오류 ${n.err}`, 'err') + chip('warn', `🟠 경고 ${n.warn}`, 'warn') + chip('info', `ℹ️ 참고 ${n.info}`);
+  const list = issues.filter(i => (ckFilter==='all' || i.sev===ckFilter) && (!q || (i.target+' '+i.msg+' '+i.cat).toLowerCase().includes(q)));
+  if (!issues.length) { body.innerHTML = '<div class="ck-ok">✅ 발견된 문제가 없습니다.</div>'; return; }
+  if (!list.length) { body.innerHTML = '<div class="empty">해당하는 항목이 없습니다.</div>'; return; }
+  const rank = { err:0, warn:1, info:2 }, icon = { err:'🔴', warn:'🟠', info:'ℹ️' };
+  const cats = {};
+  list.forEach(i => { (cats[i.cat] = cats[i.cat] || { sev:i.sev, items:[] }); if (rank[i.sev] < rank[cats[i.cat].sev]) cats[i.cat].sev = i.sev; cats[i.cat].items.push(i); });
+  body.innerHTML = Object.entries(cats).sort((a,b) => rank[a[1].sev]-rank[b[1].sev] || b[1].items.length-a[1].items.length).map(([cat, c]) =>
+    `<div class="ck-cat"><h3><span>${icon[c.sev]} ${escH(cat)}</span><span>${c.items.length}건</span></h3>` +
+    c.items.map(i => `<div class="ck-row"><div class="t">${escH(i.target)}</div><div class="m">${escH(i.msg)}</div></div>`).join('') + '</div>'
+  ).join('');
 }
 
 function toast(msg, type='') {
