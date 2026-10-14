@@ -1602,7 +1602,22 @@ async function loadSettings() {
     if (p && p.start) document.getElementById('period-start').value = toLocalDT(p.start);
     if (p && p.end)   document.getElementById('period-end').value   = toLocalDT(p.end);
     updatePeriodStatus(p);
-    if (dSnap.val()) document.getElementById('ptc-date-input').value = dSnap.val();
+    if (dSnap.val()) {
+      // 저장 형식: "5월 15일" (+ settings/ptcYear) → <input type=date>용 YYYY-MM-DD로 복원
+      const raw = String(dSnap.val()).trim();
+      let iso = '';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) iso = raw;
+      else {
+        const m = raw.match(/(\d{1,2})\s*월\s*(\d{1,2})\s*일/);
+        if (m) {
+          let yr = '';
+          try { yr = String((await db.ref('settings/ptcYear').once('value')).val()||''); } catch(e){}
+          if (!/^\d{4}$/.test(yr)) yr = String(new Date().getFullYear());
+          iso = `${yr}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+        }
+      }
+      document.getElementById('ptc-date-input').value = iso;
+    }
     currentSemester = semSnap.val() || '2';
     document.getElementById('semester-input').value = currentSemester;
   } catch(e) { updatePeriodStatus(null); }
