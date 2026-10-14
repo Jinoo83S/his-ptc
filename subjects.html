@@ -202,6 +202,8 @@ async function loadData() {
       }
     });
 
+    const splitTeachers = t => String(t==null?'':t).split(/[,，、]/).map(x=>x.trim()).filter(Boolean);
+
     // 2. 내 수강과목 교사 목록 가져오기
     const subSnap = await db.ref('subjects')
       .orderByChild('이름')
@@ -214,10 +216,13 @@ async function loadData() {
     subSnap.forEach(child => {
       const s = child.val();
       if (String(s.학년) === String(student.학년) && s.반 === student.반) {
-        const key = `${s.교사}__${s.분류}`;
-        if (!teacherMap[key]) {
-          teacherMap[key] = { 교사: s.교사, 과목: s.과목, 분류: s.분류 };
-        }
+        // 교사 칸에 "서지훈, 박래희"처럼 여러 명이면 각각 분리
+        splitTeachers(s.교사).forEach(tn => {
+          const key = `${tn}__${s.분류}`;
+          if (!teacherMap[key]) {
+            teacherMap[key] = { 교사: tn, 과목: s.과목, 분류: s.분류 };
+          }
+        });
       }
     });
 
@@ -230,10 +235,13 @@ async function loadData() {
     hmSnap.forEach(child => {
       const s = child.val();
       if (String(s.학년) === String(student.학년) && s.반 === student.반) {
-        const key = `${s.교사}__${s.분류}`;
-        if (!teacherMap[key]) {
-          teacherMap[key] = { 교사: s.교사, 과목: s.과목, 분류: s.분류 };
-        }
+        // 교사 칸에 "서지훈, 박래희"처럼 여러 명이면 각각 분리
+        splitTeachers(s.교사).forEach(tn => {
+          const key = `${tn}__${s.분류}`;
+          if (!teacherMap[key]) {
+            teacherMap[key] = { 교사: tn, 과목: s.과목, 분류: s.분류 };
+          }
+        });
       }
     });
 

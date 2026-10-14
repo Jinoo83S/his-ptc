@@ -2349,6 +2349,7 @@ async function deleteAllSubjects() {
 let ckFilter = 'all';
 function refreshCheck() { loadAll().then(() => { renderCheck(); toast('다시 점검했습니다.', 'ok'); }); }
 function setCkFilter(f) { ckFilter = f; renderCheck(); }
+const splitT = t => String(t==null?'':t).split(/[,，、]/).map(x=>x.trim()).filter(Boolean);
 const _nz = x => String(x==null?'':x).replace(/\s+/g,'').toLowerCase();
 
 function runCheck() {
@@ -2362,12 +2363,12 @@ function runCheck() {
 
   const slotTeachers = new Set(slots.map(s=>s.교사).filter(Boolean));
   const slotNorm = {}; slotTeachers.forEach(t => slotNorm[_nz(t)] = t);
-  const subTeachers = new Set(subs.map(s=>s.교사).filter(Boolean));
+  const subTeachers = new Set(subs.flatMap(s=>splitT(s.교사)));
   const subNorm = {}; subTeachers.forEach(t => subNorm[_nz(t)] = t);
 
   // ── 교사: 과목엔 있는데 교사시간 없음
   const subByTeacher = {};
-  subs.forEach(s => { const t=s.교사||''; (subByTeacher[t] = subByTeacher[t]||[]).push(s); });
+  subs.forEach(s => { splitT(s.교사).forEach(t => { (subByTeacher[t] = subByTeacher[t]||[]).push(s); }); });
   Object.entries(subByTeacher).forEach(([t, arr]) => {
     if (!t) return;
     if (slotTeachers.has(t)) return;
@@ -2464,7 +2465,7 @@ function runCheck() {
     const g = String(s.학년==null?'':s.학년), c = String(s.반||'');
     stus.forEach(st => {
       if (st.학년!==g || st.반!==c) return;
-      if (s.이름===' ' || s.이름===st.이름) stuTeachers[stuId(st)].add(s.교사);
+      if (s.이름===' ' || s.이름===st.이름) splitT(s.교사).forEach(t => stuTeachers[stuId(st)].add(t));
     });
   });
   stus.forEach(st => {
