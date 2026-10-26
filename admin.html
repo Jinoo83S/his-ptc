@@ -320,6 +320,7 @@ tr:hover td{background:#FAFBFF}
     <button class="tab" onclick="switchTab('reservations')">📋 예약 현황</button>
     <button class="tab" onclick="switchTab('students')">👤 예약 횟수</button>
     <button class="tab" onclick="switchTab('stulist')">📝 학생 명단</button>
+    <button class="tab" onclick="switchTab('rooms')">📍 상담 장소</button>
     <button class="tab" onclick="switchTab('check')">🔍 데이터 점검</button>
   </div>
   </div>
@@ -461,6 +462,23 @@ tr:hover td{background:#FAFBFF}
         </table>
       </div>
     </div>
+  </div>
+
+  <!-- ── 상담 장소 ── -->
+  <div id="tab-rooms" class="content" style="display:none">
+    <div class="tool-bar">
+      <button class="btn-upload" style="background:var(--nv);color:#fff;border-color:var(--nv)" onclick="saveRooms()">💾 저장</button>
+      <button class="btn-upload" onclick="document.getElementById('rm-paste-wrap').classList.toggle('on')">📋 엑셀 붙여넣기 ▾</button>
+      <button class="btn-upload" style="background:#FEF2F2;border-color:#FCA5A5;color:#DC2626" onclick="clearRooms()">🗑️ 전체 비우기</button>
+    </div>
+    <div class="paste-collapse" id="rm-paste-wrap">
+      <div class="ps-hint">열 구성: <code>교사</code> <code>교실(상담 장소)</code> — 탭으로 구분, 한 줄에 교사 1명 (엑셀 '기초데이터'의 교사·교실 열을 그대로 붙여넣기)</div>
+      <textarea class="paste-ta" id="rm-paste-ta" placeholder="곽인옥&#9;MH505&#10;권성욱&#9;MH305"></textarea>
+      <div class="paste-btns"><button class="btn-paste-add" onclick="applyRoomPaste()">📥 아래 표에 반영</button></div>
+    </div>
+    <div class="ck-stat" id="rm-stat"></div>
+    <div class="ck-cat"><div id="rm-body"></div></div>
+    <div class="ck-stat">저장한 상담 장소는 교사별 예약현황 페이지(교사 이름 아래)와 명찰 출력에 표시됩니다. 입력 후 반드시 💾 저장을 눌러주세요.</div>
   </div>
 
   <!-- ── 데이터 점검 ── -->
@@ -738,10 +756,8 @@ tr:hover td{background:#FAFBFF}
       <label>반 <select id="tag-class"><option value="">전체</option><option>A</option><option>B</option><option>C</option></select></label>
       <label>크기 <select id="tag-orient"><option value="land">9×6cm 가로</option><option value="port">6×9cm 세로</option></select></label>
     </div>
-    <div class="tg-row"><label style="cursor:pointer"><input type="checkbox" class="cb" id="tag-showroom" checked> 교실 표시</label>
+    <div class="tg-row"><label style="cursor:pointer"><input type="checkbox" class="cb" id="tag-showroom" checked> 상담 장소 표시</label>
       <label style="cursor:pointer"><input type="checkbox" class="cb" id="tag-empty"> 예약 없는 학생 포함</label></div>
-    <div class="copy-lbl"><span>교사별 교실 (엑셀 '기초데이터'의 교사·교실 열을 붙여넣기)</span></div>
-    <textarea id="tag-rooms" style="min-height:110px" placeholder="곽인옥&#9;MH505&#10;권성욱&#9;MH305&#10;..."></textarea>
     <div id="tag-info" class="hint" style="margin:8px 0 0"></div>
     <div class="timeedit-btns">
       <button class="btn-timeedit-cancel" onclick="closeTagModal()">닫기</button>
@@ -840,14 +856,15 @@ async function loadAll() {
     allStudents     = stSnap.val()  || {};
     allSubjects     = subSnap.val() || {};
     await loadSettings();
+    try { roomsMap = parseRooms((await db.ref('settings/roomsText').once('value')).val()); } catch(e) {}
     renderAll();
   } catch(e) { console.error(e); toast('데이터 로드 실패', 'err'); }
 }
 function refreshAll() { loadAll().then(() => toast('새로고침 완료', 'ok')); }
-function renderAll()  { renderTimeslots(); renderSubjects(); renderReservations(); renderStudents(); refreshTeacherDatalist(); try{ if(document.getElementById('tab-check').style.display==='block') renderCheck(); }catch(e){console.error(e);} }
+function renderAll()  { try{renderRooms();}catch(e){console.error(e);} renderTimeslots(); renderSubjects(); renderReservations(); renderStudents(); refreshTeacherDatalist(); try{ if(document.getElementById('tab-check').style.display==='block') renderCheck(); }catch(e){console.error(e);} }
 
 // ── 탭 전환 ──────────────────────────────────────
-const TABS = ['timeslots','subjects','reservations','students','stulist','check'];
+const TABS = ['timeslots','subjects','reservations','students','stulist','rooms','check'];
 function switchTab(tab) {
   TABS.forEach((t,i) => {
     document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
@@ -855,6 +872,7 @@ function switchTab(tab) {
   });
   if (tab === 'stulist') loadStuList();
   if (tab === 'check') renderCheck();
+  if (tab === 'rooms') renderRooms();
 }
 
 // ════════════════════════════════════════════════
@@ -2557,6 +2575,60 @@ function renderCheck() {
 }
 
 // ════════════════════════════════════════════════
+// 상담 장소(교사별 교실) 탭
+// ════════════════════════════════════════════════
+let roomsMap = {};
+function roomTeacherList() {
+  const set = new Set(Object.keys(roomsMap));
+  Object.values(allTimeslots).forEach(x => { if (x.교사) set.add(x.교사); });
+  Object.values(allSubjects).forEach(x => splitT(x.교사).forEach(t => set.add(t)));
+  return [...set].sort((a,b) => a.localeCompare(b,'ko'));
+}
+function collectRoomInputs() {
+  const m = {};
+  document.querySelectorAll('#rm-body input[data-t]').forEach(i => { const v = i.value.trim(); if (v) m[i.dataset.t] = v; });
+  return m;
+}
+function renderRooms() {
+  const box = document.getElementById('rm-body'); if (!box) return;
+  const teachers = roomTeacherList();
+  const slotT = new Set(Object.values(allTimeslots).map(x=>x.교사));
+  box.innerHTML = teachers.length ? teachers.map(t => `<div class="ck-row" style="align-items:center">
+      <div class="t">${escH(t)}${slotT.has(t)?'':' <small style="color:#B45309">(교사시간 없음)</small>'}</div>
+      <div class="m"><input class="copy-in" data-t="${escH(t)}" value="${escH(roomsMap[t]||'')}" placeholder="예) MH505" oninput="updateRoomStat()"></div>
+    </div>`).join('') : '<div class="empty">등록된 교사가 없습니다.</div>';
+  updateRoomStat();
+}
+function updateRoomStat() {
+  const inputs = [...document.querySelectorAll('#rm-body input[data-t]')];
+  const filled = inputs.filter(i => i.value.trim()).length;
+  const el = document.getElementById('rm-stat');
+  if (el) el.textContent = `교사 ${inputs.length}명 중 상담 장소 입력 ${filled}명 · 미입력 ${inputs.length - filled}명`;
+}
+async function saveRooms() {
+  const m = collectRoomInputs();
+  const text = Object.entries(m).map(([t,r]) => `${t}\t${r}`).join('\n');
+  try {
+    await db.ref('settings/roomsText').set(text);
+    roomsMap = m;
+    toast(`✅ 상담 장소 ${Object.keys(m).length}명 저장 완료`, 'ok');
+    updateRoomStat();
+  } catch(e) { toast('저장 실패: '+e.message, 'err'); }
+}
+function applyRoomPaste() {
+  const parsed = parseRooms(document.getElementById('rm-paste-ta').value);
+  if (!Object.keys(parsed).length) { toast('인식된 행이 없습니다. (교사 ⇥ 교실)', 'err'); return; }
+  roomsMap = { ...collectRoomInputs(), ...parsed };
+  renderRooms();
+  toast(`${Object.keys(parsed).length}명 반영됨 — 💾 저장을 눌러주세요`, 'ok');
+}
+async function clearRooms() {
+  if (!confirm('모든 교사의 상담 장소를 비웁니다. 계속하시겠습니까?')) return;
+  try { await db.ref('settings/roomsText').remove(); roomsMap = {}; renderRooms(); toast('상담 장소를 모두 비웠습니다.', 'ok'); }
+  catch(e) { toast('실패: '+e.message, 'err'); }
+}
+
+// ════════════════════════════════════════════════
 // 예약현황 명찰 출력 (9×6cm / 6×9cm)
 // ════════════════════════════════════════════════
 function parseRooms(txt) {
@@ -2568,30 +2640,23 @@ function parseRooms(txt) {
   });
   return m;
 }
-async function openTagModal() {
+function openTagModal() {
   document.getElementById('tag-overlay').classList.add('on');
-  try {
-    const sn = await db.ref('settings/roomsText').once('value');
-    if (sn.val() != null) document.getElementById('tag-rooms').value = sn.val();
-  } catch(e) {}
   updateTagInfo();
 }
 function closeTagModal() { document.getElementById('tag-overlay').classList.remove('on'); }
 function updateTagInfo() {
-  const n = Object.keys(parseRooms(document.getElementById('tag-rooms').value)).length;
+  const n = Object.keys(roomsMap).length;
   const t = new Set(Object.values(allReservations).map(r=>r.교사)).size;
-  document.getElementById('tag-info').textContent = `교실 등록 ${n}명 · 현재 예약된 교사 ${t}명 · 예약 ${Object.keys(allReservations).length}건`;
+  document.getElementById('tag-info').textContent = `상담 장소 등록 ${n}명 (📍 상담 장소 탭에서 입력) · 현재 예약된 교사 ${t}명 · 예약 ${Object.keys(allReservations).length}건`;
 }
-document.addEventListener('input', e => { if (e.target && e.target.id==='tag-rooms') updateTagInfo(); });
 
 async function printTags() {
   const gSel = document.getElementById('tag-grade').value, cSel = document.getElementById('tag-class').value;
   const orient = document.getElementById('tag-orient').value;
   const showRoom = document.getElementById('tag-showroom').checked;
   const withEmpty = document.getElementById('tag-empty').checked;
-  const roomsTxt = document.getElementById('tag-rooms').value;
-  const rooms = parseRooms(roomsTxt);
-  try { await db.ref('settings/roomsText').set(roomsTxt); } catch(e) { toast('교실 정보 저장 실패(출력은 계속)', 'warn'); }
+  const rooms = roomsMap;
   let ptcDate = '';
   try { ptcDate = (await db.ref('settings/ptcDate').once('value')).val() || ''; } catch(e) {}
 

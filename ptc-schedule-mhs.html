@@ -32,6 +32,7 @@ table{border-collapse:separate;border-spacing:0;font-size:var(--fs,13px);width:1
 th,td{border-right:1px solid var(--bd);border-bottom:1px solid var(--bd);padding:0 2px;height:auto;white-space:normal;overflow-wrap:anywhere;word-break:normal;line-height:1.15;text-align:center;overflow:hidden}
 thead th{position:sticky;top:0;z-index:3;background:var(--hd);color:#fff;font-weight:700;height:auto;padding:3px 1px 2px;border-right:1px solid rgba(255,255,255,.28);border-bottom:none}
 thead th small{display:block;font-weight:500;font-size:.85em;opacity:.85;margin-top:1px}
+thead th small.rm{opacity:1;font-weight:800;font-size:.98em;color:#FFF4C2}
 thead th.corner{left:0;z-index:5;white-space:nowrap}
 tbody th{white-space:nowrap;word-break:normal;position:sticky;left:0;z-index:2;background:var(--gnl);color:var(--gn2);font-weight:700;font-size:.9em}
 td.bk{background:var(--bk);color:var(--bkt);font-weight:700}
@@ -42,7 +43,25 @@ tbody tr:hover td:not(.bk){background:#F1FAF4}
 td .gc{font-weight:500;font-size:.8em;opacity:.7;margin-left:2px}
 th.hl,td.hl{box-shadow:inset 0 0 0 2px #0b6b3b}
 .msg{padding:40px 20px;text-align:center;color:var(--sb)}
-@media print{.top{padding:6px}body{height:auto}.wrap{overflow:visible}}
+/* 인쇄: A4 가로 1장 */
+.pbtn{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.55);border-radius:6px;padding:3px 10px;font:inherit;font-weight:700;cursor:pointer}
+.pbtn:hover{background:rgba(255,255,255,.3)}
+@page{size:A4 landscape;margin:6mm}
+html{--pw:284mm;--ph:196mm}
+html.printing,html.printing body{width:var(--pw);height:var(--ph);overflow:hidden}
+html.printing body{display:flex;flex-direction:column}
+html.printing .wrap{overflow:hidden}
+html.printing .pbtn{display:none}
+html.printing .top{padding:4px 10px}
+html.printing .top h1{font-size:16px}
+html.printing thead th{position:static}
+html.printing tbody th{position:static}
+@media print{
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  html,body{width:var(--pw);height:var(--ph);overflow:hidden;background:#fff}
+  .pbtn{display:none}
+  .wrap{overflow:hidden}
+}
 </style>
 </head>
 <body>
@@ -54,6 +73,8 @@ th.hl,td.hl{box-shadow:inset 0 0 0 2px #0b6b3b}
     <span class="lg"><i style="background:#fff"></i>예약 가능</span>
     <span class="lg"><i style="background:repeating-linear-gradient(45deg,#E9ECEA,#E9ECEA 4px,#f6f7f6 4px,#f6f7f6 8px)"></i>예약 불가</span>
     <span class="live"><span class="dot" id="dot"></span><span id="upd">연결 중…</span></span>
+    <button class="pbtn" onclick="printPaper('A4')">🖨️ A4 가로</button>
+    <button class="pbtn" onclick="printPaper('A3')">🖨️ A3 가로</button>
   </div>
 </div>
 <div class="wrap" id="wrap"><div class="msg">불러오는 중…</div></div>
@@ -81,7 +102,7 @@ function getDb(s) {
   return apps[s].database();
 }
 
-let state = { slots:{}, rvs:{}, ptcDate:'' };
+let state = { slots:{}, rvs:{}, ptcDate:'', roomsText:'' };
 let off = [];  // 현재 구독 해제 함수들
 
 function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -101,19 +122,20 @@ function sortKey(t){
 
 function subscribe() {
   off.forEach(f => f()); off = [];
-  state = { slots:{}, rvs:{}, ptcDate:'' };
+  state = { slots:{}, rvs:{}, ptcDate:'', roomsText:'' };
   document.getElementById('wrap').innerHTML = '<div class="msg">불러오는 중…</div>';
   setLive(false, '연결 중…');
   const db = getDb(school);
   const bind = (path, key) => {
     const ref = db.ref(path);
-    const cb = snap => { state[key] = snap.val() || (key==='ptcDate' ? '' : {}); render(); setLive(true); };
+    const cb = snap => { state[key] = snap.val() || ((key==='ptcDate'||key==='roomsText') ? '' : {}); render(); setLive(true); };
     ref.on('value', cb, err => { console.error(err); setLive(false, '불러오기 실패'); });
     off.push(() => ref.off('value', cb));
   };
   bind('timeslots', 'slots');
   bind('reservations', 'rvs');
   bind('settings/ptcDate', 'ptcDate');
+  bind('settings/roomsText', 'roomsText');
 }
 
 function setLive(ok, msg) {
@@ -162,11 +184,15 @@ function render() {
 
   if (!shown.length) { document.getElementById('wrap').innerHTML = '<div class="msg">검색 결과가 없습니다.</div>'; return; }
 
+  // 상담 장소(교사 ⇥ 교실)
+  const roomOf = {};
+  String(state.roomsText || '').split('\n').forEach(l => { const c = l.split(/\t|,/).map(x => x.trim()); if (c[0] && c[1]) roomOf[c[0]] = c[1]; });
+  const hasRoom = shown.some(t => roomOf[t]);
   const head = shown.map(t => {
     const all = Object.values(byTeacher[t]);
     const bk  = all.filter(s => String(s.예약완료 || '').trim()).length;
     const hl  = focusTeacher && t === focusTeacher ? ' class="hl"' : '';
-    return `<th${hl}>${esc(t)}<small>${bk}/${all.length}</small></th>`;
+    return `<th${hl}>${esc(t)}${roomOf[t] ? `<small class="rm">${esc(roomOf[t])}</small>` : ''}<small>${bk}/${all.length}</small></th>`;
   }).join('');
 
   const body = rows.map(time => {
@@ -196,9 +222,10 @@ function render() {
   for (let i = 0; i < 4; i++) {   // 가로(열 폭)·세로(행 높이)·시간열 폭을 함께 맞춰 스크롤이 생기지 않게 함
     const colPx = W * (100 - timeW) / 100 / n;
     const lines = colPx / fs >= 9 ? 1 : 2;               // 셀 안 이름이 몇 줄로 나뉠지 추정
-    const rowH  = (H - (fs * 3.8 + 8)) / R;              // 헤더 높이를 뺀 행당 높이
+    const rowH  = (H - (fs * (hasRoom ? 4.9 : 3.8) + 8)) / R;              // 헤더 높이를 뺀 행당 높이
     const fsW = colPx / 5, fsH = rowH / (lines * 1.2 + 0.4);
-    fs = Math.max(6.5, Math.min(14, fsW, fsH));
+    const cap = _printing ? 14 * Math.max(1, W / 1000) : 14;   // 인쇄 시 용지가 클수록(A3) 글자 상한도 키움
+    fs = Math.max(6.5, Math.min(cap, fsW, fsH));
     timeW = Math.max(4, (maxLen * fs * 0.6 + 8) / W * 100);  // 시간 열은 내용 길이만큼만
   }
   fs = fs.toFixed(1);
@@ -210,6 +237,23 @@ function render() {
 
 // 이벤트
 window.addEventListener('resize', () => render());
+// 인쇄(가로 1장): 용지(A4/A3)별로 @page 크기와 계산 기준 크기를 맞춘 뒤 인쇄 — 인쇄 직전에 다시 계산, 인쇄 후 원복
+const PAPER = { A4:{ w:297, h:210 }, A3:{ w:420, h:297 } };
+function setPaper(k){
+  const pp = PAPER[k] || PAPER.A4, m = 6;
+  let st = document.getElementById('pgstyle');
+  if (!st) { st = document.createElement('style'); st.id = 'pgstyle'; document.head.appendChild(st); }
+  st.textContent = `@page{size:${k} landscape;margin:${m}mm}`;
+  document.documentElement.style.setProperty('--pw', (pp.w - 2*m - 1) + 'mm');
+  document.documentElement.style.setProperty('--ph', (pp.h - 2*m - 2) + 'mm');
+}
+function printPaper(k){ setPaper(k); window.print(); }
+let _printing = false;
+function beforePrint(){ if (_printing) return; _printing = true; document.documentElement.classList.add('printing'); render(); }
+function afterPrint(){ if (!_printing) return; _printing = false; document.documentElement.classList.remove('printing'); setPaper('A4'); render(); }
+window.addEventListener('beforeprint', beforePrint);
+window.addEventListener('afterprint', afterPrint);
+if (window.matchMedia) { const mq = window.matchMedia('print'); const h = e => e.matches ? beforePrint() : afterPrint(); mq.addEventListener ? mq.addEventListener('change', h) : mq.addListener(h); }
 
 // 강조 교사가 있으면 검색창에 채우지 않고 해당 열로 스크롤
 function scrollToFocus() {
