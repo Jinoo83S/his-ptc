@@ -210,6 +210,10 @@ tr:hover td{background:#FAFBFF}
 #tag-overlay .timeedit-box{max-width:520px;max-height:92vh;overflow:auto}
 .tg-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;font-size:13px}
 .tg-row select{padding:7px 9px;border:1.5px solid var(--bd);border-radius:8px;font-size:13px}
+#gt-overlay{position:fixed;inset:0;z-index:600;background:rgba(8,18,60,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:16px}
+#gt-overlay.on{display:flex}
+#gt-overlay .timeedit-box{max-width:640px;max-height:92vh;overflow:auto}
+#gt-overlay textarea{min-height:90px;font-family:inherit}
 #copy-overlay .timeedit-box{max-width:520px;max-height:92vh;overflow:auto}
 .copy-src{font-size:14px;font-weight:800;color:var(--nv2);background:#EEF2FF;border-radius:8px;padding:8px 12px;margin-bottom:10px}
 .copy-lbl{font-size:12px;font-weight:800;color:var(--sb);margin:10px 0 6px;display:flex;justify-content:space-between;align-items:center}
@@ -474,6 +478,7 @@ tr:hover td{background:#FAFBFF}
       <button class="btn-upload" style="background:#FEF2F2;border-color:#FCA5A5;color:#DC2626" onclick="clearRooms()">🗑️ 전체 비우기</button>
       <button class="btn-upload" id="gd-pdf-btn" style="background:#ECFDF5;border-color:#6EE7B7;color:#047857" onclick="downloadGuidePdf()">📄 안내문 PDF 다운로드</button>
       <button class="btn-upload" onclick="previewGuide()">👁️ 안내문 미리보기/인쇄</button>
+      <button class="btn-upload" onclick="openGuideText()">✏️ 안내문 문구 편집</button>
     </div>
     <div class="ck-stat" id="rm-check"></div>
     <div class="paste-collapse" id="rm-paste-wrap">
@@ -772,6 +777,29 @@ tr:hover td{background:#FAFBFF}
   </div>
 </div>
 
+<!-- ── 안내문 문구 편집 모달 ── -->
+<div id="gt-overlay" onclick="if(event.target===this)closeGuideText()">
+  <div class="timeedit-box">
+    <h2>✏️ 안내문 문구 편집</h2>
+    <div class="hint">여기서 저장한 문구가 안내문 미리보기·PDF에 계속 적용됩니다. 글자 일부를 굵게 하려면 <code>*10분*</code>처럼 별표로 감싸세요. 한 줄 = 한 항목, 빈 줄 = 간격.</div>
+    <div class="copy-lbl"><span>제목</span></div>
+    <input class="copy-in" id="gt-title">
+    <div class="copy-lbl"><span>건물 제목 (1쪽 / 2쪽)</span></div>
+    <div style="display:flex;gap:8px"><input class="copy-in" id="gt-mh"><input class="copy-in" id="gt-vh"></div>
+    <div class="copy-lbl"><span>안내 문구 (한글)</span></div>
+    <textarea class="copy-in" id="gt-ko"></textarea>
+    <div class="copy-lbl"><span>안내 문구 (영문)</span></div>
+    <textarea class="copy-in" id="gt-en"></textarea>
+    <div class="copy-lbl"><span>시설 이름 변경 (원본=표시할 글자, 한 줄에 하나)</span></div>
+    <textarea class="copy-in" id="gt-labels" style="min-height:130px"></textarea>
+    <div class="timeedit-btns">
+      <button class="btn-timeedit-cancel" onclick="resetGuideText()">기본값</button>
+      <button class="btn-timeedit-cancel" onclick="closeGuideText()">닫기</button>
+      <button class="btn-timeedit-save" onclick="saveGuideText()">저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── 교사 시간 복사 모달 ── -->
 <div id="copy-overlay" onclick="if(event.target===this)closeCopyModal()">
   <div class="timeedit-box">
@@ -863,6 +891,7 @@ async function loadAll() {
     allSubjects     = subSnap.val() || {};
     await loadSettings();
     try { roomsMap = parseRooms((await db.ref('settings/roomsText').once('value')).val()); } catch(e) {}
+    try { const gt = (await db.ref('settings/guideText').once('value')).val(); if (gt) gdText = { ...GD_TEXT_DEFAULT, ...JSON.parse(gt) }; } catch(e) {}
     try { interpSet = new Set(String((await db.ref('settings/interpText').once('value')).val()||'').split('\n').map(x=>x.trim()).filter(Boolean)); } catch(e) {}
     renderAll();
   } catch(e) { console.error(e); toast('데이터 로드 실패', 'err'); }
@@ -2604,7 +2633,7 @@ const GD_CSS = `
 .gd-bg{position:absolute;opacity:1}
 .gd-head{position:absolute;left:12mm;top:12mm;width:108mm}
 .gd-h1{position:absolute;left:12mm;top:84mm;width:112mm;font-size:15pt;font-weight:900}
-.gd-ul{position:absolute;left:12mm;top:114mm;width:112mm;font-size:10.5pt;line-height:1.55}
+.gd-ul{position:absolute;left:12mm;top:114mm;width:106mm;font-size:10.5pt;line-height:1.55}
 .gd-ul div{padding-left:5.5mm;position:relative}
 .gd-ul div.m:before{content:'';position:absolute;left:0;top:2.4mm;width:2.6mm;height:2.6mm;background:#3fbf93;border-radius:.4mm}
 .gd-ul div.sp{height:3mm}
@@ -2613,8 +2642,10 @@ const GD_CSS = `
 .gd-top span{font-size:17pt;font-weight:900}
 .gd-note{position:absolute;left:15mm;width:267mm;top:158mm;display:grid;grid-template-columns:1fr 1fr;gap:6mm;font-size:10.5pt;line-height:1.6}
 .gd-note b{font-weight:900}
-.gd-note div div{padding-left:5.5mm;position:relative}
-.gd-note div div:before{content:'';position:absolute;left:0;top:2.4mm;width:2.6mm;height:2.6mm;background:#3fbf93;border-radius:.4mm}
+.gd-note div div{position:relative}
+.gd-note div div.m{padding-left:5.5mm}
+.gd-note div div.sp{height:3mm}
+.gd-note div div.m:before{content:'';position:absolute;left:0;top:2.4mm;width:2.6mm;height:2.6mm;background:#3fbf93;border-radius:.4mm}
 `;
 const GD_FLOOR_COLORS = ['#5BC8A8', '#F2A27A'];
 function gdRoomCode(s) { const m = String(s||'').toUpperCase().replace(/\s+/g,'').match(/^(MH|VH|TH)(\d{3})/); return m ? m[1]+m[2] : ''; }
@@ -2650,37 +2681,77 @@ function renderRoomCheck() {
     ${li('ℹ️','배정 교사가 없는 교실(빈칸으로 표시)', empty)}
   </div>`;
 }
+// ── 안내문 문구 (저장/편집) ──
+const GD_TEXT_DEFAULT = {
+  title: '한동 글로벌학교 중고등 PTC 안내문',
+  mh: '미션홀 (뒤 건물)', vh: '비전홀 (앞 건물)',
+  ko: '상담 시간은 *10분*이고 *5분* 휴식 시간 및 이동 시간이 있습니다.\n선생님은 어떠한 선물을 받지도 주지도 않습니다.\n*VH102*에서 휴식을 취하실 수 있습니다.',
+  en: 'Your consultation is *10 minutes* long, with a *5 minute* break and travel time.\nTeachers do not receive or give any gifts.\nYou are welcome to take a break in *VH102*.',
+  labels: '화장실=화장실\n엘리베이터=엘리베이터\n계단=계단\n복도=복도\n입구=입구\n중앙현관=중앙현관\n도서관=도서관\n채플실=채플실\n식당=식당\n휴게실=휴게실\n행정실=행정실\n보건실=보건실\n층=층'
+};
+let gdText = { ...GD_TEXT_DEFAULT };
+function gdLabelMap() {
+  const m = {};
+  String(gdText.labels || '').split('\n').forEach(l => { const i = l.indexOf('='); if (i > 0) { const k = l.slice(0,i).trim(), v = l.slice(i+1).trim(); if (k && v) m[k] = v; } });
+  return m;
+}
+function gdFmt(txt) { return escH(txt).replace(/\*(.+?)\*/g, '<b>$1</b>'); }
+function gdLines(txt, cls) {
+  return String(txt || '').split('\n').map(l => l.trim() ? `<div class="${cls}">${gdFmt(l.trim())}</div>` : '<div class="sp"></div>').join('');
+}
+function openGuideText() {
+  document.getElementById('gt-title').value = gdText.title;
+  document.getElementById('gt-mh').value = gdText.mh;
+  document.getElementById('gt-vh').value = gdText.vh;
+  document.getElementById('gt-ko').value = gdText.ko;
+  document.getElementById('gt-en').value = gdText.en;
+  document.getElementById('gt-labels').value = gdText.labels;
+  document.getElementById('gt-overlay').classList.add('on');
+}
+function closeGuideText() { document.getElementById('gt-overlay').classList.remove('on'); }
+async function saveGuideText() {
+  const v = id => document.getElementById(id).value;
+  gdText = { title: v('gt-title').trim() || GD_TEXT_DEFAULT.title, mh: v('gt-mh').trim() || GD_TEXT_DEFAULT.mh, vh: v('gt-vh').trim() || GD_TEXT_DEFAULT.vh, ko: v('gt-ko'), en: v('gt-en'), labels: v('gt-labels') };
+  try { await db.ref('settings/guideText').set(JSON.stringify(gdText)); toast('✅ 안내문 문구 저장 완료', 'ok'); closeGuideText(); }
+  catch(e) { toast('저장 실패: '+e.message, 'err'); }
+}
+async function resetGuideText() {
+  if (!confirm('안내문 문구를 기본값으로 되돌립니다. 계속하시겠습니까?')) return;
+  gdText = { ...GD_TEXT_DEFAULT };
+  try { await db.ref('settings/guideText').remove(); } catch(e) {}
+  openGuideText(); toast('기본값으로 복원했습니다.', 'ok');
+}
+
 function gdTableHtml(ti, o) {
-  const t = GD_CFG[ti], byRoom = gdRoomTeachers();
+  const t = GD_CFG[ti], byRoom = gdRoomTeachers(), LM = gdLabelMap(), lab = x => LM[x] || x;
   const mm = u => (u / 7200 * 25.4 * o.scale);
   const W = t.cw.reduce((a,b)=>a+b,0), H = t.rh.reduce((a,b)=>a+b,0);
-  // 층 번호 → 행 범위
   const floorOf = {};
   t.cells.filter(c => c.c === 0 && /^\d$/.test(c.t[0]||'')).forEach((c, i) => { for (let k = 0; k < c.rs; k++) floorOf[c.r + k] = i; });
   const rowsHtml = [];
   for (let r = 0; r < t.rh.length; r++) {
     const cells = t.cells.filter(c => c.r === r).sort((a,b) => a.c - b.c);
     const fi = floorOf[r];
-    const col = fi == null ? 'transparent' : GD_FLOOR_COLORS[(o.alt ? fi : fi) % 2];
+    const col = fi == null ? 'transparent' : GD_FLOOR_COLORS[fi % 2];
     const isSpacer = cells.length === 1 && cells[0].cs >= t.cw.length - 1 && !cells[0].t.length;
     const tds = cells.map(c => {
       const code = gdRoomCode(c.t[0]);
       const span = ` colspan="${c.cs}" rowspan="${c.rs}"`;
       const bd = `border:.35mm solid ${col};`;
-      if (r === 0) return c.t.length ? `<td${span} class="gd-title">${escH(c.t.join(' '))}</td>` : `<td${span} class="gd-nb"></td>`;
+      if (r === 0) return c.t.length ? `<td${span} class="gd-title">${escH(ti === 0 ? gdText.mh : gdText.vh)}</td>` : `<td${span} class="gd-nb"></td>`;
       if (isSpacer) return `<td${span} class="gd-nb"></td>`;
-      if (c.c === 0 && /^\d$/.test(c.t[0]||'')) return `<td${span} class="gd-floor" style="${bd}background:#fff"><div style="writing-mode:vertical-rl;margin:auto;text-orientation:upright">${escH(c.t[0])}층</div></td>`;
+      if (c.c === 0 && /^\d$/.test(c.t[0]||'')) return `<td${span} class="gd-floor" style="${bd}background:#fff"><div style="writing-mode:vertical-rl;margin:auto;text-orientation:upright">${escH(c.t[0])}${escH(lab('층'))}</div></td>`;
       if (code) {
         const names = byRoom[code] || [];
         const fm = c.t.join(' ').match(/(도서관|채플실|식당|휴게실|행정실|보건실)/);
-        const fixedLbl = fm ? fm[1] : '';   // 교사 없는 고정 시설
+        const fixedLbl = fm ? lab(fm[1]) : '';
         const two = c.t.length > 1 || code === 'VH106';
         const nm = fixedLbl ? escH(fixedLbl) : (names.length ? `<b>${escH(names.join('/'))}</b>` : '');
         const inner = two ? `${escH(code)}<br>${nm}` : `${escH(code)} ${nm}`;
         return `<td${span} class="gd-room" style="${bd}">${inner}</td>`;
       }
-      if (c.t[0] === '입구') return `<td${span} class="gd-ent" style="${bd}">입구</td>`;
-      const txt = c.t.join('<br>');
+      if (c.t[0] === '입구') return `<td${span} class="gd-ent" style="${bd}">${escH(lab('입구'))}</td>`;
+      const txt = c.t.length === 1 ? escH(lab(c.t[0])) : c.t.map(x => escH(x)).join('<br>');
       const gray = (ti === 0 && ((c.r === 17 && c.c === 1) || (c.r === 19 && c.c === 4)));
       return `<td${span} class="${txt?'gd-fac':''}${gray?' gd-gray':''}" style="${bd}">${txt}</td>`;
     }).join('');
@@ -2690,33 +2761,18 @@ function gdTableHtml(ti, o) {
   return `<table class="gd-t" style="left:${o.left}mm;top:${o.top}mm;width:${mm(W).toFixed(2)}mm;height:${mm(H).toFixed(2)}mm"><colgroup>${cg}</colgroup><tbody>${rowsHtml.join('')}</tbody></table>`;
 }
 function gdPagesHtml() {
-  const b = s => s;
+  const lines = gdLines(gdText.ko, 'm') + '<div class="sp"></div>' + gdLines(gdText.en, 'm');
   const p1 = `<div class="gd-page">
     <img class="gd-bg" src="${GD_IMG_BG}" style="left:150mm;top:98mm;width:140mm">
     <img class="gd-head" src="${GD_IMG_HEAD}">
-    <div class="gd-h1">한동 글로벌학교 중고등 PTC 안내문</div>
-    <div class="gd-ul">
-      <div class="m">상담 시간은 <b>10분</b>이고<br>&nbsp;<b>5분</b> 휴식 시간 및 이동 시간이 있습니다.</div>
-      <div class="m">선생님은 어떠한 선물을 받지도 주지도 않습니다.</div>
-      <div class="m"><b>VH102</b>에서 휴식을 취하실 수 있습니다.</div>
-      <div class="sp"></div>
-      <div class="m">Your consultation is <b>10 minutes</b> long,<br>&nbsp;with a <b>5 minute</b> break and travel time.</div>
-      <div class="m">Teachers do not receive or give any gifts.</div>
-      <div class="m">You are welcome to take a break in <b>VH102</b>.</div>
-    </div>
+    <div class="gd-h1">${escH(gdText.title)}</div>
+    <div class="gd-ul">${lines}</div>
     ${gdTableHtml(0, { scale:1, left:122, top:11 })}
   </div>`;
   const p2 = `<div class="gd-page">
-    <div class="gd-top"><img src="${GD_IMG_LOGO}"><span>한동 글로벌학교 중고등 PTC 안내문</span></div>
+    <div class="gd-top"><img src="${GD_IMG_LOGO}"><span>${escH(gdText.title)}</span></div>
     ${gdTableHtml(1, { scale:1, left:15, top:34 })}
-    <div class="gd-note"><div>
-      <div>상담 시간은 <b>10분</b>이고 <b>5분</b> 휴식 시간 및 이동 시간이 있습니다.</div>
-      <div>선생님은 어떠한 선물을 받지도 주지도 않습니다.</div>
-      <div><b>VH102</b>에서 휴식을 취하실 수 있습니다.</div></div><div>
-      <div>Your consultation is <b>10 minutes</b> long, with a <b>5 minute</b> break and travel time.</div>
-      <div>Teachers do not receive or give any gifts.</div>
-      <div>You are welcome to take a break in <b>VH102</b>.</div></div>
-    </div>
+    <div class="gd-note"><div>${gdLines(gdText.ko, 'm')}</div><div>${gdLines(gdText.en, 'm')}</div></div>
   </div>`;
   return p1 + p2;
 }
@@ -2725,10 +2781,33 @@ function previewGuide() {
   if (!w) { toast('팝업이 차단되었습니다. 허용 후 다시 눌러주세요.', 'err'); return; }
   w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>PTC 안내문</title><style>
 @page{size:A4 landscape;margin:0}body{margin:0;background:#e5e7eb}
-.bar{position:sticky;top:0;background:#047857;color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center;font-size:14px;z-index:5;font-family:sans-serif}.bar button{padding:7px 16px;border:0;border-radius:8px;font-weight:800;cursor:pointer}
+.bar{position:sticky;top:0;background:#047857;color:#fff;padding:10px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;z-index:5;font-family:sans-serif}.bar button{padding:7px 14px;border:0;border-radius:8px;font-weight:800;cursor:pointer}
 .gd-page{margin:12px auto}
-@media print{body{background:#fff}.bar{display:none}.gd-page{margin:0}}${GD_CSS}</style></head><body>
-<div class="bar"><button onclick="print()">🖨️ 인쇄 / PDF로 저장</button><span>A4 가로 · 2쪽 · 배율 100% · 여백 없음</span></div>${gdPagesHtml()}</body></html>`);
+[contenteditable]:hover{outline:1px dashed #1e9e5a;outline-offset:-1px}
+[contenteditable]:focus{outline:2px solid #1e9e5a;outline-offset:-1px;background:rgba(255,251,230,.8)}
+@media print{body{background:#fff}.bar{display:none}.gd-page{margin:0}[contenteditable]{outline:none!important;background:none!important}}${GD_CSS}</style></head><body>
+<div class="bar"><button id="b-pdf">📄 PDF 다운로드</button><button onclick="print()">🖨️ 인쇄</button><span>✏️ 글자를 클릭해 바로 수정할 수 있습니다(이 창에서만 적용). 계속 쓸 문구는 관리자 화면의 [안내문 문구 편집]에서 저장하세요.</span></div>${gdPagesHtml()}
+<script>
+document.querySelectorAll('.gd-page td:not(.gd-nb), .gd-h1, .gd-ul div:not(.sp), .gd-note div div:not(.sp), .gd-top span').forEach(e => e.contentEditable = 'true');
+function loadJs(src){ return new Promise((res, rej) => { const el = document.createElement('script'); el.src = src; el.onload = res; el.onerror = () => rej(new Error('PDF 라이브러리를 불러오지 못했습니다(인터넷 확인). 인쇄 → PDF로 저장을 이용하세요.')); document.head.appendChild(el); }); }
+document.getElementById('b-pdf').onclick = async function(){
+  const b = this, old = b.textContent; b.disabled = true; b.textContent = '⏳ 생성 중…';
+  try {
+    if (!window.html2canvas) await loadJs('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    if (!window.jspdf) await loadJs('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    const act = document.activeElement; if (act && act.blur) act.blur();
+    const pdf = new window.jspdf.jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+    const pages = [...document.querySelectorAll('.gd-page')];
+    for (let i = 0; i < pages.length; i++) {
+      const cv = await html2canvas(pages[i], { scale:2.5, backgroundColor:'#ffffff', useCORS:true });
+      if (i) pdf.addPage();
+      pdf.addImage(cv.toDataURL('image/jpeg', .93), 'JPEG', 0, 0, 297, 210);
+    }
+    pdf.save('HIS_PTC_안내문_중고등.pdf');
+  } catch(e) { alert(e.message); }
+  b.disabled = false; b.textContent = old;
+};
+<\/script></body></html>`);
   w.document.close();
 }
 function gdLoadScript(src) {
