@@ -203,6 +203,11 @@ tr:hover td{background:#FAFBFF}
 /* ── 전체 시간 편집 모달 ── */
 #timeedit-overlay,#copy-overlay{position:fixed;inset:0;z-index:600;background:rgba(8,18,60,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:16px}
 #timeedit-overlay.on,#copy-overlay.on{display:flex}
+#tag-overlay{position:fixed;inset:0;z-index:600;background:rgba(8,18,60,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:16px}
+#tag-overlay.on{display:flex}
+#tag-overlay .timeedit-box{max-width:520px;max-height:92vh;overflow:auto}
+.tg-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;font-size:13px}
+.tg-row select{padding:7px 9px;border:1.5px solid var(--bd);border-radius:8px;font-size:13px}
 #copy-overlay .timeedit-box{max-width:520px;max-height:92vh;overflow:auto}
 .copy-src{font-size:14px;font-weight:800;color:var(--nv2);background:#EEF2FF;border-radius:8px;padding:8px 12px;margin-bottom:10px}
 .copy-lbl{font-size:12px;font-weight:800;color:var(--sb);margin:10px 0 6px;display:flex;justify-content:space-between;align-items:center}
@@ -302,6 +307,8 @@ tr:hover td{background:#FAFBFF}
     </div>
     <div class="top-btns">
       <button class="btn-chgpw" onclick="openPwModal()">🔐 비밀번호</button>
+      <a class="tbtn" href="https://jinoo83s.github.io/his-ptc/ptc-schedule-mhs.html" target="_blank" rel="noopener" style="text-decoration:none;display:inline-flex;align-items:center">📅 교사별 예약현황</a>
+      <button class="tbtn" onclick="openTagModal()">🏷️ 명찰 출력</button>
       <button class="tbtn" onclick="refreshAll()">🔄 새로고침</button>
       <button class="tbtn" onclick="adminLogout()">로그아웃</button>
     </div>
@@ -717,6 +724,28 @@ tr:hover td{background:#FAFBFF}
     <div class="timeedit-btns">
       <button class="btn-timeedit-cancel" onclick="closeTimeEditModal()">취소</button>
       <button class="btn-timeedit-save" onclick="applyTimeEdit()">전체 적용</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 명찰 출력 모달 ── -->
+<div id="tag-overlay" onclick="if(event.target===this)closeTagModal()">
+  <div class="timeedit-box">
+    <h2>🏷️ 예약현황 명찰 출력</h2>
+    <div class="hint">학생별 예약(교사·시간·교실)을 명찰로 출력합니다. 용지 A4, 한 장에 가로형 8개 / 세로형 9개. 점선이 재단선입니다.</div>
+    <div class="tg-row">
+      <label>학년 <select id="tag-grade"><option value="">전체</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select></label>
+      <label>반 <select id="tag-class"><option value="">전체</option><option>A</option><option>B</option><option>C</option></select></label>
+      <label>크기 <select id="tag-orient"><option value="land">9×6cm 가로</option><option value="port">6×9cm 세로</option></select></label>
+    </div>
+    <div class="tg-row"><label style="cursor:pointer"><input type="checkbox" class="cb" id="tag-showroom" checked> 교실 표시</label>
+      <label style="cursor:pointer"><input type="checkbox" class="cb" id="tag-empty"> 예약 없는 학생 포함</label></div>
+    <div class="copy-lbl"><span>교사별 교실 (엑셀 '기초데이터'의 교사·교실 열을 붙여넣기)</span></div>
+    <textarea id="tag-rooms" style="min-height:110px" placeholder="곽인옥&#9;MH505&#10;권성욱&#9;MH305&#10;..."></textarea>
+    <div id="tag-info" class="hint" style="margin:8px 0 0"></div>
+    <div class="timeedit-btns">
+      <button class="btn-timeedit-cancel" onclick="closeTagModal()">닫기</button>
+      <button class="btn-timeedit-save" onclick="printTags()">미리보기 / 인쇄</button>
     </div>
   </div>
 </div>
@@ -2525,6 +2554,115 @@ function renderCheck() {
     `<div class="ck-cat"><h3><span>${icon[c.sev]} ${escH(cat)}</span><span>${c.items.length}건</span></h3>` +
     c.items.map(i => `<div class="ck-row"><div class="t">${escH(i.target)}</div><div class="m">${escH(i.msg)}</div></div>`).join('') + '</div>'
   ).join('');
+}
+
+// ════════════════════════════════════════════════
+// 예약현황 명찰 출력 (9×6cm / 6×9cm)
+// ════════════════════════════════════════════════
+function parseRooms(txt) {
+  const m = {};
+  String(txt||'').split('\n').forEach(line => {
+    const c = line.split(/\t|,/).map(x=>x.trim());
+    if (c.length < 2 || !c[0] || !c[1] || c[0]==='교사') return;
+    m[c[0]] = c[1];
+  });
+  return m;
+}
+async function openTagModal() {
+  document.getElementById('tag-overlay').classList.add('on');
+  try {
+    const sn = await db.ref('settings/roomsText').once('value');
+    if (sn.val() != null) document.getElementById('tag-rooms').value = sn.val();
+  } catch(e) {}
+  updateTagInfo();
+}
+function closeTagModal() { document.getElementById('tag-overlay').classList.remove('on'); }
+function updateTagInfo() {
+  const n = Object.keys(parseRooms(document.getElementById('tag-rooms').value)).length;
+  const t = new Set(Object.values(allReservations).map(r=>r.교사)).size;
+  document.getElementById('tag-info').textContent = `교실 등록 ${n}명 · 현재 예약된 교사 ${t}명 · 예약 ${Object.keys(allReservations).length}건`;
+}
+document.addEventListener('input', e => { if (e.target && e.target.id==='tag-rooms') updateTagInfo(); });
+
+async function printTags() {
+  const gSel = document.getElementById('tag-grade').value, cSel = document.getElementById('tag-class').value;
+  const orient = document.getElementById('tag-orient').value;
+  const showRoom = document.getElementById('tag-showroom').checked;
+  const withEmpty = document.getElementById('tag-empty').checked;
+  const roomsTxt = document.getElementById('tag-rooms').value;
+  const rooms = parseRooms(roomsTxt);
+  try { await db.ref('settings/roomsText').set(roomsTxt); } catch(e) { toast('교실 정보 저장 실패(출력은 계속)', 'warn'); }
+  let ptcDate = '';
+  try { ptcDate = (await db.ref('settings/ptcDate').once('value')).val() || ''; } catch(e) {}
+
+  const byStu = {};
+  Object.values(allReservations).forEach(r => {
+    if (!r.학생) return;
+    const k = `${r.학년}|${r.반}|${r.학생}`;
+    (byStu[k] = byStu[k] || { 학년:String(r.학년), 반:String(r.반||''), 이름:r.학생, rv:[] }).rv.push(r);
+  });
+  if (withEmpty) Object.values(allStudents).forEach(st => {
+    const k = `${st.학년}|${st.반}|${st.이름}`;
+    if (!byStu[k]) byStu[k] = { 학년:String(st.학년), 반:String(st.반||''), 이름:st.이름, rv:[] };
+  });
+  const list = Object.values(byStu)
+    .filter(x => (!gSel || x.학년===gSel) && (!cSel || x.반===cSel))
+    .sort((a,b) => Number(a.학년)-Number(b.학년) || a.반.localeCompare(b.반) || a.이름.localeCompare(b.이름,'ko'));
+  if (!list.length) { toast('출력할 학생이 없습니다.', 'err'); return; }
+
+  const tmin = x => { const m=String(x.시간||'').match(/^(\d+):(\d+)/); return m?Number(m[1])*60+Number(m[2]):9999; };
+  const fmtT = t => String(t||'').replace(/\s+/g,'').replace('-','–');
+  const roomOf = t => rooms[t] || '';
+  const land = orient === 'land';
+
+  const tagHtml = x => {
+    const rv = x.rv.slice().sort((a,b)=>tmin(a)-tmin(b));
+    const n = rv.length;
+    let body;
+    if (land) {
+      const rows = Math.max(1, Math.ceil(n/5));
+      const cells = rv.map(r => `<div class="c"><b>${escH(r.교사)}</b><i>${escH(fmtT(r.시간))}</i>${showRoom&&roomOf(r.교사)?`<u>${escH(roomOf(r.교사))}</u>`:''}</div>`).join('');
+      body = `<div class="grid" style="grid-template-rows:repeat(${rows},1fr);--rows:${rows}">${cells || '<div class="none">예약 없음</div>'}</div>`;
+    } else {
+      body = `<div class="list" style="--n:${Math.max(n,5)}">` + (rv.map(r => `<div class="r"><i>${escH(fmtT(r.시간))}</i><b>${escH(r.교사)}</b>${showRoom?`<u>${escH(roomOf(r.교사))}</u>`:''}</div>`).join('') || '<div class="none">예약 없음</div>') + '</div>';
+    }
+    return `<div class="tag"><div class="hd"><span>${escH(x.학년)}${escH(x.반)} ${escH(x.이름)}</span><small>PTC ${escH(ptcDate)}</small></div>${body}</div>`;
+  };
+  const per = land ? 8 : 9;
+  const pages = [];
+  for (let i=0;i<list.length;i+=per) pages.push(list.slice(i,i+per));
+  const W = land ? 9 : 6, H = land ? 6 : 9;
+  const css = `
+@page{size:A4 portrait;margin:0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:#e5e7eb;color:#111}
+.bar{position:sticky;top:0;background:#1e3a8a;color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center;font-size:14px;z-index:5}
+.bar button{padding:7px 16px;border:0;border-radius:8px;font-weight:800;cursor:pointer}
+.page{width:21cm;height:29.7cm;margin:12px auto;background:#fff;padding:${land?'2.85cm 1.5cm':'1.35cm 1.5cm'};display:grid;grid-template-columns:repeat(${land?2:3},${W}cm);grid-auto-rows:${H}cm;justify-content:center;align-content:start;page-break-after:always;break-after:page}
+.tag{width:${W}cm;height:${H}cm;border:.2mm dashed #888;display:flex;flex-direction:column;overflow:hidden}
+.hd{background:#1e3a8a;color:#fff;height:${land?'1.05cm':'1.15cm'};padding:0 .3cm;display:flex;align-items:center;justify-content:space-between;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.hd span{font-size:${land?'15pt':'14pt'};font-weight:900}
+.hd small{font-size:6.5pt;opacity:.85}
+.grid{flex:1;display:grid;grid-template-columns:repeat(5,1fr);padding:.15cm}
+.c{border:.2mm solid #cbd5e1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(.06cm);text-align:center;margin:.5px;min-width:0;overflow:hidden}
+.c b{font-size:calc(11pt - (var(--rows) - 1)*1.5pt);line-height:1.15;word-break:keep-all}
+.c i{font-style:normal;font-size:6.6pt;white-space:nowrap;color:#1e3a8a;font-weight:700;letter-spacing:-.2px}
+.c u{text-decoration:none;font-size:7.5pt;font-weight:800;color:#b91c1c}
+.list{flex:1;display:flex;flex-direction:column;padding:.15cm .25cm}
+.r{flex:0 0 auto;height:calc(7.3cm / var(--n));display:flex;align-items:center;gap:.2cm;border-bottom:.2mm solid #e2e8f0;min-height:0;font-size:min(10.5pt,calc(70pt / var(--n) + 3pt))}
+.r:last-child{border:0}
+.r i{font-style:normal;font-size:.62em;color:#1e3a8a;font-weight:700;white-space:nowrap;flex:0 0 auto}
+.r b{flex:1;min-width:0;font-weight:900;white-space:nowrap}
+.r u{text-decoration:none;font-weight:800;color:#b91c1c;font-size:.7em}
+.none{margin:auto;color:#999;font-size:10pt}
+@media print{body{background:#fff}.bar{display:none}.page{margin:0}}`;
+  const w = window.open('', '_blank');
+  if (!w) { toast('팝업이 차단되었습니다. 허용 후 다시 눌러주세요.', 'err'); return; }
+  w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>PTC 명찰</title><style>${css}</style></head><body>
+<div class="bar"><button onclick="print()">🖨️ 인쇄</button><span>명찰 ${list.length}개 · ${pages.length}쪽 · ${W}×${H}cm · 인쇄 시 용지 A4 / 배율 100% / 여백 없음</span></div>
+${pages.map(pg => `<div class="page">${pg.map(tagHtml).join('')}</div>`).join('')}
+</body></html>`);
+  w.document.close();
 }
 
 function toast(msg, type='') {
