@@ -120,6 +120,8 @@ input[type=file].hidden-file{display:none}
 .btn-tc-del:hover{background:rgba(220,38,38,.55)}
 .btn-tc-copy{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(251,209,85,.25);border:1px solid rgba(251,209,85,.6);color:#FBD155;cursor:pointer;transition:background .13s}
 .btn-tc-copy:hover{background:rgba(251,209,85,.4)}
+.tc-interp{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.4);border-radius:6px;padding:3px 8px;cursor:pointer}
+.tc-interp input{width:14px;height:14px;cursor:pointer}
 
 /* ── 학생 명단 탭 ── */
 .stu-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
@@ -502,6 +504,7 @@ tr:hover td{background:#FAFBFF}
       <button class="btn-upload export" onclick="exportTimeslotCSV()">⬇️ 내보내기</button>
       <button class="btn-upload" onclick="openTimeEditModal()" style="background:#EEF2FF;border-color:#C7D2FE;color:var(--nv2)">🕐 전체 시간 수정</button>
       <button class="btn-upload" onclick="deleteAllTimeslots()" style="background:#FEF2F2;border-color:#FCA5A5;color:#DC2626">🗑️ 전체 삭제</button>
+      <button class="btn-upload" id="interp-print-btn" onclick="printInterpTags()" style="background:#ECFDF5;border-color:#6EE7B7;color:#047857">🗣️ 통역 명찰 출력</button>
 
     </div>
     <!-- 엑셀 붙여넣기 접기/펼치기 -->
@@ -857,11 +860,12 @@ async function loadAll() {
     allSubjects     = subSnap.val() || {};
     await loadSettings();
     try { roomsMap = parseRooms((await db.ref('settings/roomsText').once('value')).val()); } catch(e) {}
+    try { interpSet = new Set(String((await db.ref('settings/interpText').once('value')).val()||'').split('\n').map(x=>x.trim()).filter(Boolean)); } catch(e) {}
     renderAll();
   } catch(e) { console.error(e); toast('데이터 로드 실패', 'err'); }
 }
 function refreshAll() { loadAll().then(() => toast('새로고침 완료', 'ok')); }
-function renderAll()  { try{renderRooms();}catch(e){console.error(e);} renderTimeslots(); renderSubjects(); renderReservations(); renderStudents(); refreshTeacherDatalist(); try{ if(document.getElementById('tab-check').style.display==='block') renderCheck(); }catch(e){console.error(e);} }
+function renderAll()  { try{renderRooms();updateInterpBtn();}catch(e){console.error(e);} renderTimeslots(); renderSubjects(); renderReservations(); renderStudents(); refreshTeacherDatalist(); try{ if(document.getElementById('tab-check').style.display==='block') renderCheck(); }catch(e){console.error(e);} }
 
 // ── 탭 전환 ──────────────────────────────────────
 const TABS = ['timeslots','subjects','reservations','students','stulist','rooms','check'];
@@ -905,6 +909,7 @@ function renderTimeslots() {
         <h3>👨‍🏫 ${tc}</h3>
         <div style="display:flex;align-items:center;gap:8px">
           <span class="tg-stats">전체 ${slots.length} · 예약 ${booked} · 가능 ${avail}</span>
+          <label class="tc-interp" onclick="event.stopPropagation()" title="통역이 필요한 교사 — 통역 명찰 출력 대상"><input type="checkbox" ${interpSet.has(tc)?'checked':''} onchange="toggleInterp('${esc(tc)}',this.checked)"> 🗣️ 통역</label>
           <button class="btn-tc-edit" onclick="event.stopPropagation();renameTeacher('${esc(tc)}')">✏️ 수정</button>
           <button class="btn-tc-del"  onclick="event.stopPropagation();deleteTeacher('${esc(tc)}')">🗑 삭제</button>
           <button class="btn-tc-copy" onclick="event.stopPropagation();copyTeacherTimes('${esc(tc)}')">📋 시간 복사</button>
@@ -2572,6 +2577,74 @@ function renderCheck() {
     `<div class="ck-cat"><h3><span>${icon[c.sev]} ${escH(cat)}</span><span>${c.items.length}건</span></h3>` +
     c.items.map(i => `<div class="ck-row"><div class="t">${escH(i.target)}</div><div class="m">${escH(i.msg)}</div></div>`).join('') + '</div>'
   ).join('');
+}
+
+// ════════════════════════════════════════════════
+// 통역 교사 체크 + 통역 명찰 (10×12cm)
+// ════════════════════════════════════════════════
+let interpSet = new Set();
+function updateInterpBtn() {
+  const b = document.getElementById('interp-print-btn');
+  if (b) b.textContent = `🗣️ 통역 명찰 출력 (${interpSet.size}명)`;
+}
+async function toggleInterp(tc, on) {
+  if (on) interpSet.add(tc); else interpSet.delete(tc);
+  updateInterpBtn();
+  try { await db.ref('settings/interpText').set([...interpSet].join('\n')); }
+  catch(e) { toast('통역 체크 저장 실패: '+e.message, 'err'); }
+}
+function printInterpTags() {
+  const PM_START = 12*60;   // 12:00 이후는 오후
+  const teachers = [...interpSet].filter(t => Object.values(allTimeslots).some(x => x.교사 === t)).sort((a,b)=>a.localeCompare(b,'ko'));
+  if (!teachers.length) { toast('통역 체크된 교사가 없습니다. 교사 이름 줄의 🗣️ 통역을 체크하세요.', 'err'); return; }
+  const rvMap = {};
+  Object.values(allReservations).forEach(r => { rvMap[`${r.교사}|${r.학생}`] = r; });
+  const startMin = x => { const m = String(x||'').match(/(\d{1,2})\s*:\s*(\d{2})/); return m ? Number(m[1])*60+Number(m[2]) : 9999; };
+  const fmtT = t => String(t||'').replace(/\s+/g,'').replace('-','–');
+  const tagHtml = tc => {
+    const slots = Object.values(allTimeslots).filter(x => x.교사 === tc).map(x => ({ t:x.시간||x.시간목록||'', off:x.예약가능===false, name:String(x.예약완료||'').trim() }))
+      .sort((a,b) => startMin(a.t)-startMin(b.t));
+    const am = slots.filter(x => startMin(x.t) < PM_START), pm = slots.filter(x => startMin(x.t) >= PM_START);
+    const n = Math.max(am.length, pm.length, 12);
+    const row = x => { const r = x.name ? rvMap[`${tc}|${x.name}`] : null;
+      return `<div class="r${x.off&&!x.name?' off':''}"><i>${escH(fmtT(x.t))}</i><b>${escH(x.name)}</b>${r?`<small>${escH(r.학년)}${escH(r.반||'')}</small>`:''}</div>`; };
+    const col = (label, arr) => `<div class="col"><div class="ch">${label}</div><div class="rows">${arr.map(row).join('') || '<div class="none">—</div>'}</div></div>`;
+    const room = roomsMap[tc] || '';
+    return `<div class="tag" style="--n:${n}"><div class="hd"><b>${escH(tc)}</b>${room?`<span>${escH(room)}</span>`:''}</div><div class="cols">${col('오전 AM', am)}${col('오후 PM', pm)}</div><div class="ft">통역 Interpreter · PTC</div></div>`;
+  };
+  const pages = [];
+  for (let i = 0; i < teachers.length; i += 4) pages.push(teachers.slice(i, i+4));
+  const css = `
+@page{size:A4 portrait;margin:0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:#e5e7eb;color:#111}
+.bar{position:sticky;top:0;background:#047857;color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center;font-size:14px;z-index:5}
+.bar button{padding:7px 16px;border:0;border-radius:8px;font-weight:800;cursor:pointer}
+.page{width:21cm;height:29.7cm;margin:12px auto;background:#fff;padding:2.85cm .5cm;display:grid;grid-template-columns:repeat(2,10cm);grid-auto-rows:12cm;justify-content:center;align-content:start;page-break-after:always;break-after:page}
+.tag{width:10cm;height:12cm;border:.2mm dashed #888;display:flex;flex-direction:column;overflow:hidden}
+.hd{background:#047857;color:#fff;height:1.7cm;padding:0 .4cm;display:flex;align-items:center;justify-content:space-between;gap:.3cm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.hd b{font-size:22pt;font-weight:900;white-space:nowrap}
+.hd span{font-size:16pt;font-weight:800;color:#FFF4C2;white-space:nowrap}
+.cols{flex:1;display:grid;grid-template-columns:1fr 1fr;min-height:0}
+.col{display:flex;flex-direction:column;min-height:0;border-right:.2mm solid #cbd5e1}
+.col:last-child{border:0}
+.ch{background:#ECFDF5;color:#047857;text-align:center;font-weight:900;font-size:9.5pt;padding:.08cm 0;border-bottom:.2mm solid #6EE7B7;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.rows{flex:1;display:flex;flex-direction:column;min-height:0;padding:.05cm .12cm}
+.r{flex:1 1 0;max-height:.78cm;display:flex;align-items:center;gap:.12cm;border-bottom:.2mm solid #e2e8f0;min-height:0;font-size:min(10.5pt,calc(150pt / var(--n)));white-space:nowrap;overflow:hidden}
+.r i{font-style:normal;font-size:.8em;color:#047857;font-weight:700;flex:0 0 auto}
+.r b{flex:1;min-width:0;font-weight:800;overflow:hidden;text-overflow:clip}
+.r small{font-size:.7em;color:#6b7280;flex:0 0 auto}
+.r.off{background:repeating-linear-gradient(45deg,#eee,#eee 3px,#fafafa 3px,#fafafa 6px);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.none{margin:auto;color:#999}
+.ft{height:.55cm;display:flex;align-items:center;justify-content:center;font-size:7pt;color:#6b7280;border-top:.2mm solid #cbd5e1}
+@media print{body{background:#fff}.bar{display:none}.page{margin:0}}`;
+  const w = window.open('', '_blank');
+  if (!w) { toast('팝업이 차단되었습니다. 허용 후 다시 눌러주세요.', 'err'); return; }
+  w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>통역 명찰</title><style>${css}</style></head><body>
+<div class="bar"><button onclick="print()">🖨️ 인쇄</button><span>통역 명찰 ${teachers.length}장 · ${pages.length}쪽 · 10×12cm · 인쇄 시 용지 A4 세로 / 배율 100% / 여백 없음</span></div>
+${pages.map(pg => `<div class="page">${pg.map(tagHtml).join('')}</div>`).join('')}
+</body></html>`);
+  w.document.close();
 }
 
 // ════════════════════════════════════════════════
