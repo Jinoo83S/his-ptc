@@ -2628,7 +2628,10 @@ const GD_CSS = `
 .gd-t td.gd-floor{font-weight:700;font-size:9pt;line-height:1.1}
 .gd-t td.gd-gray{background:#eceeed}
 .gd-t td.gd-fac{font-size:8.5pt}
-.gd-t td.gd-room b{font-weight:900}
+.gd-t td.gd-room b{font-weight:900;font-size:11pt}
+.gd-t td.gd-room i{font-style:normal;font-size:8.5pt;color:#444}
+.gd-t td.gd-fc{font-weight:700;color:#333}
+.gd-arrow{color:#e0262c;font-size:14pt;font-weight:900;line-height:1}
 .gd-t td.gd-ent{background:#66d6b0;color:#fff;font-weight:900;font-size:11pt}
 .gd-bg{position:absolute;opacity:1}
 .gd-head{position:absolute;left:12mm;top:12mm;width:108mm}
@@ -2733,7 +2736,7 @@ function gdTableHtml(ti, o) {
     const cells = t.cells.filter(c => c.r === r).sort((a,b) => a.c - b.c);
     const fi = floorOf[r];
     const col = fi == null ? 'transparent' : GD_FLOOR_COLORS[fi % 2];
-    const isSpacer = cells.length === 1 && cells[0].cs >= t.cw.length - 1 && !cells[0].t.length;
+    const isSpacer = r > 0 && cells.length === 1 && cells[0].c === 0 && cells[0].cs >= t.cw.length - 2 && !cells[0].t.length;
     const tds = cells.map(c => {
       const code = gdRoomCode(c.t[0]);
       const span = ` colspan="${c.cs}" rowspan="${c.rs}"`;
@@ -2747,12 +2750,17 @@ function gdTableHtml(ti, o) {
         const fixedLbl = fm ? lab(fm[1]) : '';
         const two = c.t.length > 1 || code === 'VH106';
         const nm = fixedLbl ? escH(fixedLbl) : (names.length ? `<b>${escH(names.join('/'))}</b>` : '');
-        const inner = two ? `${escH(code)}<br>${nm}` : `${escH(code)} ${nm}`;
+        const inner = two ? `<i>${escH(code)}</i><br>${nm}` : `<i>${escH(code)}</i> ${nm}`;
         return `<td${span} class="gd-room" style="${bd}">${inner}</td>`;
       }
       if (c.t[0] === '입구') return `<td${span} class="gd-ent" style="${bd}">${escH(lab('입구'))}</td>`;
       const txt = c.t.length === 1 ? escH(lab(c.t[0])) : c.t.map(x => escH(x)).join('<br>');
-      const gray = (ti === 0 && ((c.r === 17 && c.c === 1) || (c.r === 19 && c.c === 4)));
+      const GRAY = ti === 0 ? ['17,1','19,4'] : ['1,9','5,4','5,9','7,4','9,5'];
+      const gray = GRAY.includes(c.r+','+c.c);
+      if (ti === 1 && c.t[0] === '중앙현관') return `<td${span} class="gd-ent" style="${bd}">${escH(lab('중앙현관'))}</td>`;
+      if (c.t[0] === '↑') return `<td${span} class="gd-fac" style="${bd}"><span class="gd-arrow">↑</span><br>${c.t.slice(1).map(x => escH(x)).join('<br>')}</td>`;
+      const fac = /^(계단|화장실|엘리베이터)$/.test(c.t[0]||'');
+      if (fac) return `<td${span} class="gd-fac gd-fc" style="${bd}background:${col === 'transparent' ? '#fff' : col + '26'}">${escH(lab(c.t[0]))}</td>`;
       return `<td${span} class="${txt?'gd-fac':''}${gray?' gd-gray':''}" style="${bd}">${txt}</td>`;
     }).join('');
     rowsHtml.push(`<tr style="height:${mm(t.rh[r]).toFixed(2)}mm">${tds}</tr>`);
