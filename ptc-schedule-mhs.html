@@ -52,11 +52,33 @@ html.printing,html.printing body{width:var(--pw);height:var(--ph);overflow:hidde
 html.printing body{display:flex;flex-direction:column}
 html.printing .wrap{overflow:hidden}
 html.printing .pbtn{display:none}
+html.printing #selov{display:none!important}
 html.printing .top{padding:4px 10px}
 html.printing .top h1{font-size:16px}
 html.printing thead th{position:static}
 html.printing tbody th{position:static}
+#selov{position:fixed;inset:0;z-index:50;background:rgba(10,30,20,.5);display:none;align-items:center;justify-content:center;padding:16px}
+#selov.on{display:flex}
+.selbox{background:#fff;border-radius:14px;width:100%;max-width:560px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.selbox h2{font-size:16px;padding:16px 18px 6px;color:var(--gn2)}
+.selbox .sub{font-size:12px;color:var(--sb);padding:0 18px 8px;line-height:1.5}
+.seltool{display:flex;gap:8px;align-items:center;padding:4px 18px 8px;flex-wrap:wrap}
+.seltool input[type=text]{flex:1;min-width:120px;padding:7px 9px;border:1.5px solid var(--bd);border-radius:8px;font:inherit;font-size:13px}
+.seltool button{padding:6px 10px;border:1.5px solid var(--bd);background:#fff;border-radius:8px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#14221A;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;z-index:99;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+.sellist{overflow:auto;padding:4px 18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);min-height:120px}
+.sellist label{display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:6px;font-size:13px;cursor:pointer}
+.sellist label:hover{background:var(--gnl)}
+.sellist label small{color:var(--sb);margin-left:auto;font-size:11px}
+.selopt{padding:10px 18px;font-size:13px;display:flex;flex-direction:column;gap:6px}
+.selopt label{cursor:pointer;display:flex;gap:6px;align-items:flex-start}
+.selbtns{display:flex;gap:8px;padding:6px 18px 16px}
+.selbtns button{padding:10px;border:0;border-radius:9px;font:inherit;font-weight:800;cursor:pointer}
+.selbtns .go{flex:2;background:var(--gn);color:#fff}
+.selbtns .cl{flex:1;background:var(--bg);color:var(--sb)}
 @media print{
+  #selov{display:none!important}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   html,body{width:var(--pw);height:var(--ph);overflow:hidden;background:#fff}
   .pbtn{display:none}
@@ -73,12 +95,29 @@ html.printing tbody th{position:static}
     <span class="lg"><i style="background:#fff"></i>예약 가능</span>
     <span class="lg"><i style="background:repeating-linear-gradient(45deg,#E9ECEA,#E9ECEA 4px,#f6f7f6 4px,#f6f7f6 8px)"></i>예약 불가</span>
     <span class="live"><span class="dot" id="dot"></span><span id="upd">연결 중…</span></span>
+    <button class="pbtn" onclick="copyGrid()">📋 엑셀 복사</button>
+    <button class="pbtn" onclick="openSel()">👥 교사 선택 출력</button>
     <button class="pbtn" onclick="printPaper('A4')">🖨️ A4 가로</button>
     <button class="pbtn" onclick="printPaper('A3')">🖨️ A3 가로</button>
   </div>
 </div>
 <div class="wrap" id="wrap"><div class="msg">불러오는 중…</div></div>
 
+<div class="toast" id="toast"></div>
+<div id="selov" onclick="if(event.target===this)closeSel()">
+  <div class="selbox">
+    <h2>👥 교사 선택 출력</h2>
+    <div class="sub">출력할 교사를 선택하세요. 선택한 교사만 나오고, 예약 내용은 현재 실시간 데이터 기준입니다.</div>
+    <div class="seltool"><input type="text" id="selq" placeholder="🔍 교사 검색" oninput="renderSelList()"><button onclick="selAll(true)">전체 선택</button><button onclick="selAll(false)">선택 해제</button><span id="selcnt" style="font-size:12px;color:var(--sb)"></span></div>
+    <div class="sellist" id="sellist"></div>
+    <div class="selopt">
+      <label><input type="radio" name="selmode" value="each" checked> <span><b>교사별 1장씩</b> — 교사마다 한 쪽(A4 가로): 시간·학생·학년반, 오전/오후 구분</span></label>
+      <label><input type="radio" name="selmode" value="grid"> <span><b>선택 교사만 표로 한 장에</b> — 지금 화면의 예약현황표에서 선택한 교사 열만</span></label>
+      <div id="selpaper" style="padding-left:22px;font-size:12px;color:var(--sb)">용지: <select id="selpp"><option value="A4">A4 가로</option><option value="A3">A3 가로</option></select> (표 출력 시)</div>
+    </div>
+    <div class="selbtns"><button class="cl" onclick="closeSel()">닫기</button><button class="cl" onclick="copyGrid([...selChecked]);closeSel()" style="background:#E3F5EA;color:#17804A">📋 선택 교사 엑셀 복사</button><button class="go" onclick="doSelPrint()">🖨️ 출력</button></div>
+  </div>
+</div>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
@@ -103,6 +142,9 @@ function getDb(s) {
 }
 
 let state = { slots:{}, rvs:{}, ptcDate:'', roomsText:'' };
+let lastGrid = null;      // 엑셀 복사용(전체 교사·시간 행)
+let printFilter = null;   // 선택 교사만 표 출력할 때 사용
+const selChecked = new Set();
 let off = [];  // 현재 구독 해제 함수들
 
 function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -167,7 +209,7 @@ function render() {
     (byTeacher[s.교사] ||= {})[s._t] = s;
   });
   let teachers = Object.keys(byTeacher).sort((a,b) => a.localeCompare(b, 'ko'));
-  const shown = teachers;
+  const shown = printFilter ? teachers.filter(t => printFilter.has(t)) : teachers;
   // 정렬: 런치(Lunch/런치/점심) 행은 AM 끝과 PM 시작 사이에 배치
   const isLunch = t => /lunch|런치|점심/i.test(t);
   const isAM = t => /am|a\.m|오전/i.test(t) && !isLunch(t);
@@ -188,6 +230,7 @@ function render() {
   const roomOf = {};
   String(state.roomsText || '').split('\n').forEach(l => { const c = l.split(/\t|,/).map(x => x.trim()); if (c[0] && c[1]) roomOf[c[0]] = c[1]; });
   const hasRoom = shown.some(t => roomOf[t]);
+  lastGrid = { teachers, rows, byTeacher, roomOf };
   const head = shown.map(t => {
     const all = Object.values(byTeacher[t]);
     const bk  = all.filter(s => String(s.예약완료 || '').trim()).length;
@@ -250,7 +293,7 @@ function setPaper(k){
 function printPaper(k){ setPaper(k); window.print(); }
 let _printing = false;
 function beforePrint(){ if (_printing) return; _printing = true; document.documentElement.classList.add('printing'); render(); }
-function afterPrint(){ if (!_printing) return; _printing = false; document.documentElement.classList.remove('printing'); setPaper('A4'); render(); }
+function afterPrint(){ if (!_printing) return; _printing = false; printFilter = null; document.documentElement.classList.remove('printing'); setPaper('A4'); render(); }
 window.addEventListener('beforeprint', beforePrint);
 window.addEventListener('afterprint', afterPrint);
 if (window.matchMedia) { const mq = window.matchMedia('print'); const h = e => e.matches ? beforePrint() : afterPrint(); mq.addEventListener ? mq.addEventListener('change', h) : mq.addListener(h); }
@@ -263,6 +306,108 @@ function scrollToFocus() {
 let first = true;
 const _render = render;
 render = function(){ _render(); if (first && document.querySelector('th.hl')) { first = false; scrollToFocus(); } };
+
+
+// ── 교사 선택 출력 ───────────────────────────────
+function teacherNames(){ return [...new Set(Object.values(state.slots).map(s => s.교사).filter(Boolean))].sort((a,b) => a.localeCompare(b,'ko')); }
+function roomMap(){ const m = {}; String(state.roomsText || '').split('\n').forEach(l => { const c = l.split(/\t|,/).map(x => x.trim()); if (c[0] && c[1]) m[c[0]] = c[1]; }); return m; }
+function openSel(){ document.getElementById('selov').classList.add('on'); renderSelList(); }
+function closeSel(){ document.getElementById('selov').classList.remove('on'); }
+function renderSelList(){
+  const q = (document.getElementById('selq').value || '').trim().toLowerCase(), rm = roomMap();
+  const names = teacherNames();
+  document.getElementById('sellist').innerHTML = names.filter(t => !q || t.toLowerCase().includes(q)).map(t =>
+    `<label><input type="checkbox" value="${esc(t)}" ${selChecked.has(t)?'checked':''} onchange="selToggle(this)">${esc(t)}<small>${esc(rm[t]||'')}</small></label>`).join('') || '<div class="msg" style="grid-column:1/-1;padding:20px">교사가 없습니다.</div>';
+  updSelCnt();
+}
+function selToggle(cb){ cb.checked ? selChecked.add(cb.value) : selChecked.delete(cb.value); updSelCnt(); }
+function selAll(on){ document.querySelectorAll('#sellist input').forEach(cb => { cb.checked = on; on ? selChecked.add(cb.value) : selChecked.delete(cb.value); }); updSelCnt(); }
+function updSelCnt(){ document.getElementById('selcnt').textContent = `${selChecked.size}명 선택`; }
+function doSelPrint(){
+  const names = teacherNames().filter(t => selChecked.has(t));
+  if (!names.length) { alert('출력할 교사를 선택하세요.'); return; }
+  const mode = document.querySelector('input[name=selmode]:checked').value;
+  closeSel();
+  if (mode === 'grid') { printFilter = new Set(names); printPaper(document.getElementById('selpp').value); }
+  else printEach(names);
+}
+// 교사별 1장씩 (A4 가로)
+function printEach(names){
+  const rm = roomMap();
+  const rvMap = {}; Object.values(state.rvs).forEach(r => { rvMap[`${r.교사}|${r.학생}`] = r; });
+  const noon = 12 * 60;
+  const page = t => {
+    const slots = Object.values(state.slots).filter(s => s.교사 === t).map(s => ({ t: timeOf(s), off: s.예약가능 === false, name: String(s.예약완료 || '').trim() }))
+      .filter(x => x.t).sort((a,b) => sortKey(a.t) - sortKey(b.t));
+    const am = slots.filter(x => sortKey(x.t) < noon), pm = slots.filter(x => sortKey(x.t) >= noon);
+    const n = Math.max(am.length, pm.length, 10);
+    const booked = slots.filter(x => x.name).length;
+    const row = x => { const r = x.name ? rvMap[`${t}|${x.name}`] : null;
+      return `<div class="r${x.off && !x.name ? ' off' : ''}"><i>${esc(x.t.replace(/\s+/g,''))}</i><b>${esc(x.name)}</b><small>${r ? esc(String(r.학년) + (r.반 || '')) : ''}</small></div>`; };
+    const col = (lb, arr) => `<div class="col"><div class="ch">${lb}</div><div class="rows">${arr.map(row).join('') || '<div class="none">—</div>'}</div></div>`;
+    return `<div class="pg" style="--n:${n}"><div class="hd"><b>${esc(t)}</b>${rm[t] ? `<span>${esc(rm[t])}</span>` : ''}<em>HIS MHS PTC${state.ptcDate ? ' · ' + esc(state.ptcDate) : ''} · 예약 ${booked}/${slots.length}</em></div><div class="cols">${col('오전 AM', am)}${col('오후 PM', pm)}</div></div>`;
+  };
+  const css = `@page{size:A4 landscape;margin:0}*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;background:#e5e7eb}
+.bar{position:sticky;top:0;background:#1E9E5A;color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center;font-size:13px;z-index:5}.bar button{padding:7px 16px;border:0;border-radius:8px;font-weight:800;cursor:pointer}
+.pg{width:297mm;height:210mm;margin:12px auto;background:#fff;display:flex;flex-direction:column;page-break-after:always;break-after:page;overflow:hidden}
+.hd{background:#1E9E5A;color:#fff;height:22mm;padding:0 10mm;display:flex;align-items:center;gap:8mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.hd b{font-size:30pt;font-weight:900}.hd span{font-size:22pt;font-weight:800;color:#FFF4C2}.hd em{margin-left:auto;font-style:normal;font-size:11pt;opacity:.9}
+.cols{flex:1;display:grid;grid-template-columns:1fr 1fr;min-height:0;padding:5mm 10mm 8mm;gap:8mm}
+.col{display:flex;flex-direction:column;min-height:0;border:.3mm solid #C9D8CF}
+.ch{background:#E3F5EA;color:#17804A;text-align:center;font-weight:900;font-size:13pt;padding:1.5mm 0;border-bottom:.3mm solid #C9D8CF;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.rows{flex:1;display:flex;flex-direction:column;min-height:0}
+.r{flex:1 1 0;display:flex;align-items:center;gap:4mm;padding:0 4mm;border-bottom:.2mm solid #E2E8F0;min-height:0;font-size:min(15pt,calc(250pt / var(--n)));white-space:nowrap;overflow:hidden}
+.r:last-child{border:0}.r i{font-style:normal;font-size:.9em;color:#17804A;font-weight:700;flex:0 0 auto;width:36mm}
+.r b{flex:1;font-weight:800;overflow:hidden}.r small{font-size:.8em;color:#5E6F65;flex:0 0 auto}
+.r.off{background:repeating-linear-gradient(45deg,#E9ECEA,#E9ECEA 4px,#f6f7f6 4px,#f6f7f6 8px);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.none{margin:auto;color:#999}
+@media print{body{background:#fff}.bar{display:none}.pg{margin:0}}`;
+  const w = window.open('', '_blank');
+  if (!w) { alert('팝업이 차단되었습니다. 허용 후 다시 눌러주세요.'); return; }
+  w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>교사별 예약현황</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet"><style>${css}</style></head><body>
+<div class="bar"><button onclick="print()">🖨️ 인쇄</button><span>교사 ${names.length}명 · ${names.length}쪽 · A4 가로 · 인쇄 시 배율 100% / 여백 없음 (출력 시점의 예약 기준)</span></div>${names.map(page).join('')}</body></html>`);
+  w.document.close();
+}
+
+// ── 엑셀 형태 복사 (탭 구분 + HTML 표) ─────────────
+function showToast(msg){ const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('on'); clearTimeout(showToast._t); showToast._t = setTimeout(() => el.classList.remove('on'), 2600); }
+async function copyGrid(names){
+  const g = lastGrid;
+  if (!g || !g.rows.length) { showToast('복사할 데이터가 없습니다.'); return; }
+  const sel = names && names.length ? new Set(names) : null;
+  const cols = sel ? g.teachers.filter(t => sel.has(t)) : g.teachers;
+  if (!cols.length) { showToast('선택한 교사가 없습니다.'); return; }
+  const clean = x => String(x == null ? '' : x).replace(/[\t\r\n]+/g, ' ').trim();
+  const hasRoom = cols.some(t => g.roomOf[t]);
+  const cell = (t, time) => { const s = g.byTeacher[t][time]; if (!s) return { v:'', k:'none' };
+    const n = String(s.예약완료 || '').trim(); return n ? { v:n, k:'bk' } : (s.예약가능 === false ? { v:'불가', k:'off' } : { v:'', k:'' }); };
+  const rowsArr = [];
+  if (hasRoom) rowsArr.push(['', ...cols.map(t => g.roomOf[t] || '')]);
+  rowsArr.push(['시간', ...cols]);
+  g.rows.forEach(time => rowsArr.push([time, ...cols.map(t => cell(t, time).v)]));
+  const tsv = rowsArr.map(r => r.map(clean).join('\t')).join('\n');
+  const hdr = hasRoom ? 2 : 1;
+  const html = '<table border="1" style="border-collapse:collapse;font-family:Malgun Gothic,sans-serif;font-size:11pt">' + rowsArr.map((r, ri) =>
+    '<tr>' + r.map((v, ci) => {
+      let st = 'text-align:center;';
+      if (ri < hdr) st += 'background:#1E9E5A;color:#fff;font-weight:bold;';
+      else if (ci === 0) st += 'background:#E3F5EA;font-weight:bold;';
+      else { const k = cell(cols[ci-1], g.rows[ri - hdr]).k; if (k === 'bk') st += 'background:#FFF4C2;font-weight:bold;'; else if (k === 'off') st += 'background:#E9ECEA;color:#888;'; }
+      return `<td style="${st}">${esc(clean(v))}</td>`; }).join('') + '</tr>').join('') + '</table>';
+  let ok = false;
+  try {
+    if (navigator.clipboard && window.ClipboardItem) {
+      await navigator.clipboard.write([new ClipboardItem({ 'text/plain': new Blob([tsv], { type:'text/plain' }), 'text/html': new Blob([html], { type:'text/html' }) })]);
+      ok = true;
+    } else if (navigator.clipboard) { await navigator.clipboard.writeText(tsv); ok = true; }
+  } catch(e) { ok = false; }
+  if (!ok) {   // 구형/권한 제한 브라우저 대비
+    const ta = document.createElement('textarea'); ta.value = tsv; ta.style.cssText = 'position:fixed;left:-9999px'; document.body.appendChild(ta); ta.select();
+    try { ok = document.execCommand('copy'); } catch(e) { ok = false; } ta.remove();
+  }
+  showToast(ok ? `✅ 복사됨 — 엑셀에 붙여넣기 (교사 ${cols.length}명 × 시간 ${g.rows.length}줄)` : '복사 실패: 브라우저 권한을 확인하세요.');
+}
 
 subscribe();
 </script>
